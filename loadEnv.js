@@ -7,6 +7,16 @@ function load() {
 
   dotenv.config({ path: "./env/.env" });
   Global.env = process.env;
+
+  // string to array
+  Global.env = Object.fromEntries(
+    Object.entries(Global.env).map(([k, v]) => {
+      const newValue = String(v)
+        .split(",")
+        .map((v) => v.trim());
+      return [k, newValue.length > 1 ? newValue : v];
+    })
+  );
 }
 
 load();
