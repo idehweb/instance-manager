@@ -2,6 +2,7 @@ import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import { JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
+import Executer from "../job/executer.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -42,12 +43,17 @@ class Service {
       memory: req.body.memory ?? -1,
       disk: req.body.disk ?? -1,
       replica: req.body.replica ?? 1,
+      image: req.body.image,
     });
 
     const job = await jobModel.create({
       instance: instance._id,
       type: JobType.CREATE,
+      max_attempts: req.body.max_attempts,
     });
+
+    //  assign executer
+    Executer.buildAndRun(job, instance);
 
     return res.status(202).json({ status: "success", instance, job });
   }

@@ -22,6 +22,7 @@ app.use(hostGuard);
 app.use("/api/v1/instance", instanceRouter);
 app.use("/api/v1/job", jobRouter);
 
+// not found url
 app.use(notFoundHandler);
 
 // error handler

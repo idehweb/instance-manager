@@ -11,12 +11,13 @@ export const InstanceStatus = {
 export const instanceSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, required: true },
-    name: { type: String, default: () => createRandomName(8) },
+    name: { type: String, default: () => createRandomName(8), unique: true },
     cpu: { type: Number, required: true },
     memory: { type: Number, required: true },
     disk: { type: Number, required: true },
     replica: { type: Number, required: true },
     status: { type: String, default: InstanceStatus.JOB_CREATE },
+    image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
   },
   { timestamps: true }
 );
