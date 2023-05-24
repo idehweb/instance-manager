@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import { JobStatus, JobType, jobModel } from "../model/job.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import fs from "fs";
-import { getPublicPath, wait } from "../utils/helpers.js";
+import { axiosError2String, getPublicPath, wait } from "../utils/helpers.js";
 import { InstanceStatus } from "../model/instance.model.js";
 import Cloudflare from "cloudflare";
 import { Global } from "../global.js";
@@ -96,6 +96,7 @@ export default class Executer {
       }
       isRun = true;
     } catch (err) {
+      console.log(err);
       isRun = false;
     }
     if (!isRun) {
@@ -126,12 +127,12 @@ export default class Executer {
 
   async #create_instance() {
     // create public
-    const createFolders = `mkdir -p /var/${this.instance_name} && mkdir -p /var/${this.instance_name}/shared && mkdir -p /var/${this.instance_name}/public`;
+    const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
     this.log(createFolders);
     await this.#exec(createFolders);
 
     // copy static files
-    const copyStatics = `cp -r ${getPublicPath("static")}/* /var/${
+    const copyStatics = `cp -r ${getPublicPath("static")}/* /var/instances/${
       this.instance_name
     }/public`;
     this.log(copyStatics);
@@ -152,15 +153,15 @@ export default class Executer {
       this.instance.name
     }.nodeeweb.com" -e SHOP_URL="https://${
       this.instance.name
-    }.nodeeweb.com/" --mount type=bind,source=/var/${
+    }.nodeeweb.com/" --mount type=bind,source=/var/instances/${
       this.instance_name
-    }/shared/,destination=/app/shared/  --mount type=bind,source=/var/${
+    }/shared/,destination=/app/shared/  --mount type=bind,source=/var/instances/${
       this.instance_name
-    }/public/,destination=/app/public/  --mount type=bind,source=/var/${
+    }/public/,destination=/app/public/  --mount type=bind,source=/var/instances/${
       this.instance_name
-    }/public/public_media/,destination=/app/public_media/  --mount type=bind,source=/var/${
+    }/public/public_media/,destination=/app/public_media/  --mount type=bind,source=/var/instances/${
       this.instance_name
-    }/public/admin/,destination=/app/admin/  --mount type=bind,source=/var/${
+    }/public/admin/,destination=/app/admin/  --mount type=bind,source=/var/instances/${
       this.instance_name
     }/public/theme/,destination=/app/theme/ --network nodeeweb_webnet --network nodeeweb_mongonet --replicas ${
       this.instance.replica
@@ -195,11 +196,20 @@ export default class Executer {
     }
 
     // ns record
-    // list
-    const nl = await nsList();
-    if (nl.includes(this.instance.name)) return;
-    // create record
-    await nsCreate(this.instance.name);
+    try {
+      // list
+      const nl = await nsList();
+      if (nl.includes(this.instance.name)) {
+        this.log("DND record exists before");
+        return;
+      }
+      // create record
+      await nsCreate(this.instance.name);
+      this.log("DNS record create");
+    } catch (err) {
+      this.log("Axios Error in DNS:\n" + axiosError2String(err));
+      throw err;
+    }
 
     // change status
     await this.#doneJob(true, InstanceStatus.UP);
@@ -207,6 +217,7 @@ export default class Executer {
 
   async #update_instance() {}
   async #delete_instance() {}
+
   #exec(cmd) {
     return new Promise((resolve, reject) => {
       let res_ok = "",
@@ -240,7 +251,7 @@ export default class Executer {
       { $set: { status: instanceStatus } },
       { new: true }
     );
-    this.job = await instanceModel.findByIdAndUpdate(
+    this.job = await jobModel.findByIdAndUpdate(
       this.job._id,
       { $set: { status: isDone ? JobStatus.SUCCESS : JobStatus.ERROR } },
       { new: true }
