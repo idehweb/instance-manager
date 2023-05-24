@@ -1,0 +1,10 @@
+.out
+node_modules
+*.env
+.git
+.gitignore
+*.key
+*.yml
+apps
+.gitconfig
+.git-credentials
