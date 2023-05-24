@@ -94,7 +94,7 @@ export default class Executer {
     await this.#exec(createFolders);
 
     // copy static files
-    const copyStatics = `cp -r ${getPublicPath("static", "*")} /var/${
+    const copyStatics = `cp -r ${getPublicPath("static")}/* /var/${
       this.instance.name
     }/public`;
     this.log(copyStatics);
