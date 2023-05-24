@@ -1,4 +1,3 @@
-import { promisify } from "util";
 import "./loadEnv.js";
 import app from "./app.js";
 import { Global } from "./src/global.js";

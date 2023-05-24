@@ -1,10 +1,19 @@
 import { spawn } from "child_process";
 import { JobStatus, JobType, jobModel } from "../model/job.model.js";
+import { instanceModel } from "../model/instance.model.js";
 import fs from "fs";
 import { getPublicPath, wait } from "../utils/helpers.js";
 import { InstanceStatus } from "../model/instance.model.js";
-
+import Cloudflare from "cloudflare";
+import { Global } from "../global.js";
+import { nsCreate, nsList } from "../utils/cf.js";
+import axios from "axios";
 export default class Executer {
+  static cf = new Cloudflare({
+    email: Global.env.CF_EMAIL,
+    token: Global.env.CF_TOKEN,
+  });
+  last_log;
   constructor(job, instance) {
     this.job = job;
     this.instance = instance;
@@ -19,7 +28,10 @@ export default class Executer {
     executerNode.execute().then().catch();
   }
 
-  log(chunk, isEnd = false, isError = false) {
+  log(chunk, isEnd = false, isError = false, whenDifferent = false) {
+    if (this.last_log == String(chunk) && whenDifferent) return;
+    this.last_log = String(chunk);
+
     const chunk_with_id =
       `#${this.instance.name}-${String(this.job._id).slice(0, 8)}#: ` + chunk;
 
@@ -48,9 +60,18 @@ export default class Executer {
     // check attempts
     if (this.job.attempt >= this.job.max_attempts) {
       // error
-      await this.job.updateOne({ status: JobStatus.ERROR });
-      await this.instance.updateOne({ status: InstanceStatus.ERROR });
+      this.job = await jobModel.findByIdAndUpdate(
+        this.job._id,
+        { $set: { status: JobStatus.ERROR } },
+        { new: true }
+      );
+      this.instance = await instanceModel.findByIdAndUpdate(
+        this.instance._id,
+        { $set: { status: InstanceStatus.JOB_ERROR } },
+        { new: true }
+      );
       this.log("Finish with Error", true);
+      await this.callback_nodeeweb(false);
       return;
     }
 
@@ -85,6 +106,18 @@ export default class Executer {
     }
     // success
     this.log("Finish successfully", true);
+    // callback nodeeweb
+    await this.callback_nodeeweb(true);
+  }
+
+  async callback_nodeeweb(isOk) {
+    try {
+      await axios.post(Global.env.INTERFACE_URL, {
+        status: isOk ? "success" : "error",
+        job: this.job,
+        instance: this.instance,
+      });
+    } catch (err) {}
   }
 
   async #create_instance() {
@@ -105,6 +138,7 @@ export default class Executer {
     this.log(dockerServiceLs);
     const listServices = (await this.#exec(dockerServiceLs)).split("\n");
     const myService = listServices.find((s) => s.includes(this.instance.name));
+
     // create docker service
     const dockerCreate = `docker service create --hostname ${
       this.instance.name
@@ -135,6 +169,7 @@ export default class Executer {
       Math.floor(this.instance.replica / 2)
     )} --update-delay 30s ${this.instance.image}`.replace(/\n/g, " ");
 
+    // create if not exist
     if (myService) {
       if (myService.split(" ")[1].startsWith("0")) {
         // must remove service
@@ -156,7 +191,16 @@ export default class Executer {
     }
 
     // ns record
+    // list
+    const nl = await nsList();
+    if (nl.includes(this.instance.name)) return;
+    // create record
+    await nsCreate(this.instance.name);
+
+    // change status
+    await this.#doneJob(true, InstanceStatus.UP);
   }
+
   async #update_instance() {}
   async #delete_instance() {}
   #exec(cmd) {
@@ -166,16 +210,16 @@ export default class Executer {
       const sp = spawn(cmd, { shell: true, cwd: "." });
       sp.stdout.on("data", (msg) => {
         res_ok += msg;
-        this.log(String(msg));
+        this.log(String(msg), false, false, true);
       });
       sp.stderr.on("data", (msg) => {
         res_err += msg;
-        this.log(String(msg), false, true);
+        this.log(String(msg), false, true, true);
       });
       sp.on("error", (err) => {
         const msg = err?.toString ? err.toString() : String(err);
         res_err += msg;
-        this.log(msg, false, true);
+        this.log(msg, false, true, true);
       });
       sp.on("close", (code) => {
         if (code !== 0) {
@@ -185,5 +229,17 @@ export default class Executer {
         }
       });
     });
+  }
+  async #doneJob(isDone = true, instanceStatus = InstanceStatus.UP) {
+    this.instance = await instanceModel.findByIdAndUpdate(
+      this.instance._id,
+      { $set: { status: instanceStatus } },
+      { new: true }
+    );
+    this.job = await instanceModel.findByIdAndUpdate(
+      this.job._id,
+      { $set: { status: isDone ? JobStatus.SUCCESS : JobStatus.ERROR } },
+      { new: true }
+    );
   }
 }

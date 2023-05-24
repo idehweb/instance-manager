@@ -6,6 +6,7 @@ export const InstanceStatus = {
   UP: "up",
   DOWN: "down",
   ERROR: "error",
+  JOB_ERROR: "job-error",
 };
 
 export const instanceSchema = new mongoose.Schema(
