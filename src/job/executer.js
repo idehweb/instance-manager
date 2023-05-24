@@ -149,7 +149,9 @@ export default class Executer {
       this.instance_name
     } --name ${
       this.instance_name
-    } -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica" -e SERVER_PORT=3000 -e BASE_URL="https://${
+    } -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica" -e dbName=${
+      this.instance_name
+    } -e SERVER_PORT=3000 -e BASE_URL="https://${
       this.instance.name
     }.nodeeweb.com" -e SHOP_URL="https://${
       this.instance.name
