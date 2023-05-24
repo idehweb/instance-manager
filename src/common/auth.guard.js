@@ -5,7 +5,12 @@ export function hostGuard(req, res, next) {
     ? Global.env.KNOWN_HOSTS
     : [Global.env.KNOWN_HOSTS];
 
+  console.log(req.hostname);
+  return next();
+
   if (knownHosts.includes(req.hostname)) return next();
 
-  return res.status(403).json({ status: "error", message: "forbidden host" });
+  return res
+    .status(403)
+    .json({ status: "error", message: "forbidden host", host: req.hostname });
 }
