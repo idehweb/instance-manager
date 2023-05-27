@@ -6,8 +6,10 @@ import Executer from "../job/executer.js";
 
 class Service {
   static async getAll(req, res, next) {
+    const findQuery = {};
+    if (req.customer) findQuery.user = req.customer._id;
     const instances = await instanceModel
-      .find()
+      .find(findQuery)
       .limit(req.query?.limit ?? 24)
       .skip(req.query?.skip ?? 0);
     return res.status(200).json({ status: "success", instances });

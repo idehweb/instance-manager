@@ -3,7 +3,7 @@ import express from "express";
 import morgan from "morgan";
 import instanceRouter from "./src/instance/controller.js";
 import jobRouter from "./src/job/controller.js";
-import { hostGuard } from "./src/common/auth.guard.js";
+import { hostGuard, passGuard } from "./src/common/auth.guard.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -16,7 +16,8 @@ app.use(bodyParser.json());
 app.use(morgan("dev"));
 
 // guard
-app.use(hostGuard);
+// app.use(hostGuard);
+app.use(passGuard);
 
 // routes
 app.use("/api/v1/instance", instanceRouter);

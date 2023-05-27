@@ -3,8 +3,11 @@ import { classCatchBuilder } from "../utils/catchAsync.js";
 
 class Service {
   static async getAll(req, res, next) {
+    const findQuery = {};
+    if (req.customer) findQuery["instance.user"] = req.customer._id;
+
     const jobs = await jobModel
-      .find()
+      .find(findQuery)
       .limit(req.query?.limit ?? 24)
       .skip(req.query?.skip ?? 0);
     return res.status(200).json({ status: "success", jobs });

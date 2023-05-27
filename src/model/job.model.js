@@ -18,9 +18,15 @@ export const jobSchema = new mongoose.Schema(
     type: { type: String, required: true },
     update_query: { type: mongoose.Schema.Types.Mixed },
     instance: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: "instances",
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: "instances",
+      },
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      },
     },
     status: { type: String, default: JobStatus.IN_PROGRESS },
     error: { type: mongoose.Schema.Types.Mixed },
