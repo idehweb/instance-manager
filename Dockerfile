@@ -4,9 +4,9 @@ WORKDIR /app
 ENV INIT_BEFORE Docker
 ENV PORT 3000
 ENV PUBLIC_PATH ./public
-ENV MONGO_URL mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/InstanceManager?replicaSet=mongoReplica
+ENV MONGO_URL mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica
 ENV MONGO_DB InstanceManager
-ENV INTERFACE_URL http://nodeeweb-server/api/v1/instanceManager
+ENV NODEEWEB_DB Idehweb
 ENV JOB_MAX_ATTEMPTS 3
 ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-server:pro-0.1.40
 ENV AUTH_SECRET nodeeweb-token

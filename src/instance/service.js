@@ -24,40 +24,47 @@ class Service {
   static async updateOne(req, res, next) {
     const job = await jobModel.create({
       type: JobType.UPDATE,
-      instance: req.params.id,
+      instance: req.instance,
       update_query: req.body,
     });
 
-    return res.status(202).json({ status: "success", job });
+    //  assign executer
+    Executer.buildAndRun(job, req.instance, res, req);
+
+    // return res.status(202).json({ status: "success", job });
   }
   static async deleteOne(req, res, next) {
     const job = await jobModel.create({
       type: JobType.DELETE,
-      instance: req.params.id,
+      instance: req.instance,
     });
-    return res.status(202).json({ status: "success", job });
+    //  assign executer
+    Executer.buildAndRun(job, req.instance, res, req);
+
+    // return res.status(202).json({ status: "success", job });
   }
   static async createOne(req, res, next) {
+    const user = req.admin || req.customer;
     const instance = await instanceModel.create({
-      user: req.body.user,
+      user: user._id,
       name: req.body.name,
-      cpu: req.body.cpu ?? -1,
-      memory: req.body.memory ?? -1,
+      cpu: req.body.cpu ?? 2,
+      memory: req.body.memory ?? 1024,
       disk: req.body.disk ?? -1,
-      replica: req.body.replica ?? 1,
+      replica: req.body.replica ?? 2,
       image: req.body.image,
     });
 
     const job = await jobModel.create({
-      instance: instance._id,
+      instance: { _id: instance._id, user: user._id },
       type: JobType.CREATE,
       max_attempts: req.body.max_attempts,
     });
 
     //  assign executer
-    Executer.buildAndRun(job, instance);
+    Executer.buildAndRun(job, instance, res, req);
 
-    return res.status(202).json({ status: "success", instance, job });
+    // return res.status(202).json({ status: "success", instance, job });
   }
   static async getSystemStatus(req, res, next) {
     return res.status(200).json({

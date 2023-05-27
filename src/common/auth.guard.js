@@ -20,9 +20,13 @@ export function hostGuard(req, res, next) {
 
 export async function passGuard(req, res, next) {
   const token = req.headers.token;
+  if (!token)
+    return res
+      .status(401)
+      .json({ status: "error", message: "authentication failed" });
+
   const admin = await adminModel.findOne({ token });
   const customer = await customerModel.findOne({ "tokens.token": token });
-
   if (!admin && !customer)
     return res
       .status(401)

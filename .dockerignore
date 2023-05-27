@@ -8,4 +8,4 @@ node_modules
 apps
 .gitconfig
 .git-credentials
-
+*.log

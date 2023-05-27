@@ -7,25 +7,40 @@ import { InstanceStatus } from "../model/instance.model.js";
 import Cloudflare from "cloudflare";
 import { Global } from "../global.js";
 import { nsCreate, nsList } from "../utils/cf.js";
-import axios from "axios";
+import { Service as DockerService } from "../docker/service.js";
+import { transform } from "../common/transform.js";
+
 export default class Executer {
   static cf = new Cloudflare({
     email: Global.env.CF_EMAIL,
     token: Global.env.CF_TOKEN,
   });
   last_log;
-  constructor(job, instance) {
+  constructor(job, instance, res, req) {
     this.job = job;
     this.instance = instance;
     this.log_file = fs.createWriteStream(
       getPublicPath(`logs/${String(this.job._id)}-${this.instance_name}.log`),
       { encoding: "utf8" }
     );
+    this.res = res;
+    this.req = req;
   }
 
-  static buildAndRun(job, instance) {
-    const executerNode = new Executer(job, instance);
-    executerNode.execute().then().catch();
+  static buildAndRun(job, instance, res, req) {
+    const executerNode = new Executer(job, instance, res, req);
+    executerNode
+      .execute()
+      .then()
+      .catch((err) => {
+        executerNode.log(
+          `#Executer Error#\n${err.toString()}`,
+          true,
+          true,
+          true
+        );
+        executerNode.callback_nodeeweb(false);
+      });
   }
 
   get instance_name() {
@@ -52,11 +67,13 @@ export default class Executer {
       .catch();
 
     // fs log
-    if (isEnd) {
-      this.log_file.end("\n" + chunk);
-      this.log_file.close();
-    } else {
-      this.log_file.write("\n" + chunk);
+    if (this.log_file.writable) {
+      if (isEnd) {
+        this.log_file.end("\n" + chunk);
+        this.log_file.close();
+      } else {
+        this.log_file.write("\n" + chunk);
+      }
     }
   }
 
@@ -75,7 +92,7 @@ export default class Executer {
         { new: true }
       );
       this.log("Finish with Error", true);
-      await this.callback_nodeeweb(false);
+      this.callback_nodeeweb(false);
       return;
     }
 
@@ -112,17 +129,24 @@ export default class Executer {
     // success
     this.log("Finish successfully", true);
     // callback nodeeweb
-    await this.callback_nodeeweb(true);
+    this.callback_nodeeweb(true);
   }
 
-  async callback_nodeeweb(isOk) {
-    try {
-      await axios.post(Global.env.INTERFACE_URL, {
-        status: isOk ? "success" : "error",
-        job: this.job,
-        instance: this.instance,
-      });
-    } catch (err) {}
+  callback_nodeeweb(isOk) {
+    if (!this.res?.writable) return;
+    const code = isOk ? 201 : 500;
+    const status = isOk ? "success" : "error";
+    this.res.status(code).json(
+      transform(
+        {
+          status,
+          job: this.job,
+          instance: this.instance,
+        },
+        code,
+        this.req
+      )
+    );
   }
 
   async #create_instance() {
@@ -145,36 +169,16 @@ export default class Executer {
     const myService = listServices.find((s) => s.includes(this.instance_name));
 
     // create docker service
-    const dockerCreate = `docker service create --hostname ${
-      this.instance_name
-    } --name ${
-      this.instance_name
-    } -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica" -e dbName=${
-      this.instance_name
-    } -e SERVER_PORT=3000 -e BASE_URL="https://${
-      this.instance.name
-    }.nodeeweb.com" -e SHOP_URL="https://${
-      this.instance.name
-    }.nodeeweb.com/" --mount type=bind,source=/var/instances/${
-      this.instance_name
-    }/shared/,destination=/app/shared/  --mount type=bind,source=/var/instances/${
-      this.instance_name
-    }/public/,destination=/app/public/  --mount type=bind,source=/var/instances/${
-      this.instance_name
-    }/public/public_media/,destination=/app/public_media/  --mount type=bind,source=/var/instances/${
-      this.instance_name
-    }/public/admin/,destination=/app/admin/  --mount type=bind,source=/var/instances/${
-      this.instance_name
-    }/public/theme/,destination=/app/theme/ --network nodeeweb_webnet --network nodeeweb_mongonet --replicas ${
-      this.instance.replica
-    } ${this.instance.cpu === -1 ? "" : `--limit-cpu=${this.instance.cpu}`} ${
-      this.instance.memory === -1
-        ? ""
-        : `--limit-memory=${this.instance.memory}MB`
-    } --restart-condition on-failure --restart-delay 30s --restart-max-attempts 8 --restart-window 1m30s --update-parallelism ${Math.max(
-      1,
-      Math.floor(this.instance.replica / 2)
-    )} --update-delay 30s ${this.instance.image}`.replace(/\n/g, " ");
+    const dockerCreateCmd = DockerService.getCreateServiceCommand(
+      this.instance_name,
+      this.instance.name,
+      {
+        replica: this.instance.replica,
+        memory: this.instance.memory,
+        image: this.instance.image,
+        cpu: this.instance.cpu,
+      }
+    );
 
     // create if not exist
     if (myService) {
@@ -186,15 +190,15 @@ export default class Executer {
 
         // create new one
         await wait(0.5);
-        this.log(dockerCreate);
-        await this.#exec(dockerCreate);
+        this.log(dockerCreateCmd);
+        await this.#exec(dockerCreateCmd);
       } else {
         // exists service
         this.log("Service created before");
       }
     } else {
-      this.log(dockerCreate);
-      await this.#exec(dockerCreate);
+      this.log(dockerCreateCmd);
+      await this.#exec(dockerCreateCmd);
     }
 
     // ns record
