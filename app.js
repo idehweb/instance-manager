@@ -1,6 +1,7 @@
 import bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
+import cors from "cors";
 import instanceRouter from "./src/instance/controller.js";
 import jobRouter from "./src/job/controller.js";
 import { hostGuard, passGuard } from "./src/common/auth.guard.js";
@@ -14,6 +15,7 @@ const app = express();
 // common middleware
 app.use(bodyParser.json());
 app.use(morgan("dev"));
+app.use(cors());
 
 // guard
 // app.use(hostGuard);

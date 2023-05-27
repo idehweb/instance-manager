@@ -7,11 +7,15 @@ import Executer from "../job/executer.js";
 class Service {
   static async getAll(req, res, next) {
     const findQuery = {};
-    if (req.customer) findQuery.user = req.customer._id;
+    if (req.customer) {
+      findQuery.user = req.customer._id;
+      findQuery.status = { $ne: InstanceStatus.JOB_ERROR };
+    }
     const instances = await instanceModel
       .find(findQuery)
       .limit(req.query?.limit ?? 24)
-      .skip(req.query?.skip ?? 0);
+      .skip(req.query?.skip ?? 0)
+      .sort({ createdAt: -1 });
     return res.status(200).json({ status: "success", instances });
   }
   static async getOne(req, res, next) {
