@@ -4,6 +4,7 @@ import { createTerminus } from "@godaddy/terminus";
 import mongoose from "mongoose";
 import "./src/model/nodeeweb.db.js";
 import app from "./app.js";
+import { nsCreateAndCNAME } from "./src/utils/cf.js";
 
 const server = app.listen(Global.env.PORT, () => {
   console.log(`Server Listening at http://127.0.0.1:${Global.env.PORT}`);
@@ -49,13 +50,3 @@ createTerminus(server, {
   signals: ["SIGINT", "SIGTERM"],
   useExit0: true,
 });
-
-// process.on("SIGINT", shutdown);
-// process.on("SIGTERM", shutdown);
-
-// process.once("uncaughtException", (err) => {
-//   console.error("uncaughtException", err);
-// });
-// process.once("unhandledRejection", (err) => {
-//   console.error("unhandledRejection", err);
-// });

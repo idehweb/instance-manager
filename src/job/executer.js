@@ -6,7 +6,12 @@ import { axiosError2String, getPublicPath, wait } from "../utils/helpers.js";
 import { InstanceStatus } from "../model/instance.model.js";
 import Cloudflare from "cloudflare";
 import { Global } from "../global.js";
-import { nsCreate, nsList } from "../utils/cf.js";
+import {
+  CF_ZONE_STATUS,
+  nsCreate,
+  nsCreateAndCNAME,
+  nsList,
+} from "../utils/cf.js";
 import { Service as DockerService } from "../docker/service.js";
 import { transform } from "../common/transform.js";
 
@@ -16,6 +21,7 @@ export default class Executer {
     token: Global.env.CF_TOKEN,
   });
   last_log;
+  domainsResult = [];
   constructor(job, instance, res, req) {
     this.job = job;
     this.instance = instance;
@@ -39,7 +45,8 @@ export default class Executer {
           true,
           true
         );
-        executerNode.callback_nodeeweb(false);
+        executerNode.sendResultToClient(false);
+        executerNode.clean().then();
       });
   }
 
@@ -92,7 +99,7 @@ export default class Executer {
         { new: true }
       );
       this.log("Finish with Error", true);
-      this.callback_nodeeweb(false);
+      this.sendResultToClient(false);
       return;
     }
 
@@ -129,10 +136,10 @@ export default class Executer {
     // success
     this.log("Finish successfully", true);
     // callback nodeeweb
-    this.callback_nodeeweb(true);
+    this.sendResultToClient(true);
   }
 
-  callback_nodeeweb(isOk) {
+  sendResultToClient(isOk) {
     if (!this.res?.writable) return;
     const code = isOk ? 201 : 500;
     const status = isOk ? "success" : "error";
@@ -150,72 +157,106 @@ export default class Executer {
   }
 
   async #create_instance() {
-    // create public
-    const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
-    this.log(createFolders);
-    await this.#exec(createFolders);
+    const static_files = async () => {
+      // create public
+      const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
+      this.log(createFolders);
+      await this.#exec(createFolders);
 
-    // copy static files
-    const copyStatics = `cp -r ${getPublicPath("static")}/* /var/instances/${
-      this.instance_name
-    }/public`;
-    this.log(copyStatics);
-    await this.#exec(copyStatics);
+      // copy static files
+      const copyStatics = `cp -r ${getPublicPath("static")}/* /var/instances/${
+        this.instance_name
+      }/public`;
+      this.log(copyStatics);
+      await this.#exec(copyStatics);
+    };
+    const docker_cmd = async () => {
+      // check docker services
+      const dockerServiceLs = `docker service ls --format "{{.Name}} {{.Replicas}}"`;
+      this.log(dockerServiceLs);
+      const listServices = (await this.#exec(dockerServiceLs)).split("\n");
+      const myService = listServices.find((s) =>
+        s.includes(this.instance_name)
+      );
 
-    // check docker services
-    const dockerServiceLs = `docker service ls --format "{{.Name}} {{.Replicas}}"`;
-    this.log(dockerServiceLs);
-    const listServices = (await this.#exec(dockerServiceLs)).split("\n");
-    const myService = listServices.find((s) => s.includes(this.instance_name));
+      // create docker service
+      const dockerCreateCmd = DockerService.getCreateServiceCommand(
+        this.instance_name,
+        this.instance.name,
+        {
+          replica: this.instance.replica,
+          memory: this.instance.memory,
+          image: this.instance.image,
+          cpu: this.instance.cpu,
+        }
+      );
+      // create if not exist
+      if (myService) {
+        if (myService.split(" ")[1].startsWith("0")) {
+          // must remove service
+          const dockerRm = `docker service rm ${this.instance_name}`;
+          this.log(dockerRm);
+          await this.#exec(dockerRm);
 
-    // create docker service
-    const dockerCreateCmd = DockerService.getCreateServiceCommand(
-      this.instance_name,
-      this.instance.name,
-      {
-        replica: this.instance.replica,
-        memory: this.instance.memory,
-        image: this.instance.image,
-        cpu: this.instance.cpu,
-      }
-    );
-
-    // create if not exist
-    if (myService) {
-      if (myService.split(" ")[1].startsWith("0")) {
-        // must remove service
-        const dockerRm = `docker service rm ${this.instance_name}`;
-        this.log(dockerRm);
-        await this.#exec(dockerRm);
-
-        // create new one
-        await wait(0.5);
+          // create new one
+          await wait(0.5);
+          this.log(dockerCreateCmd);
+          await this.#exec(dockerCreateCmd);
+        } else {
+          // exists service
+          this.log("Service created before");
+        }
+      } else {
         this.log(dockerCreateCmd);
         await this.#exec(dockerCreateCmd);
-      } else {
-        // exists service
-        this.log("Service created before");
       }
-    } else {
-      this.log(dockerCreateCmd);
-      await this.#exec(dockerCreateCmd);
-    }
+    };
+    const ns = async () => {
+      // ns record
+      try {
+        // list
+        const nl = await nsList();
+        if (nl.includes(`${this.instance.name}.nodeeweb.com`)) {
+          this.log("DND record exists before");
+          return;
+        }
+        // create record
+        await nsCreate(this.instance.name);
+        this.log("DNS record create");
 
-    // ns record
-    try {
-      // list
-      const nl = await nsList();
-      if (nl.includes(this.instance.name)) {
-        this.log("DND record exists before");
-        return;
+        // domains
+        const domains = this.instance.domains.filter(
+          ({ content, status }) =>
+            content !== this.instance.primary_domain &&
+            status === CF_ZONE_STATUS.IN_PROGRESS
+        );
+        if (domains.length) {
+          this.log(
+            `creating zones for : ${domains
+              .map(({ content }) => content)
+              .join(" , ")}`
+          );
+          this.domainsResult = await Promise.all(
+            domains.map(async ({ content }) => ({
+              ...(await nsCreateAndCNAME(
+                content,
+                this.instance.primary_domain
+              )),
+              content,
+            }))
+          );
+        }
+      } catch (err) {
+        this.log("Axios Error in DNS:\n" + axiosError2String(err));
+        throw err;
       }
-      // create record
-      await nsCreate(this.instance.name);
-      this.log("DNS record create");
-    } catch (err) {
-      this.log("Axios Error in DNS:\n" + axiosError2String(err));
-      throw err;
+    };
+
+    if (Global.env.isPro) {
+      await static_files();
+      await docker_cmd();
     }
+    await ns();
 
     // change status
     await this.#doneJob(true, InstanceStatus.UP);
@@ -254,7 +295,18 @@ export default class Executer {
   async #doneJob(isDone = true, instanceStatus = InstanceStatus.UP) {
     this.instance = await instanceModel.findByIdAndUpdate(
       this.instance._id,
-      { $set: { status: instanceStatus } },
+      {
+        $set: {
+          status: instanceStatus,
+          domains: [
+            {
+              status: CF_ZONE_STATUS.CREATE,
+              content: this.instance.primary_domain,
+            },
+            ...this.domainsResult,
+          ],
+        },
+      },
       { new: true }
     );
     this.job = await jobModel.findByIdAndUpdate(
@@ -262,5 +314,9 @@ export default class Executer {
       { $set: { status: isDone ? JobStatus.SUCCESS : JobStatus.ERROR } },
       { new: true }
     );
+  }
+  async clean() {
+    try {
+    } catch (err) {}
   }
 }

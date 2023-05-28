@@ -19,6 +19,15 @@ export const instanceSchema = new mongoose.Schema(
     replica: { type: Number, required: true },
     status: { type: String, default: InstanceStatus.JOB_CREATE },
     image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
+    domains: [
+      {
+        _id: false,
+        status: String,
+        content: String,
+        ns: { type: [String], default: undefined },
+      },
+    ],
+    primary_domain: { type: String, required: true },
   },
   { timestamps: true }
 );
