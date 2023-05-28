@@ -11,6 +11,7 @@ import {
   nsCreate,
   nsCreateAndCNAME,
   nsList,
+  nsRemove,
 } from "../utils/cf.js";
 import { Service as DockerService } from "../docker/service.js";
 import { transform } from "../common/transform.js";
@@ -111,12 +112,22 @@ export default class Executer {
         await this.#create_instance();
       }
       // update
-      if (this.job.type === JobType.CREATE) {
+      if (this.job.type === JobType.UPDATE) {
         await this.#update_instance();
       }
       // delete
-      if (this.job.type === JobType.CREATE) {
-        await this.#delete_instance();
+      if (this.job.type === JobType.DELETE) {
+        await this.#delete_instance({
+          delDB: true,
+          delDocker: true,
+          delNs: true,
+          delStatic: true,
+          ignoreErrors: ![
+            InstanceStatus.DOWN,
+            InstanceStatus.UP,
+            InstanceStatus.ERROR,
+          ].includes(this.instance.status),
+        });
       }
       isRun = true;
     } catch (err) {
@@ -262,10 +273,141 @@ export default class Executer {
     await this.#doneJob(true, InstanceStatus.UP);
   }
 
-  async #update_instance() {}
-  async #delete_instance() {}
+  async #update_instance({
+    domains,
+    cpu,
+    memory,
+    image,
+    status,
+    name,
+    replica,
+  }) {
+    // change status
+    if (status) {
+      const docker_cmd = DockerService.getUpdateServiceCommand(
+        this.instance_name,
+        { replicas: status === InstanceStatus.UP ? this.instance.replica : 0 }
+      );
+      await this.#exec(docker_cmd, true);
 
-  #exec(cmd) {
+      this.instance = await instanceModel.findByIdAndUpdate(
+        this.instance._id,
+        {
+          $set: { status },
+        },
+        { new: true }
+      );
+      await this.#doneJob(true, null);
+      return;
+    }
+
+    // change name
+    if (name) {
+    }
+
+    // change domain
+    if (domains) {
+      const inProgressDomains = this.instance
+        .filter(({ status }) => status === CF_ZONE_STATUS.IN_PROGRESS)
+        .map(({ content }) => content);
+      domains = [...new Set(domains)].filter(
+        (d) =>
+          !inProgressDomains.includes(d) && d !== this.instance.primary_domain
+      );
+      const myDomains = this.instance.domains.map(({ content }) => content);
+      const removedDomains = myDomains.filter(
+        (d) =>
+          !domains.includes(d) &&
+          !inProgressDomains.includes(d) &&
+          d !== this.instance.primary_domain
+      );
+
+      // 1. Add new
+      this.log(`creating new zones: ${domains.join(" , ")}`);
+      let newDomains = await Promise.all(
+        domains.map((d) => nsCreateAndCNAME(d, this.instance.primary_domain))
+      );
+      newDomains = [
+        {
+          status: CF_ZONE_STATUS.CREATE,
+          content: this.instance.primary_domain,
+        },
+        ...newDomains,
+        ...inProgressDomains.map((d) => ({
+          content: d,
+          status: CF_ZONE_STATUS.IN_PROGRESS,
+        })),
+      ];
+
+      // 2. Remove old
+      this.log(`removing old zones: ${removedDomains.join(" , ")}`);
+      await nsRemove(
+        this.instance.primary_domain,
+        removedDomains.map((d) => ({
+          content: d,
+          status: CF_ZONE_STATUS.CREATE,
+        }))
+      );
+
+      // 3. Update DB
+      this.log("update db");
+      await instanceModel.findByIdAndUpdate(this.instance._id, {
+        $set: { domains: newDomains },
+      });
+      await this.#doneJob(true, null);
+      return;
+    }
+
+    // change resource
+    if (cpu || memory || image || replica) {
+    }
+  }
+  async #delete_instance({ ignoreErrors, delDocker, delNs, delStatic, delDB }) {
+    // 1. docker service
+    const docker_cmd = async () => {
+      const cmd = DockerService.getDeleteServiceCommand(this.instance_name);
+      await this.#exec(cmd, true);
+    };
+
+    // 2. cloudflare
+    const ns = async () => {
+      await nsRemove(this.instance.primary_domain, this.instance.domains);
+    };
+
+    // 3. static files
+    const static_files = async () => {
+      const cmd = `rm -r /var/instances/${this.instance_name}`;
+      await this.#exec(cmd, true);
+    };
+
+    // 4. db
+    const db = async () => {
+      this.instance = await instanceModel.findByIdAndUpdate(
+        this.instance._id,
+        {
+          $set: { status: InstanceStatus.DELETED, active: false },
+        },
+        { new: true }
+      );
+      await this.#doneJob(true, null);
+    };
+
+    // execute
+    try {
+      if (delDocker) await docker_cmd();
+      if (delNs) await ns();
+      if (delStatic) await static_files();
+      if (delDB) await db();
+    } catch (err) {
+      if (!ignoreErrors) {
+        this.log(axiosError2String(err));
+        throw err;
+      }
+    }
+  }
+
+  #exec(cmd, logCmd) {
+    if (logCmd) this.log(cmd);
     return new Promise((resolve, reject) => {
       let res_ok = "",
         res_err = "";
@@ -293,22 +435,23 @@ export default class Executer {
     });
   }
   async #doneJob(isDone = true, instanceStatus = InstanceStatus.UP) {
-    this.instance = await instanceModel.findByIdAndUpdate(
-      this.instance._id,
-      {
-        $set: {
-          status: instanceStatus,
-          domains: [
-            {
-              status: CF_ZONE_STATUS.CREATE,
-              content: this.instance.primary_domain,
-            },
-            ...this.domainsResult,
-          ],
+    if (instanceStatus !== null)
+      this.instance = await instanceModel.findByIdAndUpdate(
+        this.instance._id,
+        {
+          $set: {
+            status: instanceStatus,
+            domains: [
+              {
+                status: CF_ZONE_STATUS.CREATE,
+                content: this.instance.primary_domain,
+              },
+              ...this.domainsResult,
+            ],
+          },
         },
-      },
-      { new: true }
-    );
+        { new: true }
+      );
     this.job = await jobModel.findByIdAndUpdate(
       this.job._id,
       { $set: { status: isDone ? JobStatus.SUCCESS : JobStatus.ERROR } },
@@ -316,7 +459,12 @@ export default class Executer {
     );
   }
   async clean() {
-    try {
-    } catch (err) {}
+    await this.#delete_instance({
+      ignoreErrors: true,
+      delDocker: Global.env.isPro,
+      delStatic: Global.env.isPro,
+      delDB: true,
+      delNs: true,
+    });
   }
 }

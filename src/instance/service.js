@@ -28,6 +28,18 @@ class Service {
     return res.status(200).json({ status: "success", instance });
   }
   static async updateOne(req, res, next) {
+    const update = req.body;
+    const statusAccept = [InstanceStatus.DOWN, InstanceStatus.UP];
+    if (!statusAccept.includes(update.status)) {
+      return res.status(400).json({
+        status: "error",
+        message: `status must be ${statusAccept.join("or")}.`,
+      });
+    }
+    if (update.status == req.instance.status) {
+      return res.status(400).json({ status: "error", message: "same status" });
+    }
+
     const job = await jobModel.create({
       type: JobType.UPDATE,
       instance: req.instance,
@@ -40,6 +52,11 @@ class Service {
     // return res.status(202).json({ status: "success", job });
   }
   static async deleteOne(req, res, next) {
+    if (req.instance.status === InstanceStatus.JOB_CREATE)
+      return res.status(400).json({
+        status: "error",
+        message: "can not delete instance when job is still executing...",
+      });
     const job = await jobModel.create({
       type: JobType.DELETE,
       instance: req.instance,

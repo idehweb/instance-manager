@@ -19,6 +19,14 @@ export class Service {
 
     return dockerCreate;
   }
+  static getDeleteServiceCommand(name) {
+    return `docker service rm ${name}`;
+  }
+  static getUpdateServiceCommand(name, configs) {
+    return `docker service update ${Object.entries(configs)
+      .map(([k, v]) => `--${k} ${v}`)
+      .join(" ")} ${name}`;
+  }
 }
 
 export default Service;

@@ -7,6 +7,7 @@ export const InstanceStatus = {
   DOWN: "down",
   ERROR: "error",
   JOB_ERROR: "job-error",
+  DELETED: "deleted",
 };
 
 export const instanceSchema = new mongoose.Schema(
@@ -28,6 +29,7 @@ export const instanceSchema = new mongoose.Schema(
       },
     ],
     primary_domain: { type: String, required: true },
+    active: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

@@ -17,6 +17,9 @@ export async function nsList(id = Global.env.CF_ZONE_ID, map) {
   const list = await cf.dnsRecords.browse(id);
   return list.result.map(map ?? ((record) => record.name));
 }
+export async function zoneList() {
+  return (await cf.zones.browse()).result;
+}
 export function nsCreate(
   name,
   { type, id, proxied, content } = {
@@ -34,8 +37,8 @@ export function nsCreate(
   });
 }
 export async function nsCreateAndCNAME(source, dist) {
-  const zones = await cf.zones.browse();
-  const myZone = zones.result.find((zone) => zone.name === source);
+  const zones = await zoneList();
+  const myZone = zones.find((zone) => zone.name === source);
 
   // if system add domain before
   if (myZone) {
@@ -79,4 +82,27 @@ export async function nsCreateAndCNAME(source, dist) {
   }
 
   // const name_servers = response.result.name_servers;
+}
+export async function nsRemove(primary_domain, domains) {
+  primary_domain = primary_domain.replace(".nodeeweb.com", "");
+  domains = domains
+    .filter(
+      ({ content, status }) =>
+        content !== primary_domain && status !== CF_ZONE_STATUS.IN_PROGRESS
+    )
+    .map(({ content }) => content);
+
+  // 1. remove A record in nodeeweb zone
+  const record = (await nsList(undefined, (record) => record)).find(
+    ({ name }) => name === primary_domain
+  );
+  if (record) await cf.dnsRecords.del(Global.env.CF_ZONE_ID, record.id);
+
+  // 2. remove custom domain zones
+  if (domains.length) {
+    const zones = (await zoneList()).filter(({ name }) =>
+      domains.includes(name)
+    );
+    await Promise.all(zones.map(({ id }) => cf.zones.del(id)));
+  }
 }
