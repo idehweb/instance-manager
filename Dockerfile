@@ -28,12 +28,13 @@ RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add -
     && wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
     && echo "deb https://repo.mongodb.org/apt/debian/ bullseye/mongodb-org/6.0 main" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
 
-# install git , mongosh , mongotools
+# install git , mongosh , mongotools , zip
 RUN apt-get update \ 
     && apt-get install -y --no-install-recommends \ 
     git \ 
     mongodb-mongosh \
     mongodb-database-tools \
+    zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./

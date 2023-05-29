@@ -403,7 +403,15 @@ export default class Executer {
 
     // 3. static files
     const static_files = async () => {
-      const cmd = `rm -r /var/instances/${this.instance_name}`;
+      // backup
+      const static_path = `/var/instances/${this.instance_name}`;
+      const backup_cmd = `zip -r ${getPublicPath(
+        `backup/${this.instance_name}/static/media.zip`
+      )} ${static_path}`;
+      this.log("backup instance static files");
+      await this.#exec(backup_cmd, true);
+
+      const cmd = `rm -r ${static_path}`;
       await this.#exec(cmd, true);
     };
 
