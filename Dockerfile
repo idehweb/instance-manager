@@ -18,13 +18,22 @@ ENV CF_IP 185.110.190.242
 EXPOSE ${PORT}
 ENV DOCKER_HUB_USER idehweb
 ENV DOCKER_BUILDKIT 1
+
 # install docker engine
 RUN curl -fsSL https://get.docker.com | sh
 
-# install git
+# pre-requirements for mongoshell , mongotools
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
+    && apt-get install gnupg \ 
+    && wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add - \
+    && echo "deb https://repo.mongodb.org/apt/debian/ bullseye/mongodb-org/6.0 main" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+# install git , mongosh , mongotools
 RUN apt-get update \ 
     && apt-get install -y --no-install-recommends \ 
     git \ 
+    mongodb-mongosh \
+    mongodb-database-tools \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./

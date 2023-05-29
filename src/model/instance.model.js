@@ -10,6 +10,8 @@ export const InstanceStatus = {
   DELETED: "deleted",
 };
 
+export const InstancePattern = {};
+
 export const instanceSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -20,6 +22,7 @@ export const instanceSchema = new mongoose.Schema(
     replica: { type: Number, required: true },
     status: { type: String, default: InstanceStatus.JOB_CREATE },
     image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
+    pattern: { type: String, required: true },
     domains: [
       {
         _id: false,

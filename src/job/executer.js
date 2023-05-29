@@ -2,7 +2,13 @@ import { spawn } from "child_process";
 import { JobStatus, JobType, jobModel } from "../model/job.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import fs from "fs";
-import { axiosError2String, getPublicPath, wait } from "../utils/helpers.js";
+import {
+  axiosError2String,
+  getInstanceDbPath,
+  getInstanceStaticPath,
+  getPublicPath,
+  wait,
+} from "../utils/helpers.js";
 import { InstanceStatus } from "../model/instance.model.js";
 import Cloudflare from "cloudflare";
 import { Global } from "../global.js";
@@ -33,7 +39,6 @@ export default class Executer {
     this.res = res;
     this.req = req;
   }
-
   static buildAndRun(job, instance, res, req) {
     const executerNode = new Executer(job, instance, res, req);
     executerNode
@@ -50,11 +55,9 @@ export default class Executer {
         executerNode.clean().then();
       });
   }
-
   get instance_name() {
     return `nwi-${this.instance.name}`;
   }
-
   log(chunk, isEnd = false, isError = false, whenDifferent = false) {
     if (this.last_log == String(chunk) && whenDifferent) return;
     this.last_log = String(chunk);
@@ -84,7 +87,6 @@ export default class Executer {
       }
     }
   }
-
   async execute() {
     // check attempts
     if (this.job.attempt >= this.job.max_attempts) {
@@ -149,10 +151,23 @@ export default class Executer {
     // callback nodeeweb
     this.sendResultToClient(true);
   }
-
   sendResultToClient(isOk) {
     if (!this.res?.writable) return;
-    const code = isOk ? 201 : 500;
+    let code;
+    if (isOk) {
+      switch (this.job.type) {
+        case JobType.CREATE:
+          code = 201;
+          break;
+        case JobType.DELETE:
+          code = 204;
+          break;
+        case JobType.UPDATE:
+          code = 200;
+          break;
+      }
+    } else code = 500;
+
     const status = isOk ? "success" : "error";
     this.res.status(code).json(
       transform(
@@ -166,7 +181,6 @@ export default class Executer {
       )
     );
   }
-
   async #create_instance() {
     const static_files = async () => {
       // create public
@@ -175,9 +189,9 @@ export default class Executer {
       await this.#exec(createFolders);
 
       // copy static files
-      const copyStatics = `cp -r ${getPublicPath("static")}/* /var/instances/${
-        this.instance_name
-      }/public`;
+      const copyStatics = `cp -r ${getInstanceStaticPath(
+        this.instance
+      )} /var/instances/${this.instance_name}/public`;
       this.log(copyStatics);
       await this.#exec(copyStatics);
     };
@@ -263,16 +277,24 @@ export default class Executer {
       }
     };
 
+    const init_db = async () => {
+      this.log(`initial db base on : ${this.instance.pattern}`);
+      const cmd = `mongorestore --db ${this.instance_name} ${
+        Global.env.MONGO_URL
+      } ${getInstanceDbPath(this.instance)}`;
+      await this.#exec(cmd, true);
+    };
+
     if (Global.env.isPro) {
       await static_files();
       await docker_cmd();
     }
     await ns();
+    await init_db();
 
     // change status
     await this.#doneJob(true, InstanceStatus.UP);
   }
-
   async #update_instance({
     domains,
     cpu,
@@ -371,6 +393,11 @@ export default class Executer {
 
     // 2. cloudflare
     const ns = async () => {
+      this.log(
+        `Removing domains : ${this.instance.domains
+          .map(({ content }) => content)
+          .join(" , ")}`
+      );
       await nsRemove(this.instance.primary_domain, this.instance.domains);
     };
 
@@ -382,6 +409,19 @@ export default class Executer {
 
     // 4. db
     const db = async () => {
+      this.log("backup instance db");
+      const backup_cmd = `mongodump --db ${
+        this.instance_name
+      } --out ${getPublicPath(`backup/${this.instance_name}/db`)} --gzip ${
+        Global.env.MONGO_URL
+      }`;
+      await this.#exec(backup_cmd, true);
+
+      this.log("Delete instance db");
+      const delete_cmd = `mongosh ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
+      await this.#exec(delete_cmd, true);
+
+      this.log("Disable Instance in db");
       this.instance = await instanceModel.findByIdAndUpdate(
         this.instance._id,
         {
@@ -394,9 +434,9 @@ export default class Executer {
 
     // execute
     try {
-      if (delDocker) await docker_cmd();
       if (delNs) await ns();
-      if (delStatic) await static_files();
+      if (delDocker && Global.env.isPro) await docker_cmd();
+      if (delStatic && Global.env.isPro) await static_files();
       if (delDB) await db();
     } catch (err) {
       if (!ignoreErrors) {
@@ -405,7 +445,6 @@ export default class Executer {
       }
     }
   }
-
   #exec(cmd, logCmd) {
     if (logCmd) this.log(cmd);
     return new Promise((resolve, reject) => {

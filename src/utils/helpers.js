@@ -31,3 +31,10 @@ export function axiosError2String(error) {
     "  "
   );
 }
+
+export function getInstanceStaticPath(instance) {
+  return `${getPublicPath(`static/${instance.pattern}`)}/*`;
+}
+export function getInstanceDbPath(instance) {
+  return `${getPublicPath(`db/${instance.pattern}`)}`;
+}
