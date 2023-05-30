@@ -9,3 +9,5 @@ apps
 .gitconfig
 .git-credentials
 *.log
+public/backup
+public/nginx/test

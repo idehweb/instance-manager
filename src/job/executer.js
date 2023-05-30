@@ -21,6 +21,7 @@ import {
 } from "../utils/cf.js";
 import { Service as DockerService } from "../docker/service.js";
 import { transform } from "../common/transform.js";
+import exec from "../utils/exec.js";
 
 export default class Executer {
   static cf = new Cloudflare({
@@ -185,20 +186,17 @@ export default class Executer {
     const static_files = async () => {
       // create public
       const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
-      this.log(createFolders);
       await this.#exec(createFolders);
 
       // copy static files
       const copyStatics = `cp -r ${getInstanceStaticPath(
         this.instance
       )} /var/instances/${this.instance_name}/public`;
-      this.log(copyStatics);
       await this.#exec(copyStatics);
     };
     const docker_cmd = async () => {
       // check docker services
       const dockerServiceLs = `docker service ls --format "{{.Name}} {{.Replicas}}"`;
-      this.log(dockerServiceLs);
       const listServices = (await this.#exec(dockerServiceLs)).split("\n");
       const myService = listServices.find((s) =>
         s.includes(this.instance_name)
@@ -220,19 +218,16 @@ export default class Executer {
         if (myService.split(" ")[1].startsWith("0")) {
           // must remove service
           const dockerRm = `docker service rm ${this.instance_name}`;
-          this.log(dockerRm);
           await this.#exec(dockerRm);
 
           // create new one
           await wait(0.5);
-          this.log(dockerCreateCmd);
           await this.#exec(dockerCreateCmd);
         } else {
           // exists service
           this.log("Service created before");
         }
       } else {
-        this.log(dockerCreateCmd);
         await this.#exec(dockerCreateCmd);
       }
     };
@@ -282,7 +277,7 @@ export default class Executer {
       const cmd = `mongorestore --db ${this.instance_name} ${
         Global.env.MONGO_URL
       } ${getInstanceDbPath(this.instance)}`;
-      await this.#exec(cmd, true);
+      await this.#exec(cmd);
     };
 
     if (Global.env.isPro) {
@@ -310,7 +305,7 @@ export default class Executer {
         this.instance_name,
         { replicas: status === InstanceStatus.UP ? this.instance.replica : 0 }
       );
-      await this.#exec(docker_cmd, true);
+      await this.#exec(docker_cmd);
 
       this.instance = await instanceModel.findByIdAndUpdate(
         this.instance._id,
@@ -388,7 +383,7 @@ export default class Executer {
     // 1. docker service
     const docker_cmd = async () => {
       const cmd = DockerService.getDeleteServiceCommand(this.instance_name);
-      await this.#exec(cmd, true);
+      await this.#exec(cmd);
     };
 
     // 2. cloudflare
@@ -409,10 +404,10 @@ export default class Executer {
         `backup/${this.instance_name}/static/media.zip`
       )} ${static_path}`;
       this.log("backup instance static files");
-      await this.#exec(backup_cmd, true);
+      await this.#exec(backup_cmd);
 
       const cmd = `rm -r ${static_path}`;
-      await this.#exec(cmd, true);
+      await this.#exec(cmd);
     };
 
     // 4. db
@@ -423,11 +418,11 @@ export default class Executer {
       } --out ${getPublicPath(`backup/${this.instance_name}/db`)} --gzip ${
         Global.env.MONGO_URL
       }`;
-      await this.#exec(backup_cmd, true);
+      await this.#exec(backup_cmd);
 
       this.log("Delete instance db");
       const delete_cmd = `mongosh ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
-      await this.#exec(delete_cmd, true);
+      await this.#exec(delete_cmd);
 
       this.log("Disable Instance in db");
       this.instance = await instanceModel.findByIdAndUpdate(
@@ -453,32 +448,11 @@ export default class Executer {
       }
     }
   }
-  #exec(cmd, logCmd) {
-    if (logCmd) this.log(cmd);
-    return new Promise((resolve, reject) => {
-      let res_ok = "",
-        res_err = "";
-      const sp = spawn(cmd, { shell: true, cwd: "." });
-      sp.stdout.on("data", (msg) => {
-        res_ok += msg;
-        this.log(String(msg), false, false, true);
-      });
-      sp.stderr.on("data", (msg) => {
-        res_err += msg;
-        this.log(String(msg), false, true, true);
-      });
-      sp.on("error", (err) => {
-        const msg = err?.toString ? err.toString() : String(err);
-        res_err += msg;
-        this.log(msg, false, true, true);
-      });
-      sp.on("close", (code) => {
-        if (code !== 0) {
-          reject(res_err);
-        } else {
-          resolve(res_ok);
-        }
-      });
+  #exec(cmd) {
+    return exec(cmd, {
+      onLog: (msg, isError) => {
+        this.log(msg, false, isError, true);
+      },
     });
   }
   async #doneJob(isDone = true, instanceStatus = InstanceStatus.UP) {

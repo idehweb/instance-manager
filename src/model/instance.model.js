@@ -8,6 +8,7 @@ export const InstanceStatus = {
   ERROR: "error",
   JOB_ERROR: "job-error",
   DELETED: "deleted",
+  EXPIRED: "expired",
 };
 
 export const InstancePattern = {};
@@ -33,6 +34,7 @@ export const instanceSchema = new mongoose.Schema(
     ],
     primary_domain: { type: String, required: true },
     active: { type: Boolean, default: true },
+    expiredAt: { type: Date, required: true },
   },
   { timestamps: true }
 );

@@ -32,6 +32,10 @@ export function axiosError2String(error) {
   );
 }
 
+export function getNginxPublicPath(...path) {
+  return join("/var/instanceManager", ...path);
+}
+
 export function getInstanceStaticPath(instance) {
   return `${getPublicPath(`static/${instance.pattern}`)}/*`;
 }
