@@ -427,9 +427,16 @@ export default class Executer {
       this.log("Disable Instance in db");
       this.instance = await instanceModel.findByIdAndUpdate(
         this.instance._id,
-        {
-          $set: { status: InstanceStatus.DELETED, active: false },
-        },
+        [
+          {
+            $addFields: {
+              status: InstanceStatus.DELETED,
+              name: { $concat: ["$name", "-deleted"] },
+              old_name: "$name",
+              active: false,
+            },
+          },
+        ],
         { new: true }
       );
       await this.#doneJob(true, null);

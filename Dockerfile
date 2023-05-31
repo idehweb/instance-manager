@@ -8,7 +8,7 @@ ENV MONGO_URL mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?r
 ENV MONGO_DB InstanceManager
 ENV NODEEWEB_DB Idehweb
 ENV JOB_MAX_ATTEMPTS 3
-ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-server:pro-0.1.40
+ENV INSTANCE_DEFAULT_IMAGE nodeeweb-server:0.1.46
 ENV AUTH_SECRET nodeeweb-token
 ENV CF_TOKEN FSkS5Wh12LP5avhlgyC3nq7v4vJJZZJfHa0vEiUp
 ENV CF_EMAIL info@idehweb.com
