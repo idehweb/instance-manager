@@ -1,5 +1,8 @@
 node_modules
 *.env
 *.log
+public/logs
+public/static
+public/db
 public/backup
 public/nginx/test

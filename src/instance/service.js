@@ -86,6 +86,7 @@ class Service {
       disk: req.body.disk ?? -1,
       replica: req.body.replica ?? 2,
       image: req.body.image,
+      pattern: req.body.pattern ?? "demo0",
       primary_domain,
       domains: domains.map((d) => ({
         status: CF_ZONE_STATUS.IN_PROGRESS,
