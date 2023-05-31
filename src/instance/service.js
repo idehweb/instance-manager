@@ -67,6 +67,10 @@ class Service {
     // return res.status(202).json({ status: "success", job });
   }
   static async createOne(req, res, next) {
+    if (!req.body.expiredAt)
+      return res
+        .status(400)
+        .json({ status: "error", message: "expired at is required" });
     const user = req.admin || req.customer;
     const name = req.body.name ?? createRandomName(8);
     const primary_domain = `${name}.nodeeweb.com`;
@@ -86,6 +90,7 @@ class Service {
       disk: req.body.disk ?? -1,
       replica: req.body.replica ?? 2,
       image: req.body.image,
+      expiredAt: new Date(req.body.expiredAt),
       pattern: req.body.pattern ?? "demo0",
       primary_domain,
       domains: domains.map((d) => ({
