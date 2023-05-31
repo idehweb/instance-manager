@@ -1,3 +1,5 @@
+import { spawn } from "child_process";
+
 export default function exec(cmd, { onLog } = {}) {
   if (onLog) onLog(cmd, false);
   return new Promise((resolve, reject) => {

@@ -1,4 +1,3 @@
-import { spawn } from "child_process";
 import { JobStatus, JobType, jobModel } from "../model/job.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import fs from "fs";
