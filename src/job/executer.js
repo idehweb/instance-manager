@@ -21,6 +21,7 @@ import {
 import { Service as DockerService } from "../docker/service.js";
 import { transform } from "../common/transform.js";
 import exec from "../utils/exec.js";
+import { join } from "path";
 
 export default class Executer {
   static cf = new Cloudflare({
@@ -407,9 +408,11 @@ export default class Executer {
     const static_files = async () => {
       // backup
       const static_path = `/var/instances/${this.instance_name}`;
-      const backup_cmd = `zip -r ${getPublicPath(
-        `backup/${this.instance_name}/static/media.zip`
-      )} ${static_path}`;
+      const backup_path = `${getPublicPath(`backup/${this.instance_name}`)}`;
+      const backup_cmd = `mkdir -p ${backup_path} && zip -r ${join(
+        backup_path,
+        "static.zip"
+      )}  ${static_path}`;
       this.log("backup instance static files");
       await this.#exec(backup_cmd);
 
@@ -422,7 +425,7 @@ export default class Executer {
       this.log("backup instance db");
       const backup_cmd = `mongodump --db ${
         this.instance_name
-      } --out ${getPublicPath(`backup/${this.instance_name}/db`)} --gzip ${
+      } --out ${getPublicPath(`backup/${this.instance_name}/db`)} ${
         Global.env.MONGO_URL
       }`;
       await this.#exec(backup_cmd);
