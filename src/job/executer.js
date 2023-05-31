@@ -388,12 +388,20 @@ export default class Executer {
 
     // 2. cloudflare
     const ns = async () => {
+      let primary_domain = this.instance.primary_domain,
+        domains = this.instance.domains;
+      if (!primary_domain) {
+        primary_domain = `${this.instance.name}.nodeeweb.com`;
+        domains = [{ status: "create", content: primary_domain }];
+      }
+
       this.log(
-        `Removing domains : ${this.instance.domains
+        `Removing domains : ${domains
           .map(({ content }) => content)
           .join(" , ")}`
       );
-      await nsRemove(this.instance.primary_domain, this.instance.domains);
+
+      await nsRemove(primary_domain, domains);
     };
 
     // 3. static files
