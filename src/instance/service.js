@@ -31,10 +31,10 @@ class Service {
   static async updateOne(req, res, next) {
     const update = req.body;
     const statusAccept = [InstanceStatus.DOWN, InstanceStatus.UP];
-    if (!statusAccept.includes(update.status)) {
+    if (update.status && !statusAccept.includes(update.status)) {
       return res.status(400).json({
         status: "error",
-        message: `status must be ${statusAccept.join("or")}.`,
+        message: `status must be ${statusAccept.join(" or ")}.`,
       });
     }
     if (update.status == req.instance.status) {

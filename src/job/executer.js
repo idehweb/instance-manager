@@ -109,15 +109,16 @@ export default class Executer {
     }
 
     // create
-    let isRun;
+    let isRun, clean;
     this.log("Start");
     try {
       if (this.job.type === JobType.CREATE) {
+        clean = true;
         await this.#create_instance();
       }
       // update
       if (this.job.type === JobType.UPDATE) {
-        await this.#update_instance();
+        await this.#update_instance(this.req.body);
       }
       // delete
       if (this.job.type === JobType.DELETE) {
@@ -516,6 +517,7 @@ export default class Executer {
     );
   }
   async clean() {
+    if (this.job.type != JobType.CREATE) return;
     await this.#delete_instance({
       ignoreErrors: true,
       backup: false,
