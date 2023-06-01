@@ -11,7 +11,8 @@ class Service {
     const findQuery = {};
     if (req.customer) {
       findQuery.user = req.customer._id;
-      findQuery.status = { $ne: InstanceStatus.JOB_ERROR };
+      findQuery.status = { $n: InstanceStatus.JOB_ERROR };
+      findQuery.active = true;
     }
     const instances = await instanceModel
       .find(findQuery)

@@ -54,7 +54,7 @@ export async function instanceAccess(req, res, next) {
 
   const instance = await instanceModel.findOne({
     _id: instance_id,
-    user: req.user._id,
+    user: req.customer._id,
   });
   if (!instance)
     return res
@@ -76,7 +76,7 @@ export async function jobAccess(req, res, next) {
 
   const job = await jobModel.findOne({
     _id: job_id,
-    "instance.user": req.user._id,
+    "instance.user": req.customer._id,
   });
   if (!job)
     return res
