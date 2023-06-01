@@ -102,6 +102,7 @@ export default class Executer {
         { $set: { status: InstanceStatus.JOB_ERROR } },
         { new: true }
       );
+      await this.clean();
       this.log("Finish with Error", true);
       this.sendResultToClient(false);
       return;
@@ -379,7 +380,14 @@ export default class Executer {
     if (cpu || memory || image || replica) {
     }
   }
-  async #delete_instance({ ignoreErrors, delDocker, delNs, delStatic, delDB }) {
+  async #delete_instance({
+    ignoreErrors,
+    delDocker,
+    delNs,
+    delStatic,
+    delDB,
+    backup = true,
+  }) {
     // 1. docker service
     const docker_cmd = async () => {
       const cmd = DockerService.getDeleteServiceCommand(this.instance_name);
@@ -408,13 +416,15 @@ export default class Executer {
     const static_files = async () => {
       // backup
       const static_path = `/var/instances/${this.instance_name}`;
-      const backup_path = `${getPublicPath(`backup/${this.instance_name}`)}`;
-      const backup_cmd = `mkdir -p ${backup_path} && zip -r ${join(
-        backup_path,
-        "static.zip"
-      )}  ${static_path}`;
-      this.log("backup instance static files");
-      await this.#exec(backup_cmd);
+      if (backup) {
+        const backup_path = `${getPublicPath(`backup/${this.instance_name}`)}`;
+        const backup_cmd = `mkdir -p ${backup_path} && zip -r ${join(
+          backup_path,
+          "static.zip"
+        )}  ${static_path}`;
+        this.log("backup instance static files");
+        await this.#exec(backup_cmd);
+      }
 
       const cmd = `rm -r ${static_path}`;
       await this.#exec(cmd);
@@ -422,13 +432,15 @@ export default class Executer {
 
     // 4. db
     const db = async () => {
-      this.log("backup instance db");
-      const backup_cmd = `mongodump --db ${
-        this.instance_name
-      } --out ${getPublicPath(`backup/${this.instance_name}/db`)} ${
-        Global.env.MONGO_URL
-      }`;
-      await this.#exec(backup_cmd);
+      if (backup) {
+        this.log("backup instance db");
+        const backup_cmd = `mongodump --db ${
+          this.instance_name
+        } --out ${getPublicPath(`backup/${this.instance_name}/db`)} ${
+          Global.env.MONGO_URL
+        }`;
+        await this.#exec(backup_cmd);
+      }
 
       this.log("Delete instance db");
       const delete_cmd = `mongosh ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
@@ -499,6 +511,7 @@ export default class Executer {
   async clean() {
     await this.#delete_instance({
       ignoreErrors: true,
+      backup: false,
       delDocker: Global.env.isPro,
       delStatic: Global.env.isPro,
       delDB: true,

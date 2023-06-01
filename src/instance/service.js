@@ -84,7 +84,7 @@ class Service {
     ];
     const instance = await instanceModel.create({
       user: user._id,
-      name: req.body.name,
+      name,
       cpu: req.body.cpu ?? 2,
       memory: req.body.memory ?? 1024,
       disk: req.body.disk ?? -1,

@@ -16,7 +16,7 @@ export const InstancePattern = {};
 export const instanceSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, required: true },
-    name: { type: String, default: () => createRandomName(8), unique: true },
+    name: { type: String, required: true, unique: true },
     old_name: String,
     cpu: { type: Number, required: true },
     memory: { type: Number, required: true },
