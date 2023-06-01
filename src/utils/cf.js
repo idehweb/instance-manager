@@ -51,7 +51,7 @@ export async function nsCreateAndCNAME(source, dist) {
     // not create record if zone active before
     if (status !== CF_ZONE_STATUS.ACTIVE_BEFORE) await addRecord(myZone.id);
 
-    return { status, ns: name_servers };
+    return { status, ns: name_servers, content: source };
   }
 
   // add domain
@@ -65,7 +65,7 @@ export async function nsCreateAndCNAME(source, dist) {
   const zone_id = response.result.id;
   const status = CF_ZONE_STATUS.CREATE;
   await addRecord(zone_id);
-  return { status, ns: name_servers };
+  return { status, ns: name_servers, content: source };
 
   async function addRecord(id) {
     const records = await nsList(id);

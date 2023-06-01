@@ -377,9 +377,13 @@ export default class Executer {
       );
       // 3. Update DB
       this.log("update db");
-      await instanceModel.findByIdAndUpdate(this.instance._id, {
-        $set: { domains: new_domains },
-      });
+      this.instance = await instanceModel.findByIdAndUpdate(
+        this.instance._id,
+        {
+          $set: { domains: new_domains },
+        },
+        { new: true }
+      );
       await this.#doneJob(true, null);
       return;
     }
