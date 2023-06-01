@@ -292,7 +292,8 @@ export default class Executer {
     await this.#doneJob(true, InstanceStatus.UP);
   }
   async #update_instance({
-    domains,
+    domains_add,
+    domains_rm,
     cpu,
     memory,
     image,
@@ -304,7 +305,9 @@ export default class Executer {
     if (status) {
       const docker_cmd = DockerService.getUpdateServiceCommand(
         this.instance_name,
-        { replicas: status === InstanceStatus.UP ? this.instance.replica : 0 }
+        {
+          replicas: status === InstanceStatus.UP ? this.instance.replica : 0,
+        }
       );
       await this.#exec(docker_cmd);
 
@@ -324,53 +327,57 @@ export default class Executer {
     }
 
     // change domain
-    if (domains) {
-      const inProgressDomains = this.instance
-        .filter(({ status }) => status === CF_ZONE_STATUS.IN_PROGRESS)
-        .map(({ content }) => content);
-      domains = [...new Set(domains)].filter(
-        (d) =>
-          !inProgressDomains.includes(d) && d !== this.instance.primary_domain
-      );
-      const myDomains = this.instance.domains.map(({ content }) => content);
-      const removedDomains = myDomains.filter(
-        (d) =>
-          !domains.includes(d) &&
-          !inProgressDomains.includes(d) &&
-          d !== this.instance.primary_domain
-      );
+    if (
+      (domains_add && domains_add.length) ||
+      (domains_rm && domains_rm.length)
+    ) {
+      domains_rm = domains_rm
+        ? [
+            ...new Set(
+              domains_rm.filter((d) => d !== this.instance.primary_domain)
+            ),
+          ]
+        : [];
+      domains_add = domains_add ? [...new Set(domains_add)] : [];
 
+      let new_domains = this.instance.domains;
       // 1. Add new
-      this.log(`creating new zones: ${domains.join(" , ")}`);
-      let newDomains = await Promise.all(
-        domains.map((d) => nsCreateAndCNAME(d, this.instance.primary_domain))
-      );
-      newDomains = [
-        {
-          status: CF_ZONE_STATUS.CREATE,
-          content: this.instance.primary_domain,
-        },
-        ...newDomains,
-        ...inProgressDomains.map((d) => ({
-          content: d,
-          status: CF_ZONE_STATUS.IN_PROGRESS,
-        })),
-      ];
+      if (domains_add && domains_add.length) {
+        this.log(`creating new zones: ${domains_add.join(" , ")}`);
+        new_domains.push(
+          ...(await Promise.all(
+            domains_add.map((d) =>
+              nsCreateAndCNAME(d, this.instance.primary_domain)
+            )
+          ))
+        );
+      }
 
       // 2. Remove old
-      this.log(`removing old zones: ${removedDomains.join(" , ")}`);
-      await nsRemove(
-        this.instance.primary_domain,
-        removedDomains.map((d) => ({
-          content: d,
-          status: CF_ZONE_STATUS.CREATE,
-        }))
-      );
+      if (domains_rm && domains_rm.length) {
+        this.log(`removing old zones: ${domains_rm.join(" , ")}`);
+        await nsRemove(
+          this.instance.primary_domain,
+          domains_rm.map((d) => ({
+            content: d,
+            status: CF_ZONE_STATUS.CREATE,
+          }))
+        );
+        new_domains = new_domains.filter(
+          ({ content }) => !domains_rm.includes(content)
+        );
+      }
 
+      new_domains = Object.values(
+        new_domains.reduce((prev, curr) => {
+          prev[curr.content] = curr;
+          return prev;
+        }, {})
+      );
       // 3. Update DB
       this.log("update db");
       await instanceModel.findByIdAndUpdate(this.instance._id, {
-        $set: { domains: newDomains },
+        $set: { domains: new_domains },
       });
       await this.#doneJob(true, null);
       return;
