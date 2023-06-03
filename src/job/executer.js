@@ -1,5 +1,5 @@
 import { JobStatus, JobType, jobModel } from "../model/job.model.js";
-import { instanceModel } from "../model/instance.model.js";
+import { InstanceRegion, instanceModel } from "../model/instance.model.js";
 import fs from "fs";
 import {
   axiosError2String,
@@ -11,13 +11,9 @@ import {
 import { InstanceStatus } from "../model/instance.model.js";
 import Cloudflare from "cloudflare";
 import { Global } from "../global.js";
-import {
-  CF_ZONE_STATUS,
-  nsCreate,
-  nsCreateAndCNAME,
-  nsList,
-  nsRemove,
-} from "../utils/cf.js";
+import { CF_ZONE_STATUS } from "../utils/cf.js";
+import network, { NetworkCDN } from "../common/network.js";
+
 import { Service as DockerService } from "../docker/service.js";
 import { transform } from "../common/transform.js";
 import exec from "../utils/exec.js";
@@ -236,38 +232,14 @@ export default class Executer {
     const ns = async () => {
       // ns record
       try {
-        // list
-        const nl = await nsList();
-        if (nl.includes(`${this.instance.name}.nodeeweb.com`)) {
-          this.log("DND record exists before");
-          return;
-        }
-        // create record
-        await nsCreate(this.instance.name);
-        this.log("DNS record create");
-
-        // domains
-        const domains = this.instance.domains.filter(
-          ({ content, status }) =>
-            content !== this.instance.primary_domain &&
-            status === CF_ZONE_STATUS.IN_PROGRESS
+        this.log("creating DNS records");
+        this.domainsResult = await network.connectInstance(
+          this.instance.region === InstanceRegion.IRAN
+            ? NetworkCDN.ARVAN
+            : NetworkCDN.CF,
+          this.instance.primary_domain,
+          this.instance.domains
         );
-        if (domains.length) {
-          this.log(
-            `creating zones for : ${domains
-              .map(({ content }) => content)
-              .join(" , ")}`
-          );
-          this.domainsResult = await Promise.all(
-            domains.map(async ({ content }) => ({
-              ...(await nsCreateAndCNAME(
-                content,
-                this.instance.primary_domain
-              )),
-              content,
-            }))
-          );
-        }
       } catch (err) {
         this.log("Axios Error in DNS:\n" + axiosError2String(err));
         throw err;
@@ -335,39 +307,35 @@ export default class Executer {
       domains_rm = domains_rm
         ? [
             ...new Set(
-              domains_rm.filter((d) => d !== this.instance.primary_domain)
+              domains_rm.filter(
+                (d) =>
+                  d !== this.instance.primary_domain &&
+                  this.instance.domains.includes(d)
+              )
             ),
           ]
         : [];
       domains_add = domains_add ? [...new Set(domains_add)] : [];
 
-      let new_domains = this.instance.domains;
-      // 1. Add new
-      if (domains_add && domains_add.length) {
-        this.log(`creating new zones: ${domains_add.join(" , ")}`);
-        new_domains.push(
-          ...(await Promise.all(
-            domains_add.map((d) =>
-              nsCreateAndCNAME(d, this.instance.primary_domain)
-            )
-          ))
-        );
-      }
+      let new_domains = this.instance.domains ?? [];
+      if (domains_add.length)
+        this.log(`Creating new domains: ${domains_add.join(" , ")}`);
+      if (domains_rm.length)
+        this.log(`Removing domains: ${domains_add.join(" , ")}`);
 
-      // 2. Remove old
-      if (domains_rm && domains_rm.length) {
-        this.log(`removing old zones: ${domains_rm.join(" , ")}`);
-        await nsRemove(
+      new_domains.push(
+        await network.changeCustomDomains(
+          this.instance.region === InstanceRegion.IRAN
+            ? NetworkCDN.ARVAN
+            : NetworkCDN.CF,
           this.instance.primary_domain,
-          domains_rm.map((d) => ({
-            content: d,
-            status: CF_ZONE_STATUS.CREATE,
-          }))
-        );
-        new_domains = new_domains.filter(
-          ({ content }) => !domains_rm.includes(content)
-        );
-      }
+          domains_add,
+          domains_rm
+        )
+      );
+      new_domains = new_domains.filter(
+        ({ content }) => !domains_rm.includes(content)
+      );
 
       new_domains = Object.values(
         new_domains.reduce((prev, curr) => {
@@ -406,22 +374,19 @@ export default class Executer {
       await this.#exec(cmd);
     };
 
-    // 2. cloudflare
+    // 2. network disconnect
     const ns = async () => {
-      let primary_domain = this.instance.primary_domain,
-        domains = this.instance.domains;
-      if (!primary_domain) {
-        primary_domain = `${this.instance.name}.nodeeweb.com`;
-        domains = [{ status: "create", content: primary_domain }];
-      }
-
       this.log(
-        `Removing domains : ${domains
-          .map(({ content }) => content)
-          .join(" , ")}`
+        "Removing dns records " +
+          this.instance.domains.map(({ content }) => content).join(" , ")
       );
-
-      await nsRemove(primary_domain, domains);
+      await network.disconnectInstance(
+        this.instance.region === InstanceRegion.IRAN
+          ? NetworkCDN.ARVAN
+          : NetworkCDN.CF,
+        this.instance.primary_domain,
+        this.instance.domains
+      );
     };
 
     // 3. static files
@@ -503,13 +468,7 @@ export default class Executer {
         {
           $set: {
             status: instanceStatus,
-            domains: [
-              {
-                status: CF_ZONE_STATUS.CREATE,
-                content: this.instance.primary_domain,
-              },
-              ...this.domainsResult,
-            ],
+            domains: this.domainsResult,
           },
         },
         { new: true }

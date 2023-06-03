@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { createRandomName } from "../utils/helpers.js";
 
 export const InstanceStatus = {
   JOB_CREATE: "job-create",
@@ -9,6 +8,11 @@ export const InstanceStatus = {
   JOB_ERROR: "job-error",
   DELETED: "deleted",
   EXPIRED: "expired",
+};
+
+export const InstanceRegion = {
+  IRAN: "iran",
+  GERMAN: "german",
 };
 
 export const InstancePattern = {};
@@ -33,6 +37,7 @@ export const instanceSchema = new mongoose.Schema(
         ns: { type: [String], default: undefined },
       },
     ],
+    region: { type: String, required: true },
     primary_domain: { type: String, required: true },
     active: { type: Boolean, default: true },
     expiredAt: { type: Date, required: true },

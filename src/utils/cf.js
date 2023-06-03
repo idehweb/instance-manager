@@ -1,4 +1,4 @@
-import Cloudflare from "cloudflare";
+import CF from "cloudflare";
 import { Global } from "../global.js";
 
 export const CF_ZONE_STATUS = {
@@ -8,101 +8,82 @@ export const CF_ZONE_STATUS = {
   CREATE: "create",
 };
 
-const cf = new Cloudflare({
+const api = new CF({
   email: Global.env.CF_EMAIL,
   token: Global.env.CF_TOKEN,
 });
 
-export async function nsList(id = Global.env.CF_ZONE_ID, map) {
-  const list = await cf.dnsRecords.browse(id);
-  return list.result.map(map ?? ((record) => record.name));
-}
-export async function zoneList() {
-  return (await cf.zones.browse()).result;
-}
-export function nsCreate(
-  name,
-  { type, id, proxied, content } = {
-    type: "A",
-    id: Global.env.CF_ZONE_ID,
-    proxied: true,
-    content: Global.env.CF_IP,
-  }
-) {
-  return cf.dnsRecords.add(id, {
-    type,
-    proxied,
-    name,
-    content,
-  });
-}
-export async function nsCreateAndCNAME(source, dist) {
-  const zones = await zoneList();
-  const myZone = zones.find((zone) => zone.name === source);
-
-  // if system add domain before
-  if (myZone) {
-    let status, name_servers;
-    if (myZone.status === "active") status = CF_ZONE_STATUS.ACTIVE_BEFORE;
-    else {
-      status = CF_ZONE_STATUS.EXISTS_BEFORE;
-      name_servers = myZone.name_servers;
-    }
-    // not create record if zone active before
-    if (status !== CF_ZONE_STATUS.ACTIVE_BEFORE) await addRecord(myZone.id);
-
-    return { status, ns: name_servers, content: source };
+export default class Cloudflare {
+  #map = new Map();
+  async #domain2ZoneId(domain) {
+    if (this.#map.has(domain)) return this.#map.get(domain);
+    const zoneId = (await this.getDomains()).find(
+      (zone) => zone.domain === domain
+    )?.id;
+    if (zoneId) this.#map.set(domain, zoneId);
+    return zoneId;
   }
 
-  // add domain
-  const response = await cf.zones.add({
-    name: source,
-    action: { id: Global.env.CF_ACCOUNT_ID },
-    jump_start: true,
-    type: "full",
-  });
-  const name_servers = response.result.name_servers;
-  const zone_id = response.result.id;
-  const status = CF_ZONE_STATUS.CREATE;
-  await addRecord(zone_id);
-  return { status, ns: name_servers, content: source };
-
-  async function addRecord(id) {
-    const records = await nsList(id);
-    if (records.includes(source)) {
-      return;
-    } else {
-      await nsCreate(source, {
-        type: "CNAME",
-        id,
-        proxied: false,
-        content: dist,
-      });
-    }
+  async isDomainExistBefore(domain) {
+    const myZone = await this.#domain2ZoneId(domain);
+    return myZone ? true : false;
   }
 
-  // const name_servers = response.result.name_servers;
-}
-export async function nsRemove(primary_domain, domains) {
-  primary_domain = primary_domain.replace(".nodeeweb.com", "");
-  domains = domains
-    .filter(
-      ({ content, status }) =>
-        content !== primary_domain && status !== CF_ZONE_STATUS.IN_PROGRESS
+  async getRecords(domain) {
+    const list = await api.dnsRecords.browse(await this.#domain2ZoneId(domain));
+    return list.result;
+  }
+
+  async addRecord(domain, { content = Global.env.CF_IP, name, type, isProxy }) {
+    type = type.toUppercase();
+    const zoneId = await this.#domain2ZoneId(domain);
+    const records = await this.getRecords(domain);
+    if (
+      records.find(
+        (r) =>
+          (r.name === name || (name === "@" && r.name === domain)) &&
+          r.type === type
+      )
     )
-    .map(({ content }) => content);
+      return;
+    return api.dnsRecords.add(zoneId, {
+      type,
+      proxied: isProxy,
+      name,
+      content,
+    });
+  }
 
-  // 1. remove A record in nodeeweb zone
-  const record = (await nsList(undefined, (record) => record)).find(
-    ({ name }) => name === primary_domain
-  );
-  if (record) await cf.dnsRecords.del(Global.env.CF_ZONE_ID, record.id);
+  async getDomains() {
+    return (await api.zones.browse()).result;
+  }
 
-  // 2. remove custom domain zones
-  if (domains.length) {
-    const zones = (await zoneList()).filter(({ name }) =>
-      domains.includes(name)
+  async registerDomain(domain) {
+    const zones = await this.getDomains();
+    const myZone = zones.find((zone) => zone.domain === domain);
+    // if system add domain before
+    if (myZone) return myZone.name_servers;
+
+    // add domain
+    const response = await api.zones.add({
+      name: domain,
+      action: { id: Global.env.CF_ACCOUNT_ID },
+      jump_start: true,
+      type: "full",
+    });
+    const name_servers = response.result.name_servers;
+    return name_servers;
+  }
+
+  async removeRecord(domain, record_name) {
+    const records = await this.getRecords(domain);
+    await api.dnsRecords.del(
+      await this.#domain2ZoneId(domain),
+      records.find((r) => r.name === record_name).id
     );
-    await Promise.all(zones.map(({ id }) => cf.zones.del(id)));
+  }
+  async removeDomain(domain) {
+    await api.zones.del(await this.#domain2ZoneId(domain));
+    this.#map.delete(domain);
   }
 }

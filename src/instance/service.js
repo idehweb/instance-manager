@@ -94,8 +94,8 @@ class Service {
       expiredAt: new Date(req.body.expiredAt),
       pattern: req.body.pattern ?? "demo0",
       primary_domain,
+      region: req.body.region,
       domains: domains.map((d) => ({
-        status: CF_ZONE_STATUS.IN_PROGRESS,
         content: d,
       })),
     });
