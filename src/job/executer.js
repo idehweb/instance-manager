@@ -209,6 +209,7 @@ export default class Executer {
           memory: this.instance.memory,
           image: this.instance.image,
           cpu: this.instance.cpu,
+          region: this.instance.region,
         }
       );
       // create if not exist
