@@ -18,6 +18,7 @@ import { Service as DockerService } from "../docker/service.js";
 import { transform } from "../common/transform.js";
 import exec from "../utils/exec.js";
 import { join } from "path";
+import { Remote } from "../utils/remote.js";
 
 export default class Executer {
   static cf = new Cloudflare({
@@ -29,6 +30,7 @@ export default class Executer {
   constructor(job, instance, res, req) {
     this.job = job;
     this.instance = instance;
+    this.remote = new Remote(instance.region);
     this.log_file = fs.createWriteStream(
       getPublicPath(`logs/${String(this.job._id)}-${this.instance_name}.log`),
       { encoding: "utf8" }
@@ -456,7 +458,7 @@ export default class Executer {
     }
   }
   #exec(cmd) {
-    return exec(cmd, {
+    return exec(this.remote.autoDiagnostic(cmd), {
       onLog: (msg, isError) => {
         this.log(msg, false, isError, true);
       },

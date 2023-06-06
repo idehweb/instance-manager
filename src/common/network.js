@@ -1,3 +1,5 @@
+import { Global } from "../global.js";
+import { InstanceRegion } from "../model/instance.model.js";
 import Arvan from "../utils/arvan.js";
 import Cloudflare from "../utils/cf.js";
 
@@ -9,7 +11,12 @@ export const NetworkCDN = {
 export class Network {
   #cf = new Cloudflare();
   #arvan = new Arvan();
-
+  static getPrimaryDomain({ name, region }) {
+    if (region === InstanceRegion.IRAN)
+      return `${name}.${Global.env.ARVAN_DOMAIN}`;
+    if (region === InstanceRegion.GERMAN)
+      return `${name}.${Global.env.CF_DOMAIN}`;
+  }
   #getCDN(cdn_name) {
     return cdn_name === NetworkCDN.CF ? this.#cf : this.#arvan;
   }

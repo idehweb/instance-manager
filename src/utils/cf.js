@@ -34,7 +34,10 @@ export default class Cloudflare {
     return list.result;
   }
 
-  async addRecord(domain, { content = Global.env.CF_IP, name, type, isProxy }) {
+  async addRecord(
+    domain,
+    { content = Global.env.GERMAN_IP, name, type, isProxy }
+  ) {
     type = type.toUppercase();
     const zoneId = await this.#domain2ZoneId(domain);
     const records = await this.getRecords(domain);

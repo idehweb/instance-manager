@@ -30,7 +30,7 @@ export default class Arvan {
   }
   async addRecord(
     domain,
-    { content = Global.env.ARVAN_IP, name, type, isProxy, port = 444 }
+    { content = Global.env.IRAN_IP, name, type, isProxy, port = 444 }
   ) {
     type = type.toLowercase();
     if (name == "@" && type == "cname") type = "aname";

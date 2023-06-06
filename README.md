@@ -1,3 +1,5 @@
+## Volumes
+- bind host ssh private key in `/root/.ssh/host-private`
 ## Endpoints
 - `/health`
   response must be `{status : ok}` with http code `200`

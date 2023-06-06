@@ -5,6 +5,7 @@ import DockerService from "../docker/service.js";
 import Executer from "../job/executer.js";
 import { createRandomName } from "../utils/helpers.js";
 import { CF_ZONE_STATUS } from "../utils/cf.js";
+import { Network } from "../common/network.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -74,7 +75,7 @@ class Service {
         .json({ status: "error", message: "expired at is required" });
     const user = req.admin || req.customer;
     const name = req.body.name ?? createRandomName(8);
-    const primary_domain = `${name}.nodeeweb.com`;
+    const primary_domain = Network.getPrimaryDomain({name,region:req.body.region});
     const domains = [
       ...new Set([
         primary_domain,
