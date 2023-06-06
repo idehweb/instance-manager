@@ -45,6 +45,9 @@ export class Remote {
     if (cmd.startsWith("docker")) {
       return cmd;
     }
+    if (cmd.startsWith("mongo")) {
+      cmd = cmd.replace(Global.env.MONGO_URL, Global.env.MONGO_REMOTE_URL);
+    }
     return this.cmd(cmd);
   }
 }
