@@ -18,7 +18,7 @@ export class Remote {
   }
   isInLocal() {
     console.log({
-      isLocal: Global.env.isLocal,
+      env: Global.env,
       ip: this.#findIP() === Global.env.NODEEWEB_IP,
     });
     return Global.env.isLocal || this.#findIP() === Global.env.NODEEWEB_IP;
