@@ -55,7 +55,7 @@ ENV IRAN_IP 185.19.201.61
 ENV DOCKER_IRAN_CTX iran-ctx
 ENV DOCKER_GERMAN_CTX german-ctx
 ENV DOCKER_DEFAULT_CTX default
-ENV ARVAN_DOMAIN gomrokchi.com
+ENV ARVAN_DOMAIN nodeeweb.ir
 ENV CF_DOMAIN nodeeweb.com
 COPY . .
 # COPY ./docker-entrypoint.sh /usr/local/bin

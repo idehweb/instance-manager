@@ -34,10 +34,13 @@ export class Network {
 
     // 2. register domains
     domains = await Promise.all(
-      domains.map(async (d) => ({
-        content: d,
-        ns: await cdn.registerDomain(d),
-      }))
+      domains
+        .map(({ content }) => content)
+        .filter((d) => d !== primary_domain)
+        .map(async (d) => ({
+          content: d,
+          ns: await cdn.registerDomain(d),
+        }))
     );
 
     // 3. connect custom domain into primary domain

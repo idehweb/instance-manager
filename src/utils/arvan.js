@@ -11,6 +11,11 @@ export default class Arvan {
     const response = await api(configs);
     return response.data;
   }
+  async domain2ID(domain) {
+    const domains = await this.getDomains();
+    const d = domains.find(({ domain: d }) => d == domain);
+    return d.id;
+  }
   async isDomainExistBefore(domain) {
     try {
       await this.#query({ method: "get", url: `/domains/${domain}` });
@@ -30,9 +35,9 @@ export default class Arvan {
   }
   async addRecord(
     domain,
-    { content = Global.env.IRAN_IP, name, type, isProxy, port = 444 }
+    { content = Global.env.IRAN_IP, name, type, isProxy, port = 443 }
   ) {
-    type = type.toLowercase();
+    type = type.toLowerCase();
     if (name == "@" && type == "cname") type = "aname";
     const records = await this.getRecords(domain);
 
@@ -88,6 +93,10 @@ export default class Arvan {
     });
   }
   async removeDomain(domain) {
-    await this.#query({ method: "delete", url: `/domains/${domain}` });
+    await this.#query({
+      method: "delete",
+      url: `/domains/${domain}`,
+      params: { id: await this.domain2ID(domain) },
+    });
   }
 }

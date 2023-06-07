@@ -236,7 +236,7 @@ export default class Executer {
     const ns = async () => {
       // ns record
       try {
-        this.log("creating DNS records");
+        this.log("Connect Instance Networks");
         this.domainsResult = await network.connectInstance(
           this.instance.region === InstanceRegion.IRAN
             ? NetworkCDN.ARVAN
@@ -427,9 +427,11 @@ export default class Executer {
         await this.#exec(backup_cmd);
       }
 
-      this.log("Delete instance db");
-      const delete_cmd = `mongosh ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
-      await this.#exec(delete_cmd);
+      if (!Global.env.isLocal) {
+        this.log("Delete instance db");
+        const delete_cmd = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
+        await this.#exec(delete_cmd);
+      }
 
       this.log("Disable Instance in db");
       this.instance = await instanceModel.findByIdAndUpdate(

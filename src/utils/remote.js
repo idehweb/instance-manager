@@ -17,7 +17,7 @@ export class Remote {
     return ip;
   }
   isInLocal() {
-    return this.#findIP() === Global.env.NODEEWEB_IP;
+    return Global.env.isLocal || this.#findIP() === Global.env.NODEEWEB_IP;
   }
   cpFromLocal(localPath, remotePath) {
     const ip = this.#findIP();
@@ -34,9 +34,9 @@ export class Remote {
     return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -o "StrictHostKeyChecking no" -r root@${ip}:${remotePath} ${localPath}`;
   }
   cmd(cmd) {
+    if (this.isInLocal()) return cmd;
     const ip = this.#findIP();
-    if (ip === Global.env.NODEEWEB_IP) return cmd;
-    return `ssh -i ${Global.env.SSH_PRIVATE_KEY_PATH} -o "StrictHostKeyChecking no" root@${ip} "${cmd}"`;
+    return `ssh -i ${Global.env.SSH_PRIVATE_KEY_PATH} -o "StrictHostKeyChecking no" root@${ip} '${cmd}'`;
   }
   autoDiagnostic(cmd) {
     cmd = cmd.trim();
@@ -57,7 +57,7 @@ export class Remote {
       if (!this.isInLocal()) {
         cmd =
           `docker --context ${
-            Global.env[`DOCKER_${this.region.toUppercase()}_CTX`]
+            Global.env[`DOCKER_${this.region.toUpperCase()}_CTX`]
           }` + cmd.slice(6);
       }
       return cmd;

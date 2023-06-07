@@ -38,7 +38,7 @@ export default class Cloudflare {
     domain,
     { content = Global.env.GERMAN_IP, name, type, isProxy }
   ) {
-    type = type.toUppercase();
+    type = type.toUpperCase();
     const zoneId = await this.#domain2ZoneId(domain);
     const records = await this.getRecords(domain);
     if (
