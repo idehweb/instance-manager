@@ -44,7 +44,7 @@ export class Remote {
 
     if (!this.isInLocal()) {
       cmd = cmd.replace(
-        new RegExp(Global.env.MONGO_URL, "g"),
+        new RegExp(Global.env.MONGO_URL.replace("?", "\\?"), "g"),
         Global.env.MONGO_REMOTE_URL
       );
     }
