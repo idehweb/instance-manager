@@ -6,7 +6,7 @@ ENV PORT 3000
 ENV PUBLIC_PATH ./public
 ENV REMOTE_PUBLIC_PATH /var/instanceManager
 ENV MONGO_URL mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica
-ENV MONGO_REMOTE_URL mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/?directConnection=true
+ENV MONGO_REMOTE_URL mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/?replicaSet=mongoReplica
 ENV MONGO_DB InstanceManager
 ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-server:0.1.47
 ENV NODEEWEB_DB Idehweb
