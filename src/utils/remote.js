@@ -22,31 +22,31 @@ export class Remote {
     if (ip === Global.env.NODEEWEB_IP)
       return `cp -r ${localPath} ${remotePath}`;
 
-    return `scp -i ${Global.env.SSH_PRIVATE_KEY} -r ${localPath} root@${ip}:${remotePath}`;
+    return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -r ${localPath} root@${ip}:${remotePath}`;
   }
   cpFromRemote(localPath, remotePath) {
     const ip = this.#findIP();
     if (ip === Global.env.NODEEWEB_IP)
       return `cp -r ${remotePath} ${localPath}`;
 
-    return `scp -i ${Global.env.SSH_PRIVATE_KEY} -r root@${ip}:${remotePath} ${localPath}`;
+    return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -r root@${ip}:${remotePath} ${localPath}`;
   }
   cmd(cmd) {
     const ip = this.#findIP();
     if (ip === Global.env.NODEEWEB_IP) return cmd;
-    return `ssh -i ${Global.env.SSH_PRIVATE_KEY} root@${ip} ${cmd}`;
+    return `ssh -i ${Global.env.SSH_PRIVATE_KEY_PATH} root@${ip} ${cmd}`;
   }
   autoDiagnostic(cmd) {
     cmd = cmd.trim();
+    if (this.#findIP() !== Global.env.NODEEWEB_IP) {
+      cmd = cmd.replaceAll(Global.env.MONGO_URL, Global.env.MONGO_REMOTE_URL);
+    }
     if (cmd.startsWith("cp")) {
       const [, localPath, remotePath] = /^cp -?r? ?(.+) (.+)$/;
       return this.cpFromLocal(localPath, remotePath);
     }
     if (cmd.startsWith("docker")) {
       return cmd;
-    }
-    if (cmd.startsWith("mongo")) {
-      cmd = cmd.replace(Global.env.MONGO_URL, Global.env.MONGO_REMOTE_URL);
     }
     return this.cmd(cmd);
   }
