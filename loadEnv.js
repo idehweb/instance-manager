@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 function load() {
   const initBefore = process.env.INIT_BEFORE;
-  if (initBefore) return (Global.env = process.env);
+  if (initBefore) return (Global.env = { ...process.env });
 
   dotenv.config({ path: "./env/.env" });
   Global.env = process.env;
