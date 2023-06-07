@@ -27,4 +27,3 @@ else {
   Global.env.isDev = Global.env.NODE_ENV === "development";
   Global.env.isPro = Global.env.NODE_ENV === "production";
 }
-console.log(Global.env);
