@@ -42,7 +42,7 @@ export class Remote {
     cmd = cmd.trim();
     console.log(cmd);
 
-    if (!this.isInLocal()) {
+    if (!this.isInLocal() && !cmd.startsWith("docker")) {
       cmd = cmd.replace(
         new RegExp(Global.env.MONGO_URL.replace("?", "\\?"), "g"),
         Global.env.MONGO_REMOTE_URL
