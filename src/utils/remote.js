@@ -17,28 +17,31 @@ export class Remote {
     }
     return ip;
   }
+  #isInLocal() {
+    return this.#findIP() === Global.env.NODEEWEB_IP;
+  }
   cpFromLocal(localPath, remotePath) {
     const ip = this.#findIP();
     if (ip === Global.env.NODEEWEB_IP)
       return `cp -r ${localPath} ${remotePath}`;
 
-    return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -r ${localPath} root@${ip}:${remotePath}`;
+    return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -o "StrictHostKeyChecking no" -r ${localPath} root@${ip}:${remotePath}`;
   }
   cpFromRemote(localPath, remotePath) {
     const ip = this.#findIP();
     if (ip === Global.env.NODEEWEB_IP)
       return `cp -r ${remotePath} ${localPath}`;
 
-    return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -r root@${ip}:${remotePath} ${localPath}`;
+    return `scp -i ${Global.env.SSH_PRIVATE_KEY_PATH} -o "StrictHostKeyChecking no" -r root@${ip}:${remotePath} ${localPath}`;
   }
   cmd(cmd) {
     const ip = this.#findIP();
     if (ip === Global.env.NODEEWEB_IP) return cmd;
-    return `ssh -i ${Global.env.SSH_PRIVATE_KEY_PATH} root@${ip} ${cmd}`;
+    return `ssh -i ${Global.env.SSH_PRIVATE_KEY_PATH} -o "StrictHostKeyChecking no" root@${ip} "${cmd}"`;
   }
   autoDiagnostic(cmd) {
     cmd = cmd.trim();
-    if (this.#findIP() !== Global.env.NODEEWEB_IP) {
+    if (!this.#isInLocal()) {
       cmd = cmd.replaceAll(Global.env.MONGO_URL, Global.env.MONGO_REMOTE_URL);
     }
     if (cmd.startsWith("cp")) {
@@ -46,6 +49,12 @@ export class Remote {
       return this.cpFromLocal(localPath, remotePath);
     }
     if (cmd.startsWith("docker")) {
+      if (!this.#isInLocal()) {
+        cmd =
+          `docker --context ${
+            Global.env[`DOCKER_${region.toUppercase()}_CTX`]
+          }` + cmd.slice(6);
+      }
       return cmd;
     }
     return this.cmd(cmd);
