@@ -452,16 +452,11 @@ export default class Executer {
     // execute
     try {
       if (delNs) await ns();
-      console.log({
-        delDocker,
-        isPro: Global.env.isPro,
-        env: Global.env.NODE_ENV,
-      });
       if (delDocker && Global.env.isPro) await docker_cmd();
       if (delStatic && Global.env.isPro) await static_files();
       if (delDB) await db();
     } catch (err) {
-      console.log(err);
+      console.log(axiosError2String(err));
       if (!ignoreErrors) {
         this.log(axiosError2String(err));
         throw err;

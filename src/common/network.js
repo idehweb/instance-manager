@@ -61,6 +61,8 @@ export class Network {
     domains_rm = []
   ) {
     const cdn = this.#getCDN(cdn_name);
+    domains_add = domains_add.filter((d) => d !== primary_domain);
+    domains_rm = domains_rm.filter((d) => d !== primary_domain);
 
     // 1. add domains
     domains_add = await Promise.all(
@@ -92,7 +94,12 @@ export class Network {
     const cdn = this.#getCDN(cdn_name);
     const { subdomain, domain } = this.#getSubMain(primary_domain);
 
-    await this.changeCustomDomains(cdn_name, primary_domain, [], domains);
+    await this.changeCustomDomains(
+      cdn_name,
+      primary_domain,
+      [],
+      domains.map(({ content }) => content)
+    );
     await cdn.removeRecord(domain, subdomain);
   }
 }
