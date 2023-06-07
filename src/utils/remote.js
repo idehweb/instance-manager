@@ -53,15 +53,15 @@ export class Remote {
     //   const [, localPath, remotePath] = /^cp -?r? ?(.+) (.+)$/.exec(cmd);
     //   return this.cpFromLocal(localPath, remotePath);
     // }
-    if (cmd.startsWith("docker")) {
-      if (!this.isInLocal()) {
-        cmd =
-          `docker --context ${
-            Global.env[`DOCKER_${this.region.toUpperCase()}_CTX`]
-          }` + cmd.slice(6);
-      }
-      return cmd;
-    }
+    // if (cmd.startsWith("docker")) {
+    //   if (!this.isInLocal()) {
+    //     cmd =
+    //       `docker --context ${
+    //         Global.env[`DOCKER_${this.region.toUpperCase()}_CTX`]
+    //       }` + cmd.slice(6);
+    //   }
+    //   return cmd;
+    // }
     return this.cmd(cmd);
   }
 }

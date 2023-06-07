@@ -14,7 +14,7 @@ export default class Arvan {
   async domain2ID(domain) {
     const domains = await this.getDomains();
     const d = domains.find(({ domain: d }) => d == domain);
-    return d.id;
+    return d?.id;
   }
   async isDomainExistBefore(domain) {
     try {
@@ -93,10 +93,12 @@ export default class Arvan {
     });
   }
   async removeDomain(domain) {
+    const id = await this.domain2ID(domain);
+    if (!id) return;
     await this.#query({
       method: "delete",
       url: `/domains/${domain}`,
-      params: { id: await this.domain2ID(domain) },
+      params: { id },
     });
   }
 }
