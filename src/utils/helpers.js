@@ -6,8 +6,9 @@ export const createRandomName = customAlphabet(
 );
 export function getPublicPath(path, remote) {
   return join(
-    remote && !remote.isInLocal() ? "/var/instanceManager" : ".",
-    Global.env.PUBLIC_PATH,
+    remote && !remote.isInLocal()
+      ? Global.env.REMOTE_PUBLIC_PATH
+      : Global.env.PUBLIC_PATH,
     path
   );
 }
