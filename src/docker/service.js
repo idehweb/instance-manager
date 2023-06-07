@@ -10,7 +10,9 @@ export class Service {
   ) {
     // create docker service
     const dockerCreate =
-      `docker service create --hostname ${dockerServiceName} --name ${dockerServiceName} -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica" -e dbName=${dockerServiceName} -e SERVER_PORT=3000 -e BASE_URL="https://${Network.getPrimaryDomain(
+      `docker service create --hostname ${dockerServiceName} --name ${dockerServiceName} -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="${
+        Global.env.MONGO_URL
+      }" -e dbName=${dockerServiceName} -e SERVER_PORT=3000 -e BASE_URL="https://${Network.getPrimaryDomain(
         { name: subDomainName, region }
       )}" -e SHOP_URL="https://${Network.getPrimaryDomain({
         name: subDomainName,

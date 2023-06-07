@@ -1,6 +1,5 @@
 import { Global } from "../global.js";
 import { InstanceRegion } from "../model/instance.model.js";
-
 export class Remote {
   constructor(region) {
     this.region = region;
@@ -17,7 +16,7 @@ export class Remote {
     }
     return ip;
   }
-  #isInLocal() {
+  isInLocal() {
     return this.#findIP() === Global.env.NODEEWEB_IP;
   }
   cpFromLocal(localPath, remotePath) {
@@ -42,21 +41,23 @@ export class Remote {
   autoDiagnostic(cmd) {
     cmd = cmd.trim();
     console.log(cmd);
-    if (!this.#isInLocal()) {
+
+    if (!this.isInLocal()) {
       cmd = cmd.replace(
         new RegExp(Global.env.MONGO_URL, "g"),
         Global.env.MONGO_REMOTE_URL
       );
     }
-    if (cmd.startsWith("cp")) {
-      const [, localPath, remotePath] = /^cp -?r? ?(.+) (.+)$/.exec(cmd);
-      return this.cpFromLocal(localPath, remotePath);
-    }
+
+    // if (cmd.startsWith("cp")) {
+    //   const [, localPath, remotePath] = /^cp -?r? ?(.+) (.+)$/.exec(cmd);
+    //   return this.cpFromLocal(localPath, remotePath);
+    // }
     if (cmd.startsWith("docker")) {
-      if (!this.#isInLocal()) {
+      if (!this.isInLocal()) {
         cmd =
           `docker --context ${
-            Global.env[`DOCKER_${region.toUppercase()}_CTX`]
+            Global.env[`DOCKER_${this.region.toUppercase()}_CTX`]
           }` + cmd.slice(6);
       }
       return cmd;

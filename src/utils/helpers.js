@@ -4,8 +4,12 @@ import { Global } from "../global.js";
 export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
 );
-export function getPublicPath(path) {
-  return join(Global.env.PUBLIC_PATH, path);
+export function getPublicPath(path, remote) {
+  return join(
+    remote && !remote.isInLocal() ? "/var/instanceManager" : ".",
+    Global.env.PUBLIC_PATH,
+    path
+  );
 }
 
 export function wait(sec) {
@@ -36,9 +40,9 @@ export function getNginxPublicPath(...path) {
   return join("/var/instanceManager", ...path);
 }
 
-export function getInstanceStaticPath(instance) {
-  return `${getPublicPath(`static/${instance.pattern}`)}/*`;
+export function getInstanceStaticPath(instance, remote) {
+  return `${getPublicPath(`static/${instance.pattern}`, remote)}/*`;
 }
-export function getInstanceDbPath(instance) {
-  return `${getPublicPath(`db/${instance.pattern}`)}`;
+export function getInstanceDbPath(instance, remote) {
+  return `${getPublicPath(`db/${instance.pattern}`, remote)}`;
 }

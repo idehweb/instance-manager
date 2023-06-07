@@ -190,7 +190,8 @@ export default class Executer {
 
       // copy static files
       const copyStatics = `cp -r ${getInstanceStaticPath(
-        this.instance
+        this.instance,
+        this.remote
       )} /var/instances/${this.instance_name}/public`;
       await this.#exec(copyStatics);
     };
@@ -253,7 +254,7 @@ export default class Executer {
       this.log(`initial db base on : ${this.instance.pattern}`);
       const cmd = `mongorestore --db ${this.instance_name} ${
         Global.env.MONGO_URL
-      } ${getInstanceDbPath(this.instance)}`;
+      } ${getInstanceDbPath(this.instance, this.remote)}`;
       await this.#exec(cmd);
     };
 
@@ -397,7 +398,10 @@ export default class Executer {
       // backup
       const static_path = `/var/instances/${this.instance_name}`;
       if (backup) {
-        const backup_path = `${getPublicPath(`backup/${this.instance_name}`)}`;
+        const backup_path = `${getPublicPath(
+          `backup/${this.instance_name}`,
+          this.remote
+        )}`;
         const backup_cmd = `mkdir -p ${backup_path} && zip -r ${join(
           backup_path,
           "static.zip"
@@ -416,9 +420,10 @@ export default class Executer {
         this.log("backup instance db");
         const backup_cmd = `mongodump --db ${
           this.instance_name
-        } --out ${getPublicPath(`backup/${this.instance_name}/db`)} ${
-          Global.env.MONGO_URL
-        }`;
+        } --out ${getPublicPath(
+          `backup/${this.instance_name}/db`,
+          this.remote
+        )} ${Global.env.MONGO_URL}`;
         await this.#exec(backup_cmd);
       }
 
