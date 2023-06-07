@@ -85,11 +85,11 @@ export default class Arvan {
   }
   async removeRecord(domain, record_name) {
     const records = await this.getRecords(domain);
+    const myRecord = records.find((r) => r.name === record_name);
+    if (!myRecord) return;
     await this.#query({
       method: "delete",
-      url: `/domains/${domain}/dns-records/${
-        records.find((r) => r.name === record_name).id
-      }`,
+      url: `/domains/${domain}/dns-records/${myRecord.id}`,
     });
   }
   async removeDomain(domain) {
