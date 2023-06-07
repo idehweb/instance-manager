@@ -41,11 +41,15 @@ export class Remote {
   }
   autoDiagnostic(cmd) {
     cmd = cmd.trim();
+    console.log(cmd);
     if (!this.#isInLocal()) {
-      cmd = cmd.replaceAll(Global.env.MONGO_URL, Global.env.MONGO_REMOTE_URL);
+      cmd = cmd.replace(
+        new RegExp(Global.env.MONGO_URL, "g"),
+        Global.env.MONGO_REMOTE_URL
+      );
     }
     if (cmd.startsWith("cp")) {
-      const [, localPath, remotePath] = /^cp -?r? ?(.+) (.+)$/;
+      const [, localPath, remotePath] = /^cp -?r? ?(.+) (.+)$/.exec(cmd);
       return this.cpFromLocal(localPath, remotePath);
     }
     if (cmd.startsWith("docker")) {
