@@ -1,3 +1,15 @@
+export function catchFn(fn, { self, onError }) {
+  return async () => {
+    try {
+      return await fn.call(self ?? this);
+    } catch (err) {
+      if (onError) {
+        console.log("#CatchError", err);
+        return onError(err);
+      }
+    }
+  };
+}
 export function catchMiddleware(fn, { self, onError }) {
   return async (req, res, next) => {
     try {

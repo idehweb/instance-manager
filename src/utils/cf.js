@@ -18,7 +18,7 @@ export default class Cloudflare {
   async #domain2ZoneId(domain) {
     if (this.#map.has(domain)) return this.#map.get(domain);
     const zoneId = (await this.getDomains()).find(
-      (zone) => zone.domain === domain
+      (zone) => zone.name === domain
     )?.id;
     if (zoneId) this.#map.set(domain, zoneId);
     return zoneId;
@@ -63,7 +63,7 @@ export default class Cloudflare {
 
   async registerDomain(domain) {
     const zones = await this.getDomains();
-    const myZone = zones.find((zone) => zone.domain === domain);
+    const myZone = zones.find((zone) => zone.name === domain);
     // if system add domain before
     if (myZone) return myZone.name_servers;
 
@@ -80,13 +80,19 @@ export default class Cloudflare {
 
   async removeRecord(domain, record_name) {
     const records = await this.getRecords(domain);
-    await api.dnsRecords.del(
-      await this.#domain2ZoneId(domain),
-      records.find((r) => r.name === record_name).id
-    );
+    const myRecordId = records.find(
+      (r) => r.name === `${record_name}.${domain}`
+    )?.id;
+    if (!myRecordId) {
+      return;
+    }
+
+    await api.dnsRecords.del(await this.#domain2ZoneId(domain), myRecordId);
   }
   async removeDomain(domain) {
-    await api.zones.del(await this.#domain2ZoneId(domain));
+    const zoneId = await this.#domain2ZoneId(domain);
+    if (!zoneId) return;
+    await api.zones.del(zoneId);
     this.#map.delete(domain);
   }
 }

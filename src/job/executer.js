@@ -19,6 +19,7 @@ import { transform } from "../common/transform.js";
 import exec from "../utils/exec.js";
 import { join } from "path";
 import { Remote } from "../utils/remote.js";
+import { catchFn } from "../utils/catchAsync.js";
 
 export default class Executer {
   static cf = new Cloudflare({
@@ -452,17 +453,26 @@ export default class Executer {
     };
 
     // execute
+    const executeStack = [];
+    if (delNs) executeStack.push(ns);
+    if (delDocker && Global.env.isPro) executeStack.push(docker_cmd);
+    if (delStatic && Global.env.isPro) executeStack.push(static_files);
+    if (delDB) executeStack.push(db);
     try {
-      if (delNs) await ns();
-      if (delDocker && Global.env.isPro) await docker_cmd();
-      if (delStatic && Global.env.isPro) await static_files();
-      if (delDB) await db();
-    } catch (err) {
-      console.log(axiosError2String(err));
-      if (!ignoreErrors) {
-        this.log(axiosError2String(err));
-        throw err;
+      for (const fn of executeStack) {
+        let myFn = ignoreErrors
+          ? catchFn(fn, {
+              self: this,
+              onError(err) {
+                this.log(axiosError2String(err));
+              },
+            })
+          : fn;
+        await myFn();
       }
+    } catch (err) {
+      this.log(axiosError2String(err));
+      throw err;
     }
   }
   #exec(cmd) {
