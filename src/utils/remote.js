@@ -40,7 +40,6 @@ export class Remote {
   }
   autoDiagnostic(cmd) {
     cmd = cmd.trim();
-    console.log(cmd);
 
     if (!this.isInLocal() && !cmd.startsWith("docker")) {
       cmd = cmd.replace(
