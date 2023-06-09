@@ -74,10 +74,11 @@ class Service {
         .status(400)
         .json({ status: "error", message: "expired at is required" });
     const user = req.admin || req.customer;
+    const region = req.body.region ?? "german";
     const name = req.body.name ?? createRandomName(8);
     const primary_domain = Network.getPrimaryDomain({
       name,
-      region: req.body.region,
+      region,
     });
     const domains = [
       ...new Set([
@@ -98,7 +99,7 @@ class Service {
       expiredAt: new Date(req.body.expiredAt),
       pattern: req.body.pattern ?? "demo0",
       primary_domain,
-      region: req.body.region ?? "iran",
+      region,
       domains: domains.map((d) => ({
         content: d,
       })),
