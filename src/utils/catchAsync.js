@@ -26,7 +26,7 @@ export function catchMiddleware(fn, { self, onError }) {
 
 export function classCatchBuilder(C, onError = C.onError) {
   const methodNames = Object.getOwnPropertyNames(C).filter(
-    (p) => typeof C[p] === "function" && p !== "constructor"
+    (p) => typeof C[p] === "function" && p !== "constructor" && p !== "onError"
   );
 
   methodNames.forEach(

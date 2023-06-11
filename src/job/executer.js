@@ -154,7 +154,7 @@ export default class Executer {
     this.sendResultToClient(true);
   }
   sendResultToClient(isOk) {
-    if (!this.res?.writable) return;
+    if (!this.res || !this.res?.writable) return;
     let code;
     if (isOk) {
       switch (this.job.type) {
@@ -171,17 +171,16 @@ export default class Executer {
     } else code = 500;
 
     const status = isOk ? "success" : "error";
-    this.res.status(code).json(
-      transform(
-        {
-          status,
-          job: this.job,
-          instance: this.instance,
-        },
-        code,
-        this.req
-      )
+    const data = transform(
+      {
+        status,
+        job: this.job,
+        instance: this.instance,
+      },
+      code,
+      this.req
     );
+    this.res.status(code).json(data);
   }
   async #create_instance() {
     const static_files = async () => {

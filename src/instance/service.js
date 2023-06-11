@@ -4,8 +4,8 @@ import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
 import Executer from "../job/executer.js";
 import { createRandomName } from "../utils/helpers.js";
-import { CF_ZONE_STATUS } from "../utils/cf.js";
 import { Network } from "../common/network.js";
+import SSE from "../utils/sse.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -112,9 +112,9 @@ class Service {
     });
 
     //  assign executer
-    Executer.buildAndRun(job, instance, res, req);
+    Executer.buildAndRun(job, instance, null, req);
 
-    // return res.status(202).json({ status: "success", instance, job });
+    return res.status(202).json({ status: "success", instance, job });
   }
   static async getSystemStatus(req, res, next) {
     return res.status(200).json({
