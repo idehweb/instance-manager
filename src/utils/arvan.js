@@ -44,7 +44,9 @@ export default class Arvan {
     if (
       records.find(
         (r) =>
-          (r.name === name || (name === "@" && r.name === domain)) &&
+          (r.name === name ||
+            (name === "@" && r.name === domain) ||
+            r.name === `${name}.${domain}`) &&
           r.type === type
       )
     )

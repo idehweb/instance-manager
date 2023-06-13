@@ -48,9 +48,9 @@ class Service {
     });
 
     //  assign execute manager
-    ExecuteManager.buildAndRun(job, req.instance, res, req);
+    ExecuteManager.buildAndRun(job, req.instance, null, req);
 
-    // return res.status(202).json({ status: "success", job });
+    return res.status(202).json({ status: "success", job });
   }
   static async deleteOne(req, res, next) {
     if (req.instance.status === InstanceStatus.JOB_CREATE)
@@ -63,9 +63,9 @@ class Service {
       instance: req.instance,
     });
     //  assign executer
-    Executer.buildAndRun(job, req.instance, res, req);
+    ExecuteManager.buildAndRun(job, req.instance, null, req);
 
-    // return res.status(202).json({ status: "success", job });
+    return res.status(202).json({ status: "success", job });
   }
   static async createOne(req, res, next) {
     if (!req.body.expiredAt)
@@ -110,8 +110,8 @@ class Service {
       max_attempts: req.body.max_attempts,
     });
 
-    //  assign executer
-    Executer.buildAndRun(job, instance, null, req);
+    //  assign execute manager
+    ExecuteManager.buildAndRun(job, instance, null, req);
 
     return res.status(202).json({ status: "success", instance, job });
   }

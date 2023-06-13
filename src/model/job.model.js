@@ -54,7 +54,7 @@ export const jobSchema = new mongoose.Schema(
     progress_step: {
       type: String,
     },
-    attempt: Number,
+    attempt: { type: Number, default: 1 },
     max_attempts: { type: Number, default: +Global.env.JOB_MAX_ATTEMPTS },
   },
   { timestamps: true }

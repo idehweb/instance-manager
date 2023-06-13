@@ -44,7 +44,9 @@ export default class Cloudflare {
     if (
       records.find(
         (r) =>
-          (r.name === name || (name === "@" && r.name === domain)) &&
+          (r.name === `${name}.${domain}` ||
+            (name === "@" && r.name === domain) ||
+            name === r.name) &&
           r.type === type
       )
     )

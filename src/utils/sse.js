@@ -5,9 +5,13 @@ class SSE {
   }
   #write(data, type) {
     if (!this.res || !this.res.writable) return false;
-    this.res[type === "close" ? "send" : "write"](
-      `${JSON.stringify({ type, data })}\n\n`
-    );
+    this.res.write(`${JSON.stringify({ type, data })}\n\n`);
+    if (type === "close") this.res.end();
+    return true;
+  }
+  #writeHead(headers) {
+    if (!this.res || !this.res.writable) return false;
+    this.res.writeHead(200, headers);
     return true;
   }
   sendData(data) {
@@ -20,12 +24,11 @@ class SSE {
       Connection: "keep-alive",
       "Cache-Control": "no-cache",
     };
-    this.res.writeHead(200, headers);
+    this.#writeHead(headers);
 
     // handle on close
     this.res.on("close", () => {
       // when connection closed
-      console.log("connection closed");
       this.res = null;
     });
 

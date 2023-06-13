@@ -36,11 +36,16 @@ class Service {
       { $match: { operationType: "update", "documentKey._id": req.job._id } },
     ]);
     watch.on("change", (cs) => {
-      const data = cs.updateDescription?.updatedFields;
-
-      // remove log fields
-      delete data.logs;
-      delete data.error;
+      let data = cs.updateDescription?.updatedFields;
+      // remove unneccery fields
+      data = Object.fromEntries(
+        Object.entries({
+          status: data.status,
+          attempt: data.attempt,
+          progress_step: data.progress_step,
+          done_steps: data.done_steps,
+        }).filter(([, v]) => v)
+      );
 
       if (!Object.values(data).length) return;
 

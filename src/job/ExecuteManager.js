@@ -1,9 +1,13 @@
 import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import fs from "fs";
-import { axiosError2String, getPublicPath, wait } from "../utils/helpers.js";
+import {
+  axiosError2String,
+  createRandomName,
+  getPublicPath,
+  wait,
+} from "../utils/helpers.js";
 import { InstanceStatus } from "../model/instance.model.js";
-import Cloudflare from "cloudflare";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
 import exec from "../utils/exec.js";
@@ -12,12 +16,9 @@ import { catchFn } from "../utils/catchAsync.js";
 import CreateExecuter from "./CreateExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
+import { customAlphabet } from "nanoid";
 
 export default class ExecuteManager {
-  static cf = new Cloudflare({
-    email: Global.env.CF_EMAIL,
-    token: Global.env.CF_TOKEN,
-  });
   last_log;
   domainsResult = [];
   constructor(job, instance, res, req) {
@@ -32,10 +33,10 @@ export default class ExecuteManager {
     this.req = req;
 
     // initial executer
-    this.child_executer = new this.#convertJobTypeToChildExecuter()(
+    this.child_executer = new (this.#convertJobTypeToChildExecuter())(
       this.job,
       this.instance,
-      this.#exec.bind(this),
+      this.exec.bind(this),
       this.log.bind(this)
     );
   }
@@ -64,8 +65,8 @@ export default class ExecuteManager {
     console.log(chunk_with_id);
 
     // db log
-    this.job
-      .updateOne({
+    jobModel
+      .findByIdAndUpdate(this.job._id, {
         $push: { logs: chunk },
         ...(isError ? { $set: { error: chunk } } : {}),
       })
@@ -83,15 +84,6 @@ export default class ExecuteManager {
     }
   }
   async execute() {
-    // check attempts
-    if (this.job.attempt >= this.job.max_attempts) {
-      await this.#sync_db(true);
-      await this.clean();
-      this.log("Finish with Error", true);
-      this.sendResultToClient(false);
-      return;
-    }
-
     // create
     let isRun;
     this.log("Start");
@@ -110,10 +102,12 @@ export default class ExecuteManager {
       }
       isRun = true;
     } catch (err) {
-      console.log(err);
+      console.log("$$execute error$$ :", err);
       isRun = false;
     }
     if (!isRun) {
+      const isThereChance = await this.#checkAttempts();
+      if (!isThereChance) return;
       // failed
       this.job = {
         ...(
@@ -161,6 +155,15 @@ export default class ExecuteManager {
     );
     this.res.status(code).json(data);
   }
+  async #checkAttempts() {
+    // check attempts
+    if (this.job.attempt < this.job.max_attempts) return true;
+    await this.#sync_db(true);
+    await this.clean();
+    this.log("Finish with Error", true);
+    this.sendResultToClient(false);
+    return false;
+  }
   async #sync_db(isError = false) {
     // instance status , active , domains
     let set_body = {},
@@ -169,7 +172,7 @@ export default class ExecuteManager {
       if (isError) {
         addFields_body = {
           status: InstanceStatus.JOB_ERROR,
-          name: { $concat: ["$name", "-errored"] },
+          name: { $concat: ["$name", `-errored-${createRandomName(8)}`] },
           old_name: "$name",
           active: false,
         };
@@ -185,7 +188,7 @@ export default class ExecuteManager {
     } else if (this.job.type === JobType.DELETE && !isError) {
       addFields_body = {
         status: InstanceStatus.DELETED,
-        name: { $concat: ["$name", "-deleted"] },
+        name: { $concat: ["$name", `-deleted-${createRandomName(8)}`] },
         old_name: "$name",
         active: false,
       };
@@ -232,9 +235,13 @@ export default class ExecuteManager {
       filter: true,
     }
   ) {
-    stack = filter
-      ? stack.filter((step) => !this.job.done_steps.includes(step))
-      : stack;
+    stack = [
+      ...new Set(
+        filter
+          ? stack.filter((step) => !this.job.done_steps.includes(step))
+          : stack
+      ),
+    ];
 
     for (const step of stack) {
       this.log(`Execute Stack step: ${step}`);
@@ -252,8 +259,11 @@ export default class ExecuteManager {
             },
           })
         : fn;
-      await myFn();
+      await myFn.call(executer);
     }
+
+    // set db step
+    if (update_step) await this.#updateJobStep(null);
   }
 
   async #create_instance() {
@@ -264,9 +274,16 @@ export default class ExecuteManager {
       JobSteps.RESTORE_DB,
       JobSteps.SYNC_DB,
     ].filter((step) => {
-      if (Global.env.isPro) return true;
-      if (step == JobSteps.COPY_STATIC || step === JobSteps.CREATE_SERVICE)
-        return false;
+      if (
+        Global.env.isPro ||
+        ![
+          JobSteps.COPY_STATIC,
+          JobSteps.CREATE_SERVICE,
+          JobSteps.RESTORE_DB,
+        ].includes(step)
+      )
+        return true;
+      return false;
     });
 
     // execute
@@ -334,7 +351,7 @@ export default class ExecuteManager {
 
     await this.#execute_stack(stack);
   }
-  #exec(cmd) {
+  exec(cmd) {
     return exec(this.remote.autoDiagnostic(cmd), {
       onLog: (msg, isError) => {
         this.log(msg, false, isError, true);
@@ -351,7 +368,7 @@ export default class ExecuteManager {
     ].filter((step) => {
       if (
         Global.env.isLocal &&
-        [JobSteps.CDN_UNREGISTER, JobSteps.REMOVE_SERVICE].includes(step)
+        [JobSteps.REMOVE_SERVICE, JobSteps.REMOVE_STATIC].includes(step)
       )
         return false;
       return true;
@@ -361,7 +378,7 @@ export default class ExecuteManager {
       executer: new DeleteExecuter(
         this.job,
         this.instance,
-        this.#exec.bind(this),
+        this.exec.bind(this),
         this.log.bind(this)
       ),
       filter: false,
@@ -369,12 +386,17 @@ export default class ExecuteManager {
     });
   }
   async #updateJobStep(progress_step) {
+    // no progress
+    if (progress_step === this.job.progress_step) return;
+
     this.job = {
       ...(
         await jobModel.findByIdAndUpdate(
           this.job._id,
           {
-            $set: { progress_step },
+            ...(progress_step === null
+              ? { $unset: { progress_step: "" } }
+              : { $set: { progress_step } }),
             ...(this.job.progress_step
               ? { $addToSet: { done_steps: this.job.progress_step } }
               : {}),

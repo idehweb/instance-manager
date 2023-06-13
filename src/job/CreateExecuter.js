@@ -14,6 +14,7 @@ export default class CreateExecuter extends BaseExecuter {
     super(job, instance, exec, log);
   }
   async copy_static() {
+    console.log("## COPY_STATIC ##", this.exec, this.log);
     // create public
     const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
     await this.exec(createFolders);

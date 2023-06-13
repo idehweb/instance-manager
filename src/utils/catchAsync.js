@@ -5,7 +5,7 @@ export function catchFn(fn, { self, onError }) {
     } catch (err) {
       if (onError) {
         console.log("#CatchError", err);
-        return onError(err);
+        return onError.call(self ?? this, err);
       }
     }
   };
