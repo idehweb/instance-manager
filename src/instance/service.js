@@ -2,10 +2,9 @@ import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import { JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
-import Executer from "../job/executer.js";
+import ExecuteManager from "../job/ExecuteManager.js";
 import { createRandomName } from "../utils/helpers.js";
 import { Network } from "../common/network.js";
-import SSE from "../utils/sse.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -48,8 +47,8 @@ class Service {
       update_query: req.body,
     });
 
-    //  assign executer
-    Executer.buildAndRun(job, req.instance, res, req);
+    //  assign execute manager
+    ExecuteManager.buildAndRun(job, req.instance, res, req);
 
     // return res.status(202).json({ status: "success", job });
   }

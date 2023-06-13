@@ -3,10 +3,15 @@ class SSE {
     this.res = res;
     this.#registerClient();
   }
-  sendData(data) {
+  #write(data, type) {
     if (!this.res || !this.res.writable) return false;
-    this.res.write(`${JSON.stringify({ type: "data", data })}\n\n`);
+    this.res[type === "close" ? "send" : "write"](
+      `${JSON.stringify({ type, data })}\n\n`
+    );
     return true;
+  }
+  sendData(data) {
+    return this.#write(data, "data");
   }
   #registerClient() {
     // set sse headers
@@ -32,6 +37,9 @@ class SSE {
         separator: "\n\n",
       })}\n\n`
     );
+  }
+  close() {
+    return this.#write({ message: "connection closed" }, "close");
   }
 }
 

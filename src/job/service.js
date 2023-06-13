@@ -1,5 +1,5 @@
 import SSE from "../utils/sse.js";
-import { jobModel } from "../model/job.model.js";
+import { JobStatus, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 
 class Service {
@@ -19,6 +19,19 @@ class Service {
 
   static async getSSE(req, res) {
     const sse = new SSE(res);
+
+    // send live status
+    sse.sendData({
+      status: req.job.status,
+      attempt: req.job.attempt,
+      done_steps: req.job.done_steps,
+      progress_step: req.job.progress_step,
+    });
+
+    if (req.job.status !== JobStatus.IN_PROGRESS) {
+      sse.close();
+      return;
+    }
     const watch = jobModel.watch([
       { $match: { operationType: "update", "documentKey._id": req.job._id } },
     ]);
@@ -31,8 +44,14 @@ class Service {
 
       if (!Object.values(data).length) return;
 
+      // connection lost
       const canSendData = sse.sendData(data);
-      if (!canSendData) watch.close();
+
+      // job is done
+      const doneJob = data.status && data.status !== JobStatus.IN_PROGRESS;
+
+      if (!canSendData || doneJob) watch.close();
+      if (doneJob) sse.close();
     });
   }
 }

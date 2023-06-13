@@ -1,6 +1,22 @@
 import mongoose, { mongo } from "mongoose";
 import { Global } from "../global.js";
 
+export const JobSteps = {
+  CDN_REGISTER: "cdn-register",
+  CREATE_SERVICE: "create-service",
+  COPY_STATIC: "copy-static",
+  REMOVE_STATIC: "remove-static",
+  RESTORE_DB: "restore-db",
+  REMOVE_DB: "remove-db",
+  BACKUP_DB: "backup-db",
+  BACKUP_STATIC: "backup-static",
+  REMOVE_SERVICE: "remove-service",
+  CDN_UNREGISTER: "cdn-unregister",
+  SYNC_DB: "sync-db",
+  CHANGE_STATUS: "change-status",
+  CHANGE_DOMAINS: "change-domains",
+};
+
 export const JobStatus = {
   IN_PROGRESS: "in-progress",
   SUCCESS: "success",
@@ -31,6 +47,13 @@ export const jobSchema = new mongoose.Schema(
     status: { type: String, default: JobStatus.IN_PROGRESS },
     error: { type: mongoose.Schema.Types.Mixed },
     logs: { type: [String], default: undefined },
+    done_steps: {
+      type: [String],
+      default: [],
+    },
+    progress_step: {
+      type: String,
+    },
     attempt: Number,
     max_attempts: { type: Number, default: +Global.env.JOB_MAX_ATTEMPTS },
   },
