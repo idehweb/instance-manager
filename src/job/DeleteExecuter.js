@@ -4,7 +4,7 @@ import network, { NetworkCDN } from "../common/network.js";
 import { getPublicPath } from "../utils/helpers.js";
 import { Remote } from "../utils/remote.js";
 import { InstanceRegion } from "../model/instance.model.js";
-
+import { join } from "path";
 export default class DeleteExecuter extends BaseExecuter {
   constructor(job, instance, exec, log) {
     super(job, instance, exec, log);

@@ -9,6 +9,7 @@ import {
   errorHandler,
   notFoundHandler,
 } from "./src/common/handler.exception.js";
+import SSE from "./src/utils/sse.js";
 
 const app = express();
 
@@ -16,6 +17,15 @@ const app = express();
 app.use(bodyParser.json());
 app.use(morgan("dev"));
 app.use(cors());
+
+// sse test
+app.get("/sse", (req, res) => {
+  const sse = new SSE(res);
+  const t = setInterval(() => {
+    const canSend = sse.sendData("Hello " + Math.floor(Math.random() * 10));
+    if (!canSend) clearInterval(t);
+  }, 1000);
+});
 
 // guard
 // app.use(hostGuard);
