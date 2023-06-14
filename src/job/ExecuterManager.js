@@ -250,7 +250,7 @@ export default class ExecuteManager {
       const fn = this.#convertJobStepToFunc(step, executer);
       const myFn = ignoreError
         ? catchFn(fn, {
-            self: this,
+            self: executer,
             onError(err) {
               this.log(`Error step ${step} \n` + axiosError2String(err));
             },
