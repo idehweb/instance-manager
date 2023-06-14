@@ -47,6 +47,9 @@ class Service {
       update_query: req.body,
     });
 
+    // link instance to job
+    await req.instance.updateOne({ $push: { jobs: job._id } });
+
     //  assign execute manager
     ExecuterManager.buildAndRun(job, req.instance, null, req);
 
@@ -62,6 +65,10 @@ class Service {
       type: JobType.DELETE,
       instance: req.instance,
     });
+
+    // link instance to job
+    await req.instance.updateOne({ $push: { jobs: job._id } });
+
     //  assign executer
     ExecuterManager.buildAndRun(job, req.instance, null, req);
 
@@ -109,6 +116,9 @@ class Service {
       type: JobType.CREATE,
       max_attempts: req.body.max_attempts,
     });
+
+    // link instance to job
+    await instance.updateOne({ $push: { jobs: job._id } });
 
     //  assign execute manager
     ExecuterManager.buildAndRun(job, instance, null, req);

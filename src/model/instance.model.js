@@ -40,6 +40,7 @@ export const instanceSchema = new mongoose.Schema(
     region: { type: String, required: true },
     primary_domain: { type: String, required: true },
     active: { type: Boolean, default: true },
+    jobs: { type: [mongoose.Schema.Types.ObjectId] },
     expiredAt: { type: Date, required: true },
   },
   { timestamps: true }
