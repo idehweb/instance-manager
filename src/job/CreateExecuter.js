@@ -6,12 +6,13 @@ import {
 } from "../utils/helpers.js";
 import { Service as DockerService } from "../docker/service.js";
 import network, { NetworkCDN } from "../common/network.js";
-import { BaseExecuter, Global } from "../global.js";
+import { Global } from "../global.js";
 import { InstanceRegion } from "../model/instance.model.js";
+import { BaseExecuter } from "./BaseExecuter.js";
 
 export default class CreateExecuter extends BaseExecuter {
-  constructor(job, instance, exec, log) {
-    super(job, instance, exec, log);
+  constructor(job, instance, log_file) {
+    super(job, instance, log_file);
   }
   async copy_static() {
     // create public
