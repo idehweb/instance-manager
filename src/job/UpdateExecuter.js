@@ -1,10 +1,10 @@
-import { BaseExecuter } from "../global.js";
 import { Service as DockerService } from "../docker/service.js";
 import { InstanceRegion, InstanceStatus } from "../model/instance.model.js";
 import network, { NetworkCDN } from "../common/network.js";
+import { BaseExecuter } from "./BaseExecuter.js";
 export default class UpdateExecuter extends BaseExecuter {
-  constructor(job, instance, exec, log) {
-    super(job, instance, exec, log);
+  constructor(job, instance, log_file) {
+    super(job, instance, log_file);
   }
 
   async changeStatus() {

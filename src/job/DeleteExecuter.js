@@ -1,14 +1,14 @@
-import { BaseExecuter, Global } from "../global.js";
+import { Global } from "../global.js";
 import { Service as DockerService } from "../docker/service.js";
 import network, { NetworkCDN } from "../common/network.js";
 import { getPublicPath } from "../utils/helpers.js";
 import { Remote } from "../utils/remote.js";
 import { InstanceRegion } from "../model/instance.model.js";
 import { join } from "path";
+import { BaseExecuter } from "./BaseExecuter.js";
 export default class DeleteExecuter extends BaseExecuter {
-  constructor(job, instance, exec, log) {
-    super(job, instance, exec, log);
-    this.remote = new Remote(this.instance.region);
+  constructor(job, instance, log_file) {
+    super(job, instance, log_file);
   }
 
   async service_remove() {

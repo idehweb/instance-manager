@@ -10,13 +10,11 @@ import {
 import { InstanceStatus } from "../model/instance.model.js";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
-import exec from "../utils/exec.js";
 import { Remote } from "../utils/remote.js";
 import { catchFn } from "../utils/catchAsync.js";
 import CreateExecuter from "./CreateExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
-import { customAlphabet } from "nanoid";
 
 export default class ExecuteManager {
   last_log;
@@ -33,11 +31,10 @@ export default class ExecuteManager {
     this.req = req;
 
     // initial executer
-    this.child_executer = new (this.#convertJobTypeToChildExecuter())(
+    this.executer = new (this.#convertJobTypeToExecuter())(
       this.job,
       this.instance,
-      this.exec.bind(this),
-      this.log.bind(this)
+      this.log_file
     );
   }
   static buildAndRun(job, instance, res, req) {
@@ -231,7 +228,7 @@ export default class ExecuteManager {
     { ignoreError, executer, update_step, filter } = {
       update_step: true,
       ignoreError: false,
-      executer: this.child_executer,
+      executer: this.executer,
       filter: true,
     }
   ) {
@@ -351,13 +348,6 @@ export default class ExecuteManager {
 
     await this.#execute_stack(stack);
   }
-  exec(cmd) {
-    return exec(this.remote.autoDiagnostic(cmd), {
-      onLog: (msg, isError) => {
-        this.log(msg, false, isError, true);
-      },
-    });
-  }
   async clean() {
     if (this.job.type != JobType.CREATE) return;
     const stack = [
@@ -375,12 +365,7 @@ export default class ExecuteManager {
     });
     await this.#execute_stack(stack, {
       ignoreError: true,
-      executer: new DeleteExecuter(
-        this.job,
-        this.instance,
-        this.exec.bind(this),
-        this.log.bind(this)
-      ),
+      executer: new DeleteExecuter(this.job, this.instance, this.log_file),
       filter: false,
       update_step: true,
     });
@@ -406,7 +391,7 @@ export default class ExecuteManager {
       )._doc,
     };
   }
-  #convertJobStepToFunc(step, executer = this.child_executer) {
+  #convertJobStepToFunc(step, executer = this.executer) {
     switch (step) {
       case JobSteps.COPY_STATIC:
         return executer.copy_static;
@@ -436,7 +421,7 @@ export default class ExecuteManager {
         return this.#sync_db;
     }
   }
-  #convertJobTypeToChildExecuter() {
+  #convertJobTypeToExecuter() {
     switch (this.job.type) {
       case JobType.CREATE:
         return CreateExecuter;

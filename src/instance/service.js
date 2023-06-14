@@ -2,7 +2,7 @@ import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import { JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
-import ExecuteManager from "../job/ExecuteManager.js";
+import ExecuterManager from "../job/ExecuterManager.js";
 import { createRandomName } from "../utils/helpers.js";
 import { Network } from "../common/network.js";
 
@@ -48,7 +48,7 @@ class Service {
     });
 
     //  assign execute manager
-    ExecuteManager.buildAndRun(job, req.instance, null, req);
+    ExecuterManager.buildAndRun(job, req.instance, null, req);
 
     return res.status(202).json({ status: "success", job });
   }
@@ -63,7 +63,7 @@ class Service {
       instance: req.instance,
     });
     //  assign executer
-    ExecuteManager.buildAndRun(job, req.instance, null, req);
+    ExecuterManager.buildAndRun(job, req.instance, null, req);
 
     return res.status(202).json({ status: "success", job });
   }
@@ -111,7 +111,7 @@ class Service {
     });
 
     //  assign execute manager
-    ExecuteManager.buildAndRun(job, instance, null, req);
+    ExecuterManager.buildAndRun(job, instance, null, req);
 
     return res.status(202).json({ status: "success", instance, job });
   }
