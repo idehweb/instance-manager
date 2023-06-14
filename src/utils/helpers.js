@@ -8,7 +8,7 @@ export function getPublicPath(path, remote) {
   console.log(
     "get public path : ",
     remote,
-    remote.isInLocal(),
+    remote?.isInLocal(),
     remote && !remote.isInLocal(),
     Global.env.REMOTE_PUBLIC_PATH,
     Global.env.PUBLIC_PATH
