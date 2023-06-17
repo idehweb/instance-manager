@@ -5,14 +5,6 @@ export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
 );
 export function getPublicPath(path, remote) {
-  console.log(
-    "get public path : ",
-    remote,
-    remote?.isInLocal(),
-    remote && !remote.isInLocal(),
-    Global.env.REMOTE_PUBLIC_PATH,
-    Global.env.PUBLIC_PATH
-  );
   return join(
     remote && !remote.isInLocal()
       ? Global.env.REMOTE_PUBLIC_PATH

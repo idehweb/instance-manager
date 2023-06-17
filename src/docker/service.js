@@ -6,13 +6,13 @@ export class Service {
   static getCreateServiceCommand(
     dockerServiceName,
     subDomainName,
-    { replica, memory, cpu, image, region }
+    { replica, memory, cpu, image, region,site_name }
   ) {
     // create docker service
     const dockerCreate =
       `docker service create --hostname ${dockerServiceName} --name ${dockerServiceName} -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="${
         Global.env.MONGO_URL
-      }" -e dbName=${dockerServiceName} -e SERVER_PORT=3000 -e BASE_URL="https://${Network.getPrimaryDomain(
+      }" -e dbName=${dockerServiceName} -e SITE_NAME=${site_name} -e SERVER_PORT=3000 -e BASE_URL="https://${Network.getPrimaryDomain(
         { name: subDomainName, region }
       )}" -e SHOP_URL="https://${Network.getPrimaryDomain({
         name: subDomainName,

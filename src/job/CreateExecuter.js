@@ -42,6 +42,7 @@ export default class CreateExecuter extends BaseExecuter {
         image: this.instance.image,
         cpu: this.instance.cpu,
         region: this.instance.region,
+        site_name: this.instance.site_name,
       }
     );
     // create if not exist

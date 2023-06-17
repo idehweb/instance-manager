@@ -28,6 +28,7 @@ export const instanceSchema = new mongoose.Schema(
     replica: { type: Number, required: true },
     status: { type: String, default: InstanceStatus.JOB_CREATE },
     image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
+    site_name : {type : String , required:true},
     pattern: { type: String, required: true },
     domains: [
       {
