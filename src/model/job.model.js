@@ -15,6 +15,9 @@ export const JobSteps = {
   SYNC_DB: "sync-db",
   CHANGE_STATUS: "change-status",
   CHANGE_DOMAINS: "change-domains",
+  CHANGE_IMAGE: "change-image",
+  CHANGE_CDN_PRIMARY_DOMAIN: "change-cdn-primary-domain",
+  CHANGE_SERVICE_PRIMARY_DOMAIN: "change-service-primary-domain",
 };
 
 export const JobStatus = {

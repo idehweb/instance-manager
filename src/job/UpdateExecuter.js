@@ -1,7 +1,14 @@
+import * as fs from "fs";
 import { Service as DockerService } from "../docker/service.js";
 import { InstanceRegion, InstanceStatus } from "../model/instance.model.js";
-import network, { NetworkCDN } from "../common/network.js";
+import network, { Network, NetworkCDN } from "../common/network.js";
 import { BaseExecuter } from "./BaseExecuter.js";
+import {
+  getNginxPublicPath,
+  getScripts,
+  getWorkerConfPath,
+  isExist,
+} from "../utils/helpers.js";
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
     super(job, instance, log_file);
@@ -63,4 +70,57 @@ export default class UpdateExecuter extends BaseExecuter {
     );
     this.instance.new_domains = new_domains;
   }
+
+  async changeImage() {}
+
+  async createCertificate() {
+    const primary_domain = this.job.update_query.primary_domain;
+    const certPath = getWorkerConfPath("nginx", "site_certs", primary_domain);
+
+    try {
+      await this.exec(`${getScripts("exist")} ${certPath}`);
+      // cert exists before
+      return;
+    } catch (err) {}
+
+    // remove record
+    await network.rmRecord(this.instance.region, primary_domain, { name: "@" });
+
+    // add record
+    await network.addRecord(this.instance.region, primary_domain, {
+      type: "A",
+      name: "@",
+      content: Network.getIP(this.instance.region),
+      isProxy: false,
+    });
+
+    // run certbot : domain , result path , root path
+    await this.exec(
+      `${getScripts(
+        "certbot"
+      )} ${primary_domain} ${certPath} ${getNginxPublicPath(".")}`
+    );
+  }
+  async changeCDNPrimaryDomain() {}
+  async changeDockerPrimaryDomain() {
+    const primary_domain = this.job.update_query.primary_domain;
+    const instance_cmd = DockerService.getUpdateServiceCommand(
+      this.instance_name,
+      {
+        "env-add": [
+          `BASE_URL=https://${primary_domain}`,
+          `SHOP_URL=https://${primary_domain}/`,
+        ],
+      }
+    );
+
+    await this.exec(
+      `${getScripts("instance-nginx-conf")} ${primary_domain} ${
+        this.instance_name
+      } ${getWorkerConfPath("nginx", "sites-available")}`
+    );
+
+    await this.exec(instance_cmd);
+  }
+  async changeProxyPrimaryDomain() {}
 }

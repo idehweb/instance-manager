@@ -181,6 +181,8 @@ export default class ExecuteManager {
         ? InstanceStatus.JOB_ERROR
         : this.job.update_query.status;
       set_body.domains = this.instance.new_domains;
+      set_body.image = this.job.update_query.image;
+      set_body.primary_domain = this.job.update_query.primary_domain;
     } else if (this.job.type === JobType.DELETE && !isError) {
       addFields_body = {
         status: InstanceStatus.DELETED,
@@ -294,6 +296,7 @@ export default class ExecuteManager {
     status,
     name,
     replica,
+    primary_domain,
   }) {
     const stack = [];
     // change status
@@ -312,8 +315,15 @@ export default class ExecuteManager {
       stack.push(JobSteps.CHANGE_DOMAINS);
     }
 
-    // change resource
-    if (cpu || memory || image || replica) {
+    // change image version
+    else if (image) {
+      stack.push(JobSteps.CHANGE_IMAGE);
+    }
+
+    // change primary domain
+    else if (primary_domain) {
+      stack.push(JobSteps.CHANGE_CDN_PRIMARY_DOMAIN);
+      stack.push(JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN);
     }
 
     // sync db
@@ -418,6 +428,12 @@ export default class ExecuteManager {
         return executer.rm_static;
       case JobSteps.SYNC_DB:
         return this.#sync_db;
+      case JobSteps.CHANGE_IMAGE:
+        return executer.changeImage;
+      case JobSteps.CHANGE_CDN_PRIMARY_DOMAIN:
+        return executer.changeCDNPrimaryDomain;
+      case JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN:
+        return executer.changeDockerPrimaryDomain;
     }
   }
   #convertJobTypeToExecuter() {

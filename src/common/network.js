@@ -17,8 +17,14 @@ export class Network {
     if (region === InstanceRegion.GERMAN)
       return `${name}.${Global.env.CF_DOMAIN}`;
   }
+  static getIP(region) {
+    if (region === InstanceRegion.IRAN) return Global.env.ARVAN_DOMAIN;
+    return Global.env.CF_DOMAIN;
+  }
   #getCDN(cdn_name) {
-    return cdn_name === NetworkCDN.CF ? this.#cf : this.#arvan;
+    if (cdn_name === NetworkCDN.CF || cdn_name === InstanceRegion.GERMAN)
+      return this.#cf;
+    return this.#arvan;
   }
   #getSubMain(primary_domain) {
     const [, subD, domain] = /^(.*)\.([^.]+\.[^.]+)$/.exec(primary_domain);
@@ -105,6 +111,10 @@ export class Network {
     );
     await cdn.removeRecord(domain, subdomain);
   }
+
+  async changePrimaryDomain(cdn_name) {}
+  async addRecord(cdnOrRegion, domain, data) {}
+  async rmRecord(cdnOrRegion, domain, data) {}
 }
 
 const network = new Network();

@@ -6,7 +6,7 @@ export class Service {
   static getCreateServiceCommand(
     dockerServiceName,
     subDomainName,
-    { replica, memory, cpu, image, region,site_name }
+    { replica, memory, cpu, image, region, site_name }
   ) {
     // create docker service
     const dockerCreate =
@@ -33,7 +33,11 @@ export class Service {
   }
   static getUpdateServiceCommand(name, configs) {
     return `docker service update ${Object.entries(configs)
-      .map(([k, v]) => `--${k} ${v}`)
+      .map(([k, v]) =>
+        Array.isArray(v)
+          ? `${v.map((sub_v) => `--${k} ${sub_v}`).join(" ")}`
+          : `--${k} ${v}`
+      )
       .join(" ")} ${name}`;
   }
 }
