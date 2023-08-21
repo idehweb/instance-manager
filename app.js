@@ -10,6 +10,7 @@ import {
   notFoundHandler,
 } from "./src/common/handler.exception.js";
 import SSE from "./src/utils/sse.js";
+import wsRouter from "./src/ws/controller.js";
 
 const app = express();
 
@@ -29,11 +30,12 @@ app.get("/sse", (req, res) => {
 
 // guard
 // app.use(hostGuard);
-app.use(passGuard);
+// app.use(passGuard);
 
 // routes
 app.use("/api/v1/instance", instanceRouter);
 app.use("/api/v1/job", jobRouter);
+app.use("/api/v1", wsRouter);
 
 // not found url
 app.use(notFoundHandler);
