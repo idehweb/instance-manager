@@ -3,25 +3,51 @@ import { Global } from "../global.js";
 import { authWithToken } from "./auth.js";
 import { DisconnectError } from "./error.js";
 
+const confMap = new Map();
+
 export default function registerWs(io) {
   io.use(authWithToken);
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log(socket.id, "connected");
     socket.join(socket.instance.region);
-  });
 
-  io.on("disconnect", (socket) => {
-    console.log(socket.id, "disconnect");
-    const rooms = [...socket.rooms].slice(1);
-    for (const room of rooms) {
-      socket.leave(room);
-    }
+    socket.on("log", onLog);
+    socket.on("command", onCommand);
   });
 
   io.on("error", (err) => {
     console.log("error", err);
   });
+}
+
+function onLog(data) {
+  const { id, log, error } = data;
+  const conf = confMap.get(id);
+  if (!conf) return;
+
+  if (log) conf.logger.log(log);
+  if (error) conf.logger.error(error);
+}
+
+function onCommand(data) {
+  const { code, error, id } = data;
+  const conf = confMap.get(id);
+  if (!conf) return;
+
+  // send response
+  if (code === 0) conf.resolve();
+  if (code !== 0) conf.reject(error ?? code);
+
+  // remove conf
+  confMap.delete(id);
+}
+
+async function onDisconnect(id, reject) {
+  await setTimeout(5 * 60 * 1000);
+  reject(new DisconnectError("client disconnect"));
+  // remove conf
+  confMap.delete(id);
 }
 
 export async function runRemoteCmd(region, cmd, logger = console) {
@@ -35,31 +61,7 @@ export async function runRemoteCmd(region, cmd, logger = console) {
   targetSocket.emit("command", { id: cmdId, cmd });
 
   return await new Promise((resolve, reject) => {
-    const onLog = (data) => {
-      if (data.id !== cmdId) return;
-      if (data.log) logger.log(data.log);
-      if (data.error) logger.error(data.error);
-    };
-    const onResponse = (data) => {
-      if (data.id !== cmdId) return;
-
-      // remove listeners
-      targetSocket.removeListener("command", onResponse);
-      targetSocket.removeListener("log", onLog);
-
-      // send response
-      const { code, error } = data;
-      if (code === 0) resolve();
-      if (code !== 0) reject(error ?? code);
-    };
-
-    targetSocket.on("command", onResponse);
-    targetSocket.on("log", onLog);
-
-    // disconnect
-    targetSocket.on("disconnect", async () => {
-      await setTimeout(5 * 60 * 1000);
-      reject(new DisconnectError("client disconnect"));
-    });
+    runMap.set(cmdId, { logger, resolve, reject });
+    targetSocket.on("disconnect", onDisconnect.bind(null, cmdId, reject));
   });
 }
