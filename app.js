@@ -4,7 +4,7 @@ import morgan from "morgan";
 import cors from "cors";
 import instanceRouter from "./src/instance/controller.js";
 import jobRouter from "./src/job/controller.js";
-import { hostGuard, passGuard } from "./src/common/auth.guard.js";
+import { tokenGuard } from "./src/common/auth.guard.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -30,7 +30,7 @@ app.get("/sse", (req, res) => {
 
 // guard
 // app.use(hostGuard);
-// app.use(passGuard);
+app.use(tokenGuard);
 
 // routes
 app.use("/api/v1/instance", instanceRouter);

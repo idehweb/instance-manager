@@ -1,8 +1,12 @@
+import jwt from "jsonwebtoken";
 import { Global } from "../global.js";
 import adminModel from "../model/admin.model.js";
 import customerModel from "../model/customer.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import { jobModel } from "../model/job.model.js";
+import axios from "axios";
+import { axiosError2String } from "../utils/helpers.js";
+import { Types } from "mongoose";
 
 export function hostGuard(req, res, next) {
   const knownHosts = Array.isArray(Global.env.KNOWN_HOSTS)
@@ -16,6 +20,37 @@ export function hostGuard(req, res, next) {
   return res
     .status(403)
     .json({ status: "error", message: "forbidden host", host: req.hostname });
+}
+
+export async function tokenGuard(req, res, next) {
+  try {
+    const token =
+      req.headers.authorization?.split("Bearer ")?.[1] ?? req.cookies?.auth;
+    if (!token) return res.status(401).send("unAuthorization");
+    const user = jwt.decode(token, { complete: true, json: true });
+    if (!user) return res.status(401).send("unAuthorization");
+    const { data } = await axios.post(
+      Global.env.AUTH_API,
+      {
+        userType: user.payload.type,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    req.user = data.data;
+    req[user.payload.type] = req.user;
+
+    req.user.id = req.user._id;
+    if (req.user._id) req.user._id = new Types.ObjectId(req.user._id);
+
+    return next();
+  } catch (err) {
+    console.error(axiosError2String(err));
+    return res.status(401).send("unAuthorization , from auth api");
+  }
 }
 
 export async function passGuard(req, res, next) {
