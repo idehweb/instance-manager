@@ -5,6 +5,20 @@ import { DisconnectError } from "./error.js";
 
 const confMap = new Map();
 
+function getIP(socket) {
+  const ip = socket.handshake.address.split(":").pop();
+  return ip;
+}
+
+function addIP(socket) {
+  if (!Global.ips[socket.instance.region])
+    Global.ips[socket.instance.region] = new Set();
+  Global.ips[socket.instance.region].add(getIP(socket));
+}
+function rmIP(socket) {
+  Global.ips[socket.instance.region].delete(getIP(socket));
+}
+
 export default function registerWs(io) {
   io.use(authWithToken);
 
@@ -12,8 +26,12 @@ export default function registerWs(io) {
     console.log(socket.id, "connected");
     socket.join(socket.instance.region);
 
+    // add ip to global
+    addIP(socket);
+
     socket.on("log", onLog);
     socket.on("command", onCommand);
+    socket.on("disconnect", disconnectGlobal.bind(null, socket));
   });
 
   io.on("error", (err) => {
@@ -41,6 +59,11 @@ function onCommand(data) {
 
   // remove conf
   confMap.delete(id);
+}
+
+function disconnectGlobal(socket) {
+  // rm ip
+  rmIP(socket);
 }
 
 async function onDisconnect(id, reject) {

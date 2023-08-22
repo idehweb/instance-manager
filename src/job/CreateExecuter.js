@@ -5,7 +5,7 @@ import {
   wait,
 } from "../utils/helpers.js";
 import { Service as DockerService } from "../docker/service.js";
-import network, { NetworkCDN } from "../common/network.js";
+import network, { Network, NetworkCDN } from "../common/network.js";
 import { Global } from "../global.js";
 import { InstanceRegion } from "../model/instance.model.js";
 import { BaseExecuter } from "./BaseExecuter.js";
@@ -14,10 +14,13 @@ export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
     super(job, instance, log_file);
   }
+
   async copy_static() {
     // create public
     const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
     await this.exec(createFolders);
+
+    if (!this.instance.pattern) return;
 
     // copy static files
     const copyStatics = `cp -r ${getInstanceStaticPath(
@@ -26,6 +29,7 @@ export default class CreateExecuter extends BaseExecuter {
     )} /var/instances/${this.instance_name}/public`;
     await this.exec(copyStatics);
   }
+
   async docker_create() {
     // check docker services
     const dockerServiceLs = `docker service ls --format "{{.Name}} {{.Replicas}}"`;
@@ -63,16 +67,22 @@ export default class CreateExecuter extends BaseExecuter {
       await this.exec(dockerCreateCmd);
     }
   }
+
   async register_cdn() {
+    const ips = [...Global.ips[this.instance.region]];
     // ns record
     try {
       this.log("Connect Instance Networks");
       this.domainsResult = await network.connectInstance(
-        this.instance.region === InstanceRegion.IRAN
-          ? NetworkCDN.ARVAN
-          : NetworkCDN.CF,
-        this.instance.primary_domain,
-        this.instance.domains
+        Network.region2CDN(this.instance.region),
+        {
+          defaultDomain: Network.getDefaultDomain({
+            name: this.instance_name,
+            region: this.instance.region,
+          }),
+          logger: { log: this.log },
+          content: ips[0],
+        }
       );
     } catch (err) {
       this.log("Axios Error in DNS:\n" + axiosError2String(err));
@@ -80,9 +90,11 @@ export default class CreateExecuter extends BaseExecuter {
     }
   }
   async restore_demo() {
+    if (!this.instance.pattern) return;
+
     this.log(`initial db base on : ${this.instance.pattern}`);
     const cmd = `mongorestore --db ${this.instance_name} ${
-      Global.env.MONGO_URL
+      Global.env.MONGO_REMOTE_URL
     } ${getInstanceDbPath(this.instance, this.remote)}`;
     await this.exec(cmd);
   }

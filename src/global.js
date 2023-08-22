@@ -1,1 +1,3 @@
-export const Global = {};
+export const Global = {
+  ips: {},
+};

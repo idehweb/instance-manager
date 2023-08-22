@@ -80,7 +80,7 @@ export default class Cloudflare {
     return name_servers;
   }
 
-  async removeRecord(domain, record_name) {
+  async removeRecord(domain, { name, type, content }) {
     const records = await this.getRecords(domain);
     const myRecordId = records.find(
       (r) => r.name === `${record_name}.${domain}`

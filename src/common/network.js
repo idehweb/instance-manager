@@ -11,7 +11,19 @@ export const NetworkCDN = {
 export class Network {
   #cf = new Cloudflare();
   #arvan = new Arvan();
-  static getPrimaryDomain({ name, region }) {
+  static region2CDN(region) {
+    switch (region) {
+      case InstanceRegion.IRAN:
+        return NetworkCDN.ARVAN;
+
+      case InstanceRegion.GERMAN:
+        return NetworkCDN.CF;
+
+      default:
+        return NetworkCDN.ARVAN;
+    }
+  }
+  static getDefaultDomain({ name, region }) {
     if (region === InstanceRegion.IRAN)
       return `${name}.${Global.env.ARVAN_DOMAIN}`;
     if (region === InstanceRegion.GERMAN)
@@ -31,12 +43,23 @@ export class Network {
     return { subdomain: subD, domain };
   }
 
-  async connectInstance(cdn_name, primary_domain, domains = []) {
+  async connectInstance(
+    cdn_name,
+    { port = 80, content, logger, domains = [], defaultDomain }
+  ) {
     const cdn = this.#getCDN(cdn_name);
-    const { subdomain, domain } = this.#getSubMain(primary_domain);
+    const { subdomain, domain } = this.#getSubMain(defaultDomain);
 
     // 1. create A record
-    await cdn.addRecord(domain, { name: subdomain, type: "A", isProxy: true });
+    await cdn.addRecord(domain, {
+      name: subdomain,
+      type: "A",
+      isProxy: true,
+      port,
+      content,
+    });
+
+    logger.log(`add ${defaultDomain} record`);
 
     // 2. register domains
     domains = await Promise.all(
@@ -49,25 +72,36 @@ export class Network {
         }))
     );
 
-    // 3. connect custom domain into primary domain
+    logger.log(`register all domains in ${cdn_name}`);
+
+    // 3. add A record into domains
     await Promise.all(
       domains.map(async ({ content }) =>
         cdn.addRecord(content, {
-          content: primary_domain,
-          type: "CNAME",
-          isProxy: false,
+          isProxy: true,
           name: "@",
+          type: "A",
+          content,
+          port,
         })
       )
     );
 
-    return [{ content: primary_domain }, ...domains];
+    if (domains.length) logger.log(`add A record in ${domains.join(" , ")}`);
+
+    return [{ content: defaultDomain }, ...domains];
   }
+
   async changeCustomDomains(
     cdn_name,
-    primary_domain,
-    domains_add = [],
-    domains_rm = []
+    {
+      port = 80,
+      content,
+      logger,
+      domains_add = [],
+      domains_rm = [],
+      primary_domain,
+    }
   ) {
     const cdn = this.#getCDN(cdn_name);
     domains_add = domains_add.filter((d) => d !== primary_domain);
@@ -81,14 +115,20 @@ export class Network {
           ns: await cdn.registerDomain(d),
         };
         await cdn.addRecord(d, {
-          content: primary_domain,
-          type: "CNAME",
-          isProxy: false,
+          content,
+          type: "A",
+          isProxy: true,
+          port,
           name: "@",
         });
         return newD;
       })
     );
+
+    if (domains_add.length)
+      logger.log(
+        `add domains and A record , domains: ${domains_add.join(" , ")}`
+      );
 
     // 2. rm domains
     await Promise.all(
@@ -97,24 +137,52 @@ export class Network {
       })
     );
 
+    if (domains_rm.length)
+      logger.log(`remove domains , domains: ${domains_rm.join(" , ")}`);
+
     return domains_add;
   }
-  async disconnectInstance(cdn_name, primary_domain, domains = []) {
-    const cdn = this.#getCDN(cdn_name);
-    const { subdomain, domain } = this.#getSubMain(primary_domain);
 
-    await this.changeCustomDomains(
-      cdn_name,
+  async disconnectInstance(
+    cdn_name,
+    { domains = [], defaultDomain, primary_domain = domain[0], logger }
+  ) {
+    const cdn = this.#getCDN(cdn_name);
+    const { subdomain, domain } = this.#getSubMain(defaultDomain);
+
+    await this.changeCustomDomains(cdn_name, {
+      logger,
+      domains_rm: domains,
       primary_domain,
-      [],
-      domains.map(({ content }) => content)
-    );
+    });
+
     await cdn.removeRecord(domain, subdomain);
+    logger.log(`remove ${defaultDomain} record`);
   }
 
   async changePrimaryDomain(cdn_name) {}
-  async addRecord(cdnOrRegion, domain, data) {}
-  async rmRecord(cdnOrRegion, domain, data) {}
+
+  async addRecord(cdn_name, domain, { type, content, isProxy, name, secure }) {
+    const cdn = this.#getCDN(cdn_name);
+    await cdn.addRecord(domain, {
+      name,
+      type,
+      isProxy,
+      content,
+      port: secure ? 443 : 80,
+    });
+  }
+
+  async rmRecord(cdn_name, domain, { type, content, name }) {
+    const cdn = this.#getCDN(cdn_name);
+    await cdn.removeRecord(domain, {
+      name,
+      type,
+      content,
+    });
+  }
+
+  async createCert(cdn_name) {}
 }
 
 const network = new Network();

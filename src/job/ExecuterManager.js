@@ -272,6 +272,13 @@ export default class ExecuteManager {
       JobSteps.RESTORE_DB,
       JobSteps.SYNC_DB,
     ].filter((step) => {
+      // not use demo steps on none pattern mode
+      if (
+        !this.instance.pattern &&
+        [JobSteps.COPY_STATIC, JobSteps.RESTORE_DB].includes(step)
+      )
+        return false;
+
       if (
         Global.env.isPro ||
         ![

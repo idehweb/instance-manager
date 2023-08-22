@@ -85,7 +85,7 @@ export default class Arvan {
     });
     return result.data.ns_keys;
   }
-  async removeRecord(domain, record_name) {
+  async removeRecord(domain, { name, type, content }) {
     const records = await this.getRecords(domain);
     const myRecord = records.find((r) => r.name === record_name);
     if (!myRecord) return;
