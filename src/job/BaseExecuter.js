@@ -1,6 +1,6 @@
 import { jobModel } from "../model/job.model.js";
-import exec from "../utils/exec.js";
 import { Remote } from "../utils/remote.js";
+import { runRemoteCmd } from "../ws/index.js";
 
 export class BaseExecuter {
   last_log;
@@ -14,12 +14,19 @@ export class BaseExecuter {
     return `nwi-${this.instance.name}`;
   }
 
-  log(chunk, isEnd = false, isError = false, whenDifferent = false) {
-    if (this.last_log == String(chunk) && whenDifferent) return;
-    this.last_log = String(chunk);
+  log = (chunk, isEnd = false, isError = false, whenDifferent = false) => {
+    const chunkArr = Array.isArray(chunk) ? chunk : [chunk];
+    const msg = chunkArr
+      .map((c) =>
+        typeof c === "object" ? JSON.stringify(c, null, " ") : String(c)
+      )
+      .join(" ");
+
+    if (this.last_log == msg && whenDifferent) return;
+    this.last_log = msg;
 
     const chunk_with_id =
-      `#${this.instance_name}-${String(this.job._id).slice(0, 8)}#: ` + chunk;
+      `#${this.instance_name}-${String(this.job._id).slice(0, 8)}#: ` + msg;
 
     // console log
     console.log(chunk_with_id);
@@ -27,8 +34,8 @@ export class BaseExecuter {
     // db log
     jobModel
       .findByIdAndUpdate(this.job._id, {
-        $push: { logs: chunk },
-        ...(isError ? { $set: { error: chunk } } : {}),
+        $push: { logs: msg },
+        ...(isError ? { $set: { error: msg } } : {}),
       })
       .then()
       .catch();
@@ -36,18 +43,27 @@ export class BaseExecuter {
     // fs log
     if (this.log_file.writable) {
       if (isEnd) {
-        this.log_file.end("\n" + chunk);
+        this.log_file.end("\n" + msg);
         this.log_file.close();
       } else {
-        this.log_file.write("\n" + chunk);
+        this.log_file.write("\n" + msg);
       }
     }
-  }
-  exec(cmd) {
-    return exec(this.remote.autoDiagnostic(cmd), {
-      onLog: (msg, isError) => {
-        this.log(msg, false, isError, true);
+  };
+
+  exec = (cmd) => {
+    return runRemoteCmd(this.instance.region, cmd, {
+      log: (...msgs) => {
+        this.log(msgs, false, false, true);
+      },
+      error: (...msgs) => {
+        this.log(msgs, false, true, true);
       },
     });
-  }
+    // return exec(this.remote.autoDiagnostic(cmd), {
+    //   onLog: (msg, isError) => {
+    //     this.log(msg, false, isError, true);
+    //   },
+    // });
+  };
 }
