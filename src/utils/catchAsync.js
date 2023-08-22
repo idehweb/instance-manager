@@ -10,7 +10,7 @@ export function catchFn(fn, { self, onError }) {
     }
   };
 }
-export function catchMiddleware(fn, { self, onError }) {
+export function catchMiddleware(fn, { self, onError } = {}) {
   return async (req, res, next) => {
     try {
       return await fn.call(self ?? this, req, res, next);
