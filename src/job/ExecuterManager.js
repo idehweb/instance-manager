@@ -175,6 +175,7 @@ export default class ExecuteManager {
         set_body = null;
       } else {
         set_body.status = InstanceStatus.UP;
+        set_body.server_ip = this.instance.server_ip;
       }
     } else if (this.job.type === JobType.UPDATE) {
       set_body.status = isError

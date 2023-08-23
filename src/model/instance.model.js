@@ -30,6 +30,7 @@ export const instanceSchema = new mongoose.Schema(
     image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
     site_name: { type: String, required: true },
     pattern: { type: String },
+    server_ip: { type: String },
     domains: [
       {
         _id: false,

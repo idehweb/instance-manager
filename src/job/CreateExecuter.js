@@ -7,7 +7,6 @@ import {
 import { Service as DockerService } from "../docker/service.js";
 import network, { Network, NetworkCDN } from "../common/network.js";
 import { Global } from "../global.js";
-import { InstanceRegion } from "../model/instance.model.js";
 import { BaseExecuter } from "./BaseExecuter.js";
 
 export default class CreateExecuter extends BaseExecuter {
@@ -29,7 +28,6 @@ export default class CreateExecuter extends BaseExecuter {
     )} /var/instances/${this.instance_name}/public`;
     await this.exec(copyStatics);
   }
-
   async docker_create() {
     // check docker services
     const dockerServiceLs = `docker service ls --format "{{.Name}} {{.Replicas}}"`;
@@ -67,9 +65,9 @@ export default class CreateExecuter extends BaseExecuter {
       await this.exec(dockerCreateCmd);
     }
   }
-
   async register_cdn() {
     const ips = [...Global.ips[this.instance.region]];
+    const server_ip = ips[0];
     const defaultDomain = Network.getDefaultDomain({
       name: this.instance_name,
       region: this.instance.region,
@@ -84,13 +82,14 @@ export default class CreateExecuter extends BaseExecuter {
           defaultDomain,
           domains: this.instance.domains,
           logger: { log: this.log },
-          content: ips[0],
+          content: server_ip,
         }
       );
     } catch (err) {
       this.log("Axios Error in DNS:\n" + axiosError2String(err));
       throw err;
     }
+    this.instance.server_ip = server_ip;
   }
   async restore_demo() {
     if (!this.instance.pattern) return;

@@ -53,9 +53,14 @@ export default class UpdateExecuter extends BaseExecuter {
         this.instance.region === InstanceRegion.IRAN
           ? NetworkCDN.ARVAN
           : NetworkCDN.CF,
-        this.instance.primary_domain,
-        domains_add,
-        domains_rm
+        {
+          primary_domain: this.instance.primary_domain,
+          logger: { log: this.log },
+          content: this.instance.server_ip,
+          port: 80,
+          domains_add,
+          domains_rm,
+        }
       )
     );
     new_domains = new_domains.filter(
