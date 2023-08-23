@@ -65,7 +65,7 @@ export class Network {
     domains = await Promise.all(
       domains
         .map(({ content }) => content)
-        .filter((d) => d !== primary_domain)
+        .filter((d) => d !== defaultDomain)
         .map(async (d) => ({
           content: d,
           ns: await cdn.registerDomain(d),
@@ -76,8 +76,8 @@ export class Network {
 
     // 3. add A record into domains
     await Promise.all(
-      domains.map(async ({ content }) =>
-        cdn.addRecord(content, {
+      domains.map(async ({ content: domain }) =>
+        cdn.addRecord(domain, {
           isProxy: true,
           name: "@",
           type: "A",
@@ -87,7 +87,10 @@ export class Network {
       )
     );
 
-    if (domains.length) logger.log(`add A record in ${domains.join(" , ")}`);
+    if (domains.length)
+      logger.log(
+        `add A record in ${domains.map(({ content }) => content).join(" , ")}`
+      );
 
     return [{ content: defaultDomain }, ...domains];
   }
@@ -127,7 +130,9 @@ export class Network {
 
     if (domains_add.length)
       logger.log(
-        `add domains and A record , domains: ${domains_add.join(" , ")}`
+        `add domains and A record , domains: ${domains_add
+          .map(({ content }) => content)
+          .join(" , ")}`
       );
 
     // 2. rm domains

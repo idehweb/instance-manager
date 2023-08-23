@@ -70,16 +70,19 @@ export default class CreateExecuter extends BaseExecuter {
 
   async register_cdn() {
     const ips = [...Global.ips[this.instance.region]];
+    const defaultDomain = Network.getDefaultDomain({
+      name: this.instance_name,
+      region: this.instance.region,
+    });
+
     // ns record
     try {
       this.log("Connect Instance Networks");
       this.domainsResult = await network.connectInstance(
         Network.region2CDN(this.instance.region),
         {
-          defaultDomain: Network.getDefaultDomain({
-            name: this.instance_name,
-            region: this.instance.region,
-          }),
+          defaultDomain,
+          domains: this.instance.domains,
           logger: { log: this.log },
           content: ips[0],
         }

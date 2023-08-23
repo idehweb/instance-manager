@@ -25,11 +25,26 @@ export default class Arvan {
       throw err;
     }
   }
+  sameName(record, name, domain) {
+    return (
+      record.name === name ||
+      (name === "@" && record.name === domain) ||
+      record.name === `${name}.${domain}`
+    );
+  }
+  sameContent(record, content) {
+    const value = record.value ?? [];
+    const ips = value.map(({ ip }) => ip);
+    const hosts = value.map(({ host }) => host);
+
+    return ips.includes(content) || hosts.includes(content);
+  }
   async getRecords(domain) {
     return (
       await this.#query({
         url: `/domains/${domain}/dns-records`,
         method: "get",
+        params: { per_page: 100 },
       })
     ).data;
   }
@@ -44,10 +59,9 @@ export default class Arvan {
     if (
       records.find(
         (r) =>
-          (r.name === name ||
-            (name === "@" && r.name === domain) ||
-            r.name === `${name}.${domain}`) &&
-          r.type === type
+          this.sameName(r, name, domain) &&
+          r.type === type &&
+          this.sameContent(r, content)
       )
     )
       return;
@@ -63,7 +77,12 @@ export default class Arvan {
             ? [{ ip: content, port: isProxy ? port : undefined }]
             : { [type === "aname" ? "location" : "host"]: content },
         cloud: isProxy,
-        upstream_https: type === "a" && isProxy ? "https" : undefined,
+        upstream_https:
+          type === "a" && isProxy
+            ? port === 443
+              ? "https"
+              : "http"
+            : undefined,
       },
     });
   }
@@ -86,8 +105,14 @@ export default class Arvan {
     return result.data.ns_keys;
   }
   async removeRecord(domain, { name, type, content }) {
+    type = type?.toLowerCase();
     const records = await this.getRecords(domain);
-    const myRecord = records.find((r) => r.name === record_name);
+    const myRecord = records.find(
+      (r) =>
+        this.sameName(r, name, domain) &&
+        (!type || type === r.type) &&
+        (!content || this.sameContent(r, content))
+    );
     if (!myRecord) return;
     await this.#query({
       method: "delete",
