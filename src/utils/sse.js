@@ -2,11 +2,22 @@ class SSE {
   constructor(res) {
     this.res = res;
     this.#registerClient();
+    const heartbeat = setInterval(this.#heartbeat, 15_000);
+    this.res.on("close", () => {
+      if (heartbeat) clearInterval(heartbeat);
+    });
   }
+
+  #heartbeat = () => {
+    this.#write("comment", "heartbeat");
+  };
+
   #write(data, type) {
     if (!this.res || !this.res.writable) return false;
-    this.res.write(`${JSON.stringify({ type, data })}\n\n`);
-    if (type === "close") this.res.end();
+    this.res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+    if (type === "close") {
+      this.res.end();
+    }
     return true;
   }
   #writeHead(headers) {
@@ -33,13 +44,9 @@ class SSE {
     });
 
     // first handshake and define separator
-    this.res.write(
-      `${JSON.stringify({
-        type: "handshaking",
-        data: "connection accept",
-        separator: "\n\n",
-      })}\n\n`
-    );
+    const padding = new Array(2049);
+    this.res.write(":" + padding.join(" ") + "\n"); // 2kB padding for IE
+    this.res.write("retry: 2000\n");
   }
   close() {
     return this.#write({ message: "connection closed" }, "close");
