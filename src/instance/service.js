@@ -82,18 +82,28 @@ class Service {
     const user = req.admin || req.customer;
     const region = req.body.region ?? "german";
     const name = req.body.name ?? createRandomName(8);
-    const primary_domain = Network.getPrimaryDomain({
+    const defaultDomain = Network.getDefaultDomain({
       name,
       region,
     });
+    const primary_domain =
+      req.body.primary_domain
+        ?.replace(/^https?:\/\//, "")
+        .replace(/^www\./, "") ?? defaultDomain;
     const domains = [
       ...new Set([
-        primary_domain,
+        defaultDomain,
         ...(req.body.domains ?? []).map((d) =>
           d.replace(/^https?:\/\//, "").replace(/^www\./, "")
         ),
       ]),
     ];
+
+    if (!domains.includes(primary_domain))
+      return res
+        .status(400)
+        .json({ message: "primary domain must in domains list" });
+
     const instance = await instanceModel.create({
       user: user._id,
       name,
@@ -104,7 +114,7 @@ class Service {
       replica: Math.min(2, req.body.replica ?? 2),
       image: req.body.image,
       expiredAt: new Date(req.body.expiredAt),
-      pattern: req.body.pattern ?? "demo0",
+      pattern: req.body.pattern,
       primary_domain,
       region,
       domains: domains.map((d) => ({

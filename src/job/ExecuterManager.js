@@ -270,6 +270,7 @@ export default class ExecuteManager {
       JobSteps.COPY_STATIC,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,
+      JobSteps.ADD_DOMAIN_CONFIG,
       JobSteps.RESTORE_DB,
       JobSteps.SYNC_DB,
     ].filter((step) => {
@@ -370,12 +371,17 @@ export default class ExecuteManager {
     const stack = [
       JobSteps.CDN_UNREGISTER,
       JobSteps.REMOVE_SERVICE,
+      JobSteps.REMOVE_DOMAIN_CONFIG,
       JobSteps.REMOVE_STATIC,
       JobSteps.REMOVE_DB,
     ].filter((step) => {
       if (
         Global.env.isLocal &&
-        [JobSteps.REMOVE_SERVICE, JobSteps.REMOVE_STATIC].includes(step)
+        [
+          JobSteps.REMOVE_SERVICE,
+          JobSteps.REMOVE_STATIC,
+          JobSteps.REMOVE_DOMAIN_CONFIG,
+        ].includes(step)
       )
         return false;
       return true;
@@ -442,6 +448,10 @@ export default class ExecuteManager {
         return executer.changeCDNPrimaryDomain;
       case JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN:
         return executer.changeDockerPrimaryDomain;
+      case JobSteps.ADD_DOMAIN_CONFIG:
+        return executer.nginx_domain_config;
+      case JobSteps.REMOVE_DOMAIN_CONFIG:
+        return executer.rm_domain_config;
     }
   }
   #convertJobTypeToExecuter() {

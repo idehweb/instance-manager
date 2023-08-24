@@ -6,6 +6,7 @@ import { Remote } from "../utils/remote.js";
 import { InstanceRegion } from "../model/instance.model.js";
 import { join } from "path";
 import { BaseExecuter } from "./BaseExecuter.js";
+import Nginx from "../common/nginx.js";
 export default class DeleteExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
     super(job, instance, log_file);
@@ -62,5 +63,18 @@ export default class DeleteExecuter extends BaseExecuter {
     this.log("Delete instance db");
     const delete_cmd = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
     await this.exec(delete_cmd);
+  }
+
+  async rm_domain_config() {
+    if (this.instance.domains.length === 1) return;
+
+    const nginx = new Nginx(this.exec);
+
+    const domains = this.instance.domains
+      .map(({ content }) => content)
+      .filter((d) => d !== this.instance.primary_domain);
+
+    await nginx.rmDomainsConf(domains);
+    this.log(`remove nginx config for domains: ${domains.join(" ")}`);
   }
 }

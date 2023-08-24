@@ -8,6 +8,7 @@ import { Service as DockerService } from "../docker/service.js";
 import network, { Network, NetworkCDN } from "../common/network.js";
 import { Global } from "../global.js";
 import { BaseExecuter } from "./BaseExecuter.js";
+import Nginx from "../common/nginx.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
@@ -64,6 +65,18 @@ export default class CreateExecuter extends BaseExecuter {
     } else {
       await this.exec(dockerCreateCmd);
     }
+  }
+  async nginx_domain_config() {
+    if (this.instance.domains.length === 1) return;
+
+    const nginx = new Nginx(this.exec);
+
+    const domains = this.instance.domains
+      .map(({ content }) => content)
+      .filter((d) => d !== this.instance.primary_domain);
+
+    await nginx.addDomainsConf(domains, this.instance_name);
+    this.log(`add nginx config for domains: ${domains.join(" ")}`);
   }
   async register_cdn() {
     const ips = [...Global.ips[this.instance.region]];
