@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  core:
+    image: im-master:0.0.1
+    build: .
+    container_name: im-master
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 2m
+    networks:
+      mongonet:
+      imnet:
+    ports:
+      - 2760:3000
+    env_file:
+      - .env.local
+
+networks:
+  mongonet:
+    external: true
+    name: mongonet
+  imnet:
+    external: true
+    name: imnet
