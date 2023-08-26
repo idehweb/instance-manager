@@ -99,6 +99,11 @@ export default class ExecuteManager {
       }
       isRun = true;
     } catch (err) {
+      this.log(
+        `error in step:${this.job.progress_step}, attempt:${this.job.attempt}, message:${err.message}`,
+        false,
+        true
+      );
       isRun = false;
     }
     if (!isRun) {

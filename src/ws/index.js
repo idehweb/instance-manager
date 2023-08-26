@@ -45,6 +45,8 @@ function onLog(data) {
   const conf = confMap.get(id);
   if (!conf) return;
 
+  console.log("socket log", { log, error });
+
   if (log) conf.logger.log(log);
   if (error) conf.logger.error(error);
 }
