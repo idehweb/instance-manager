@@ -32,7 +32,7 @@ export default class DeleteExecuter extends BaseExecuter {
           region: this.instance.region,
         }),
         logger: { log: this.log },
-        domains: this.instance.domains,
+        domains: this.instance.domains.map(({ content }) => content),
       }
     );
   }

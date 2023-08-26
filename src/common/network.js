@@ -42,7 +42,17 @@ export class Network {
     const [, subD, domain] = /^(.*)\.([^.]+\.[^.]+)$/.exec(defaultDomain);
     return { subdomain: subD, domain };
   }
-
+  /**
+   *
+   * @param {string} cdn_name
+   * port : number;
+   * content: string;
+   * logger:any;
+   * domains: string[];
+   * defaultDomain: string;
+   *
+   * @returns
+   */
   async connectInstance(
     cdn_name,
     { port = 80, content, logger, domains = [], defaultDomain }
@@ -64,7 +74,6 @@ export class Network {
     // 2. register domains
     domains = await Promise.all(
       domains
-        .map(({ content }) => content)
         .filter((d) => d !== defaultDomain)
         .map(async (d) => ({
           content: d,
@@ -94,7 +103,14 @@ export class Network {
 
     return [{ content: defaultDomain }, ...domains];
   }
-
+  /**
+   *
+   * @param {string} cdn_name
+   *
+   * domains_add: string[];
+   * domains_rm: string[];
+   *
+   */
   async changeCustomDomains(
     cdn_name,
     {
@@ -148,6 +164,11 @@ export class Network {
     return domains_add;
   }
 
+  /**
+   *
+   * @param {string} cdn_name
+   * domains: string[];
+   */
   async disconnectInstance(cdn_name, { domains = [], defaultDomain, logger }) {
     const cdn = this.#getCDN(cdn_name);
     const { subdomain, domain } = this.#getSubMain(defaultDomain);
