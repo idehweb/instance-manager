@@ -45,19 +45,17 @@ function onLog(data) {
   const conf = confMap.get(id);
   if (!conf) return;
 
-  console.log("socket log", { log, error });
-
   if (log) conf.logger.log(log);
   if (error) conf.logger.error(error);
 }
 
 function onCommand(data) {
-  const { code, error, id } = data;
+  const { code, error, id, response } = data;
   const conf = confMap.get(id);
   if (!conf) return;
 
   // send response
-  if (code === 0) conf.resolve();
+  if (code === 0) conf.resolve(response);
   if (code !== 0) conf.reject(error ?? code);
 
   // remove conf
@@ -66,6 +64,7 @@ function onCommand(data) {
 
 function disconnectGlobal(socket) {
   // rm ip
+  console.log(socket.id, "disconnect");
   rmIP(socket);
 }
 
