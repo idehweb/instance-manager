@@ -35,6 +35,7 @@ export default class CreateExecuter extends BaseExecuter {
     // check docker services
     const dockerServiceLs = DockerService.getAllCmd();
     const listServices = (await this.exec(dockerServiceLs)).split("\n");
+    console.log(listServices);
     const myService = listServices.find((s) => s.includes(this.instance_name));
 
     // create docker service
