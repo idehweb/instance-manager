@@ -150,7 +150,7 @@ export class Network {
 
   async disconnectInstance(
     cdn_name,
-    { domains = [], defaultDomain, primary_domain = domain[0], logger }
+    { domains = [], defaultDomain, primary_domain = domains[0], logger }
   ) {
     const cdn = this.#getCDN(cdn_name);
     const { subdomain, domain } = this.#getSubMain(defaultDomain);

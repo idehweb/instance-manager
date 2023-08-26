@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { setTimeout } from "timers/promises";
 import { Global } from "../global.js";
 import { authWithToken } from "./auth.js";
