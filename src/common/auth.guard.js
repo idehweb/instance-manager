@@ -29,18 +29,23 @@ export async function tokenGuard(req, res, next) {
     if (!token) return res.status(401).send("unAuthorization");
     const user = jwt.decode(token, { complete: true, json: true });
     if (!user) return res.status(401).send("unAuthorization");
-    const { data } = await axios.post(
-      Global.env.AUTH_API,
-      {
-        userType: user.payload.type,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    if (!process.env.AUTH_API) {
+      req.user = user.payload;
+      req.user._id = req.user.id;
+    } else {
+      const { data } = await axios.post(
+        Global.env.AUTH_API,
+        {
+          userType: user.payload.type,
         },
-      }
-    );
-    req.user = data.data;
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      req.user = data.data;
+    }
     req[user.payload.type] = req.user;
 
     req.user.id = req.user._id;
