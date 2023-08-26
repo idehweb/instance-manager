@@ -15,11 +15,13 @@ export default class CreateExecuter extends BaseExecuter {
     super(job, instance, log_file);
   }
 
-  async copy_static() {
+  async create_static_dirs() {
     // create public
     const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
     await this.exec(createFolders);
+  }
 
+  async copy_static() {
     if (!this.instance.pattern) return;
 
     // copy static files

@@ -4,6 +4,7 @@ import { Global } from "../global.js";
 export const JobSteps = {
   CDN_REGISTER: "cdn-register",
   CREATE_SERVICE: "create-service",
+  CREATE_STATIC_DIRS: "create-static-dirs",
   COPY_STATIC: "copy-static",
   ADD_DOMAIN_CONFIG: "add-domain-config",
   REMOVE_DOMAIN_CONFIG: "remove-domain-config",

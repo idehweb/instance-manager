@@ -272,6 +272,7 @@ export default class ExecuteManager {
 
   async #create_instance() {
     const stack = [
+      JobSteps.CREATE_STATIC_DIRS,
       JobSteps.COPY_STATIC,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,
@@ -457,6 +458,8 @@ export default class ExecuteManager {
         return executer.nginx_domain_config;
       case JobSteps.REMOVE_DOMAIN_CONFIG:
         return executer.rm_domain_config;
+      case JobSteps.CREATE_STATIC_DIRS:
+        return executer.create_static_dirs;
     }
   }
   #convertJobTypeToExecuter() {
