@@ -85,7 +85,7 @@ export async function runRemoteCmd(region, cmd, logger = console) {
   targetSocket.emit("command", { id: cmdId, cmd });
 
   return await new Promise((resolve, reject) => {
-    runMap.set(cmdId, { logger, resolve, reject });
+    confMap.set(cmdId, { logger, resolve, reject });
     targetSocket.on("disconnect", onDisconnect.bind(null, cmdId, reject));
   });
 }

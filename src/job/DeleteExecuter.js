@@ -1,6 +1,6 @@
 import { Global } from "../global.js";
 import { Service as DockerService } from "../docker/service.js";
-import network, { NetworkCDN } from "../common/network.js";
+import network, { Network, NetworkCDN } from "../common/network.js";
 import { getPublicPath } from "../utils/helpers.js";
 import { Remote } from "../utils/remote.js";
 import { InstanceRegion } from "../model/instance.model.js";
@@ -26,8 +26,14 @@ export default class DeleteExecuter extends BaseExecuter {
       this.instance.region === InstanceRegion.IRAN
         ? NetworkCDN.ARVAN
         : NetworkCDN.CF,
-      this.instance.primary_domain,
-      this.instance.domains
+      {
+        defaultDomain: Network.getDefaultDomain({
+          name: this.instance.name,
+          region: this.instance.region,
+        }),
+        logger: { log: this.log },
+        domains: this.instance.domains,
+      }
     );
   }
 

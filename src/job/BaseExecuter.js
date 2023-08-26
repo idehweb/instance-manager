@@ -57,6 +57,7 @@ export class BaseExecuter {
         this.log(msgs, false, false, true);
       },
       error: (...msgs) => {
+        console.log("log from slave", ...msgs);
         this.log(msgs, false, true, true);
       },
     });

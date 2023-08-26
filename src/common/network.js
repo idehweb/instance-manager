@@ -38,8 +38,8 @@ export class Network {
       return this.#cf;
     return this.#arvan;
   }
-  #getSubMain(primary_domain) {
-    const [, subD, domain] = /^(.*)\.([^.]+\.[^.]+)$/.exec(primary_domain);
+  #getSubMain(defaultDomain) {
+    const [, subD, domain] = /^(.*)\.([^.]+\.[^.]+)$/.exec(defaultDomain);
     return { subdomain: subD, domain };
   }
 
@@ -148,17 +148,14 @@ export class Network {
     return domains_add;
   }
 
-  async disconnectInstance(
-    cdn_name,
-    { domains = [], defaultDomain, primary_domain = domains[0], logger }
-  ) {
+  async disconnectInstance(cdn_name, { domains = [], defaultDomain, logger }) {
     const cdn = this.#getCDN(cdn_name);
     const { subdomain, domain } = this.#getSubMain(defaultDomain);
 
     await this.changeCustomDomains(cdn_name, {
       logger,
       domains_rm: domains,
-      primary_domain,
+      primary_domain: "",
     });
 
     await cdn.removeRecord(domain, subdomain);
