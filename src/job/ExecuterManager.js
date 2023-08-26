@@ -287,16 +287,26 @@ export default class ExecuteManager {
       )
         return false;
 
+      // not use docker steps in dev env
       if (
-        Global.env.isPro ||
-        ![
+        !Global.env.isPro &&
+        [
           JobSteps.COPY_STATIC,
           JobSteps.CREATE_SERVICE,
           JobSteps.RESTORE_DB,
+          JobSteps.ADD_DOMAIN_CONFIG,
         ].includes(step)
       )
-        return true;
-      return false;
+        return false;
+
+      // not use add domain config when there is not any custom config
+      if (
+        this.instance.domains.length <= 1 &&
+        JobSteps.ADD_DOMAIN_CONFIG === step
+      )
+        return false;
+
+      return true;
     });
 
     // execute
