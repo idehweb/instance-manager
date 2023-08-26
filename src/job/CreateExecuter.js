@@ -33,7 +33,7 @@ export default class CreateExecuter extends BaseExecuter {
   }
   async docker_create() {
     // check docker services
-    const dockerServiceLs = `docker service ls --format "{{.Name}} {{.Replicas}}"`;
+    const dockerServiceLs = DockerService.getAllCmd();
     const listServices = (await this.exec(dockerServiceLs)).split("\n");
     const myService = listServices.find((s) => s.includes(this.instance_name));
 

@@ -13,6 +13,12 @@ export default class DeleteExecuter extends BaseExecuter {
   }
 
   async service_remove() {
+    const dockerServiceLs = DockerService.getAllCmd();
+    const listServices = (await this.exec(dockerServiceLs)).split("\n");
+    const myService = listServices.find((s) => s.includes(this.instance_name));
+
+    if (!myService) return this.log("service remove before");
+
     const cmd = DockerService.getDeleteServiceCommand(this.instance_name);
     await this.exec(cmd);
   }

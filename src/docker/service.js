@@ -40,6 +40,9 @@ export class Service {
       )
       .join(" ")} ${name}`;
   }
+  static getAllCmd() {
+    return 'docker service ls --format "{{.Name}} {{.Replicas}}"';
+  }
 }
 
 export default Service;
