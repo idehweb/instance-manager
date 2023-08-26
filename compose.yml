@@ -5,6 +5,11 @@ services:
     image: im-master:0.0.1
     build: .
     container_name: im-master
+    volumes:
+      - /var/im2/backup:/app/public/backup
+      - /var/im2/static:/app/public/static
+      - /var/im2/db:/app/public/db
+      - /var/im2/logs:/app/public/logs
     deploy:
       replicas: 1
       restart_policy:
