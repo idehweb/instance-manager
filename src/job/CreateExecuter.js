@@ -84,7 +84,7 @@ export default class CreateExecuter extends BaseExecuter {
     const ips = [...Global.ips[this.instance.region]];
     const server_ip = ips[0];
     const defaultDomain = Network.getDefaultDomain({
-      name: this.instance_name,
+      name: this.instance.name,
       region: this.instance.region,
     });
 

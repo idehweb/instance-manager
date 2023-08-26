@@ -73,7 +73,6 @@ export class Network {
 
     // 2. register domains
     let needRegisterDomains = domains.filter((d) => d !== defaultDomain);
-    console.log({ domains, defaultDomain, needRegisterDomains });
 
     if (needRegisterDomains.length) {
       needRegisterDomains = await Promise.all(
