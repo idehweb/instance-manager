@@ -95,7 +95,7 @@ export default class CreateExecuter extends BaseExecuter {
         Network.region2CDN(this.instance.region),
         {
           defaultDomain,
-          domains: this.instance.domains,
+          domains: this.instance.domains.map(({ content }) => content),
           logger: { log: this.log },
           content: server_ip,
         }
