@@ -72,36 +72,40 @@ export class Network {
     logger.log(`add ${defaultDomain} record`);
 
     // 2. register domains
-    domains = await Promise.all(
-      domains
-        .filter((d) => d !== defaultDomain)
-        .map(async (d) => ({
+    let needRegisterDomains = domains.filter((d) => d !== defaultDomain);
+    console.log({ domains, defaultDomain, needRegisterDomains });
+
+    if (needRegisterDomains.length) {
+      needRegisterDomains = await Promise.all(
+        needRegisterDomains.map(async (d) => ({
           content: d,
           ns: await cdn.registerDomain(d),
         }))
-    );
-
-    logger.log(`register all domains in ${cdn_name}`);
-
-    // 3. add A record into domains
-    await Promise.all(
-      domains.map(async ({ content: domain }) =>
-        cdn.addRecord(domain, {
-          isProxy: true,
-          name: "@",
-          type: "A",
-          content,
-          port,
-        })
-      )
-    );
-
-    if (domains.length)
-      logger.log(
-        `add A record in ${domains.map(({ content }) => content).join(" , ")}`
       );
 
-    return [{ content: defaultDomain }, ...domains];
+      logger.log(`register all domains in ${cdn_name}`);
+
+      // 3. add A record into domains
+      await Promise.all(
+        needRegisterDomains.map(async ({ content: domain }) =>
+          cdn.addRecord(domain, {
+            isProxy: true,
+            name: "@",
+            type: "A",
+            content,
+            port,
+          })
+        )
+      );
+
+      logger.log(
+        `add A record in ${needRegisterDomains
+          .map(({ content }) => content)
+          .join(" , ")}`
+      );
+    }
+
+    return [{ content: defaultDomain }, ...needRegisterDomains];
   }
   /**
    *
