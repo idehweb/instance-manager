@@ -1,4 +1,5 @@
-FROM node:18.11.0-bullseye as base
+FROM node:18.17.0-bullseye-slim as base
+
 ENV PATH=/app/node_modules/.bin:$PATH
 WORKDIR /app
 ENV INIT_BEFORE Docker
