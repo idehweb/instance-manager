@@ -164,7 +164,7 @@ export default class ExecuteManager {
     this.sendResultToClient(false);
     return false;
   }
-  async #sync_db(isError = false) {
+  #sync_db = async (isError = false) => {
     // inner sync
     const newInstance = await this.executer.sync_db(isError);
     this.instance = newInstance;
@@ -177,7 +177,7 @@ export default class ExecuteManager {
     );
     this.job = newJob._doc;
     this.executer.job = this.job;
-  }
+  };
 
   async #execute_stack(
     stack,
