@@ -24,6 +24,15 @@ app.use(cors());
 // app.use(hostGuard);
 app.use(catchMiddleware(tokenGuard));
 
+app.use("/sse/test", (req, res) => {
+  const sse = new SSE(res);
+  const timer = setInterval(() => {
+    sse.sendData(Math.random() + "");
+  }, 1000);
+  req.on("close", () => {
+    clearInterval(timer);
+  });
+});
 // routes
 app.use("/api/v1/instance", instanceRouter);
 app.use("/api/v1/job", jobRouter);
