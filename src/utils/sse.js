@@ -34,6 +34,7 @@ class SSE {
       "Content-Type": "text/event-stream",
       Connection: "keep-alive",
       "Cache-Control": "no-cache",
+      "Access-Control-Allow-Origin": "*",
     };
     this.#writeHead(headers);
 
