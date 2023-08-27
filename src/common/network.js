@@ -126,7 +126,9 @@ export class Network {
     }
   ) {
     const cdn = this.#getCDN(cdn_name);
-    domains_add = domains_add.filter((d) => d !== primary_domain);
+    domains_add = domains_add.filter(
+      (d) => d !== primary_domain && !domains_rm.includes(d)
+    );
     domains_rm = domains_rm.filter((d) => d !== primary_domain);
 
     // 1. add domains

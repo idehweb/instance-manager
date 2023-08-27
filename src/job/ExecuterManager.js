@@ -275,7 +275,7 @@ export default class ExecuteManager {
     replica,
     primary_domain,
   }) {
-    const stack = [];
+    const stack = [JobSteps.PARSE_UPDATE_QUERY];
     // change status
     if (status) {
       stack.push(JobSteps.CHANGE_STATUS);
@@ -289,7 +289,11 @@ export default class ExecuteManager {
       (domains_add && domains_add.length) ||
       (domains_rm && domains_rm.length)
     ) {
-      stack.push(JobSteps.CHANGE_DOMAINS);
+      stack.push(
+        JobSteps.UPDATE_DOMAIN_CDN,
+        JobSteps.UPDATE_DOMAIN_CERT,
+        JobSteps.UPDATE_DOMAIN_CONFIG
+      );
     }
 
     // change image version
@@ -299,7 +303,6 @@ export default class ExecuteManager {
 
     // change primary domain
     else if (primary_domain) {
-      stack.push(JobSteps.CHANGE_CDN_PRIMARY_DOMAIN);
       stack.push(JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN);
     }
 
@@ -418,8 +421,6 @@ export default class ExecuteManager {
         return this.#sync_db;
       case JobSteps.CHANGE_IMAGE:
         return executer.changeImage;
-      case JobSteps.CHANGE_CDN_PRIMARY_DOMAIN:
-        return executer.changeCDNPrimaryDomain;
       case JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN:
         return executer.changeDockerPrimaryDomain;
       case JobSteps.ADD_DOMAIN_CONFIG:
@@ -432,6 +433,14 @@ export default class ExecuteManager {
         return executer.rm_domain_cert;
       case JobSteps.CREATE_STATIC_DIRS:
         return executer.create_static_dirs;
+      case JobSteps.UPDATE_DOMAIN_CDN:
+        return executer.update_domain_cdn;
+      case JobSteps.UPDATE_DOMAIN_CERT:
+        return executer.update_domain_cert;
+      case JobSteps.UPDATE_DOMAIN_CONFIG:
+        return executer.update_domain_config;
+      case JobSteps.PARSE_UPDATE_QUERY:
+        return executer.parse_update_query;
     }
   }
   #convertJobTypeToExecuter() {

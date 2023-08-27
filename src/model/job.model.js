@@ -19,9 +19,14 @@ export const JobSteps = {
   CDN_UNREGISTER: "cdn-unregister",
   SYNC_DB: "sync-db",
   CHANGE_STATUS: "change-status",
-  CHANGE_DOMAINS: "change-domains",
+  PARSE_UPDATE_QUERY: "parse-update-query",
+  UPDATE_DOMAIN_CDN: "update-domain-cdn",
+  ROLLBACK_UPDATE_DOMAIN_CDN: "rollback-update-domain-cdn",
+  UPDATE_DOMAIN_CONFIG: "update-domain-config",
+  ROLLBACK_UPDATE_DOMAIN_CONFIG: "rollback-update-domain-config",
+  UPDATE_DOMAIN_CERT: "update-domain-cert",
+  ROLLBACK_UPDATE_DOMAIN_CERT: "rollback-update-domain-cert",
   CHANGE_IMAGE: "change-image",
-  CHANGE_CDN_PRIMARY_DOMAIN: "change-cdn-primary-domain",
   CHANGE_SERVICE_PRIMARY_DOMAIN: "change-service-primary-domain",
 };
 

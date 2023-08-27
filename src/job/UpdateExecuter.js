@@ -18,70 +18,7 @@ export default class UpdateExecuter extends BaseExecuter {
     super(job, instance, log_file);
   }
 
-  async changeStatus() {
-    const docker_cmd = DockerService.getUpdateServiceCommand(
-      this.instance_name,
-      {
-        replicas:
-          this.job.update_query.status === InstanceStatus.UP
-            ? this.instance.replica
-            : 0,
-      }
-    );
-    await this.exec(docker_cmd);
-  }
-
-  async changeDomains() {
-    let { domains_rm, domains_add } = { ...this.job.update_query };
-    domains_rm = domains_rm
-      ? [
-          ...new Set(
-            domains_rm.filter(
-              (d) =>
-                d !== this.instance.primary_domain &&
-                this.instance.domains.includes(d)
-            )
-          ),
-        ]
-      : [];
-    domains_add = domains_add ? [...new Set(domains_add)] : [];
-
-    let new_domains = this.instance.domains ?? [];
-    if (domains_add.length)
-      this.log(`Creating new domains: ${domains_add.join(" , ")}`);
-    if (domains_rm.length)
-      this.log(`Removing domains: ${domains_add.join(" , ")}`);
-
-    new_domains.push(
-      await network.changeCustomDomains(
-        this.instance.region === InstanceRegion.IRAN
-          ? NetworkCDN.ARVAN
-          : NetworkCDN.CF,
-        {
-          primary_domain: this.instance.primary_domain,
-          logger: { log: this.log },
-          content: this.instance.server_ip,
-          port: 80,
-          domains_add,
-          domains_rm,
-        }
-      )
-    );
-    new_domains = new_domains.filter(
-      ({ content }) => !domains_rm.includes(content)
-    );
-
-    new_domains = Object.values(
-      new_domains.reduce((prev, curr) => {
-        prev[curr.content] = curr;
-        return prev;
-      }, {})
-    );
-    this.instance.new_domains = new_domains;
-  }
-
   async changeImage() {}
-
   async createCertificate() {
     const primary_domain = this.job.update_query.primary_domain;
     const certPath = getWorkerConfPath("nginx", "site_certs", primary_domain);
@@ -110,7 +47,107 @@ export default class UpdateExecuter extends BaseExecuter {
       )} ${primary_domain} ${certPath} ${getNginxPublicPath(".")}`
     );
   }
-  async changeCDNPrimaryDomain() {}
+
+  async changeStatus() {
+    const docker_cmd = DockerService.getUpdateServiceCommand(
+      this.instance_name,
+      {
+        replicas:
+          this.job.update_query.status === InstanceStatus.UP
+            ? this.instance.replica
+            : 0,
+      }
+    );
+    await this.exec(docker_cmd);
+  }
+
+  async parse_update_query() {
+    const query = { ...this.job.update_query };
+
+    const myDomains = this.instance.domains.map(({ content }) => content);
+
+    query.domains_rm = query.domains_rm
+      ? [
+          ...new Set(
+            query.domains_rm.filter(
+              (d) => d !== this.instance.primary_domain && myDomains.includes(d)
+            )
+          ),
+        ]
+      : [];
+
+    query.domains_add = query.domains_add
+      ? [...new Set(query.domains_add.filter((d) => !myDomains.includes(d)))]
+      : [];
+
+    this.job.parsed_update_query = query;
+  }
+  async update_domain_cdn() {
+    const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
+
+    if (!domains_add.length && domains_rm.length) return;
+
+    let new_domains = this.instance.domains ?? [];
+
+    if (domains_add.length)
+      this.log(`Going to create new domains: ${domains_add.join(" , ")}`);
+    if (domains_rm.length)
+      this.log(`Going to remove domains: ${domains_rm.join(" , ")}`);
+
+    new_domains.push(
+      await network.changeCustomDomains(
+        this.instance.region === InstanceRegion.IRAN
+          ? NetworkCDN.ARVAN
+          : NetworkCDN.CF,
+        {
+          primary_domain: this.instance.primary_domain,
+          logger: { log: this.log },
+          content: this.instance.server_ip,
+          port: 80,
+          domains_add,
+          domains_rm,
+        }
+      )
+    );
+    new_domains = new_domains.filter(
+      ({ content }) => !domains_rm.includes(content)
+    );
+
+    this.instance.new_domains = new_domains;
+  }
+  async update_domain_cert() {
+    const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
+
+    if (!domains_add.length && !domains_rm.length) return;
+
+    if (domains_add.length) {
+      this.log(`Going to add certs for domains: ${domains_add.join(" , ")}`);
+      await this.exec(`x-cert add ${domains_add.map((d) => `-d ${d}`)}`);
+    }
+    if (domains_rm.length) {
+      this.log(`Going to remove certs for domains: ${domains_rm.join(" , ")}`);
+      await this.exec(`x-cert rm ${domains_rm.map((d) => `-d ${d}`)}`);
+    }
+  }
+  async update_domain_config() {
+    const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
+
+    if (!domains_add.length && !domains_rm.length) return;
+
+    if (domains_add.length) {
+      this.log(`Going to add config for domains: ${domains_add.join(" , ")}`);
+      await this.exec(
+        `x-nginx add ${domains_add.map((d) => `-d ${d}`)} -n ${
+          this.instance_name
+        }`
+      );
+    }
+    if (domains_rm.length) {
+      this.log(`Going to remove config for domains: ${domains_rm.join(" , ")}`);
+      await this.exec(`x-nginx rm ${domains_rm.map((d) => `-d ${d}`)}`);
+    }
+  }
+
   async changeDockerPrimaryDomain() {
     const primary_domain = this.job.update_query.primary_domain;
     const instance_cmd = DockerService.getUpdateServiceCommand(
@@ -131,16 +168,20 @@ export default class UpdateExecuter extends BaseExecuter {
 
     await this.exec(instance_cmd);
   }
-  async changeProxyPrimaryDomain() {}
-  async sync_db(isError = false) {
-    const set_body = {};
 
-    set_body.status = isError
-      ? InstanceStatus.JOB_ERROR
-      : this.job.update_query.status;
-    set_body.domains = this.instance.new_domains;
-    set_body.image = this.job.update_query.image;
-    set_body.primary_domain = this.job.update_query.primary_domain;
+  async sync_db(isError = false) {
+    let set_body;
+
+    if (isError) {
+      set_body = { status: InstanceStatus.JOB_ERROR };
+    } else {
+      set_body = {
+        status: this.job.update_query.status,
+        domains: this.instance.new_domains,
+        image: this.job.update_query.image,
+        primary_domain: this.job.update_query.primary_domain,
+      };
+    }
 
     const newInsDoc = await instanceModel.findByIdAndUpdate(
       this.instance._id,
