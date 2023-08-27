@@ -21,7 +21,7 @@ services:
       mongonet:
       imnet:
     ports:
-      - 2727:3000
+      - 2760:3000
     env_file:
       - .env.local
 
@@ -32,3 +32,6 @@ networks:
   imnet:
     external: true
     name: imnet
+  webnet:
+    external: true
+    name: webnet
