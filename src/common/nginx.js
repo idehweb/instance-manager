@@ -3,14 +3,23 @@ export class Nginx {
   constructor(exec) {
     this.#exec = exec;
   }
-  async addDomainsConf(domains, name) {
-    domains = domains.map((d) => `-d ${d}`).join(" ");
+  #domainsArg(domains) {
+    return domains.map((d) => `-d ${d}`).join(" ");
+  }
+  async addDomainsCert(domains) {
+    domains = this.#domainsArg(domains);
     await this.#exec(`x-cert add ${domains}`);
+  }
+  async addDomainsConf(domains, name) {
+    domains = this.#domainsArg(domains);
     await this.#exec(`x-nginx add ${domains} -n ${name}`);
   }
-  async rmDomainsConf(domains) {
-    domains = domains.map((d) => `-d ${d}`).join(" ");
+  async rmDomainsCert(domains) {
+    domains = this.#domainsArg(domains);
     await this.#exec(`x-cert rm ${domains}`);
+  }
+  async rmDomainsConf(domains) {
+    domains = this.#domainsArg(domains);
     await this.#exec(`x-nginx rm ${domains}`);
   }
 }

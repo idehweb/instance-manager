@@ -276,6 +276,7 @@ export default class ExecuteManager {
       JobSteps.COPY_STATIC,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,
+      JobSteps.ADD_DOMAIN_CERT,
       JobSteps.ADD_DOMAIN_CONFIG,
       JobSteps.RESTORE_DB,
       JobSteps.SYNC_DB,
@@ -295,6 +296,7 @@ export default class ExecuteManager {
           JobSteps.CREATE_SERVICE,
           JobSteps.RESTORE_DB,
           JobSteps.ADD_DOMAIN_CONFIG,
+          JobSteps.ADD_DOMAIN_CERT,
         ].includes(step)
       )
         return false;
@@ -302,7 +304,7 @@ export default class ExecuteManager {
       // not use add domain config when there is not any custom config
       if (
         this.instance.domains.length <= 1 &&
-        JobSteps.ADD_DOMAIN_CONFIG === step
+        [JobSteps.ADD_DOMAIN_CONFIG, JobSteps.ADD_DOMAIN_CERT].includes(step)
       )
         return false;
 
@@ -360,6 +362,8 @@ export default class ExecuteManager {
   async #delete_instance() {
     const stack = [
       JobSteps.CDN_UNREGISTER,
+      JobSteps.REMOVE_DOMAIN_CERT,
+      JobSteps.REMOVE_DOMAIN_CONFIG,
       JobSteps.REMOVE_SERVICE,
       JobSteps.BACKUP_STATIC,
       JobSteps.REMOVE_STATIC,
@@ -372,6 +376,8 @@ export default class ExecuteManager {
         [
           JobSteps.REMOVE_SERVICE,
           JobSteps.BACKUP_STATIC,
+          JobSteps.REMOVE_DOMAIN_CERT,
+          JobSteps.REMOVE_DOMAIN_CONFIG,
           JobSteps.REMOVE_STATIC,
           JobSteps.BACKUP_DB,
         ].includes(step)
@@ -387,6 +393,7 @@ export default class ExecuteManager {
     const stack = [
       JobSteps.CDN_UNREGISTER,
       JobSteps.REMOVE_SERVICE,
+      JobSteps.REMOVE_DOMAIN_CERT,
       JobSteps.REMOVE_DOMAIN_CONFIG,
       JobSteps.REMOVE_STATIC,
       JobSteps.REMOVE_DB,
@@ -396,6 +403,7 @@ export default class ExecuteManager {
         [
           JobSteps.REMOVE_SERVICE,
           JobSteps.REMOVE_STATIC,
+          JobSteps.REMOVE_DOMAIN_CERT,
           JobSteps.REMOVE_DOMAIN_CONFIG,
         ].includes(step)
       )
@@ -468,6 +476,10 @@ export default class ExecuteManager {
         return executer.nginx_domain_config;
       case JobSteps.REMOVE_DOMAIN_CONFIG:
         return executer.rm_domain_config;
+      case JobSteps.ADD_DOMAIN_CERT:
+        return executer.domain_certs;
+      case JobSteps.REMOVE_DOMAIN_CERT:
+        return executer.rm_domain_cert;
       case JobSteps.CREATE_STATIC_DIRS:
         return executer.create_static_dirs;
     }

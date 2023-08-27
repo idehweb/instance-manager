@@ -69,14 +69,38 @@ export default class CreateExecuter extends BaseExecuter {
       await this.exec(dockerCreateCmd);
     }
   }
-  async nginx_domain_config() {
-    if (this.instance.domains.length === 1) return;
+
+  async domain_certs() {
+    if (this.instance.domains.length <= 1) return;
 
     const nginx = new Nginx(this.exec);
 
+    const defaultDomain = Network.getDefaultDomain({
+      name: this.instance.name,
+      region: this.instance.region,
+    });
+
     const domains = this.instance.domains
       .map(({ content }) => content)
-      .filter((d) => d !== this.instance.primary_domain);
+      .filter((d) => d !== defaultDomain);
+
+    await nginx.addDomainsCert(domains);
+    this.log(`add certs for domains: ${domains.join(" ")}`);
+  }
+
+  async nginx_domain_config() {
+    if (this.instance.domains.length <= 1) return;
+
+    const nginx = new Nginx(this.exec);
+
+    const defaultDomain = Network.getDefaultDomain({
+      name: this.instance.name,
+      region: this.instance.region,
+    });
+
+    const domains = this.instance.domains
+      .map(({ content }) => content)
+      .filter((d) => d !== defaultDomain);
 
     await nginx.addDomainsConf(domains, this.instance_name);
     this.log(`add nginx config for domains: ${domains.join(" ")}`);

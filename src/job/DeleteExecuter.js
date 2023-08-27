@@ -76,14 +76,36 @@ export default class DeleteExecuter extends BaseExecuter {
     await this.exec(delete_cmd);
   }
 
+  async rm_domain_cert() {
+    if (this.instance.domains.length === 1) return;
+
+    const nginx = new Nginx(this.exec);
+
+    const defaultDomain = Network.getDefaultDomain({
+      name: this.instance.name,
+      region: this.instance.region,
+    });
+
+    const domains = this.instance.domains
+      .map(({ content }) => content)
+      .filter((d) => d !== defaultDomain);
+
+    await nginx.rmDomainsCert(domains);
+    this.log(`remove certs for domains: ${domains.join(" ")}`);
+  }
   async rm_domain_config() {
     if (this.instance.domains.length === 1) return;
 
     const nginx = new Nginx(this.exec);
 
+    const defaultDomain = Network.getDefaultDomain({
+      name: this.instance.name,
+      region: this.instance.region,
+    });
+
     const domains = this.instance.domains
       .map(({ content }) => content)
-      .filter((d) => d !== this.instance.primary_domain);
+      .filter((d) => d !== defaultDomain);
 
     await nginx.rmDomainsConf(domains);
     this.log(`remove nginx config for domains: ${domains.join(" ")}`);

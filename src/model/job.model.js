@@ -8,6 +8,8 @@ export const JobSteps = {
   COPY_STATIC: "copy-static",
   ADD_DOMAIN_CONFIG: "add-domain-config",
   REMOVE_DOMAIN_CONFIG: "remove-domain-config",
+  ADD_DOMAIN_CERT: "add-domain-cert",
+  REMOVE_DOMAIN_CERT: "remove-domain-cert",
   REMOVE_STATIC: "remove-static",
   RESTORE_DB: "restore-db",
   REMOVE_DB: "remove-db",
