@@ -18,7 +18,6 @@ import DeleteExecuter from "./DeleteExecuter.js";
 
 export default class ExecuteManager {
   last_log;
-  domainsResult = [];
   constructor(job, instance, res, req) {
     this.job = { ...job._doc };
     this.instance = { ...instance._doc };
@@ -166,68 +165,18 @@ export default class ExecuteManager {
     return false;
   }
   async #sync_db(isError = false) {
-    // instance status , active , domains
-    let set_body = {},
-      addFields_body;
-    if (this.job.type === JobType.CREATE) {
-      if (isError) {
-        addFields_body = {
-          status: InstanceStatus.JOB_ERROR,
-          name: { $concat: ["$name", `-errored-${createRandomName(8)}`] },
-          old_name: "$name",
-          active: false,
-        };
-        set_body = null;
-      } else {
-        set_body.status = InstanceStatus.UP;
-        set_body.server_ip = this.instance.server_ip;
-      }
-    } else if (this.job.type === JobType.UPDATE) {
-      set_body.status = isError
-        ? InstanceStatus.JOB_ERROR
-        : this.job.update_query.status;
-      set_body.domains = this.instance.new_domains;
-      set_body.image = this.job.update_query.image;
-      set_body.primary_domain = this.job.update_query.primary_domain;
-    } else if (this.job.type === JobType.DELETE && !isError) {
-      addFields_body = {
-        status: InstanceStatus.DELETED,
-        name: { $concat: ["$name", `-deleted-${createRandomName(8)}`] },
-        old_name: "$name",
-        active: false,
-      };
-      set_body = null;
-    }
+    // inner sync
+    const newInstance = await this.executer.sync_db(isError);
+    this.instance = newInstance;
 
-    this.instance = {
-      ...(
-        await instanceModel.findByIdAndUpdate(
-          this.instance._id,
-          set_body
-            ? {
-                $set: set_body,
-              }
-            : addFields_body
-            ? [
-                {
-                  $addFields: addFields_body,
-                },
-              ]
-            : {},
-          { new: true }
-        )
-      )._doc,
-    };
-
-    this.job = {
-      ...(
-        await jobModel.findByIdAndUpdate(
-          this.job._id,
-          { $set: { status: isError ? JobStatus.ERROR : JobStatus.SUCCESS } },
-          { new: true }
-        )
-      )._doc,
-    };
+    // outer sync
+    const newJob = await jobModel.findByIdAndUpdate(
+      this.job._id,
+      { $set: { status: isError ? JobStatus.ERROR : JobStatus.SUCCESS } },
+      { new: true }
+    );
+    this.job = newJob._doc;
+    this.executer.job = this.job;
   }
 
   async #execute_stack(

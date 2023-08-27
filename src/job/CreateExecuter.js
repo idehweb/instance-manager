@@ -9,6 +9,7 @@ import network, { Network, NetworkCDN } from "../common/network.js";
 import { Global } from "../global.js";
 import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
+import { instanceModel } from "../model/instance.model.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
@@ -116,7 +117,7 @@ export default class CreateExecuter extends BaseExecuter {
     // ns record
     try {
       this.log("Connect Instance Networks");
-      this.domainsResult = await network.connectInstance(
+      this.instance.domains_result = await network.connectInstance(
         Network.region2CDN(this.instance.region),
         {
           defaultDomain,
@@ -139,5 +140,47 @@ export default class CreateExecuter extends BaseExecuter {
       Global.env.MONGO_REMOTE_URL
     } ${getInstanceDbPath(this.instance, this.remote)}`;
     await this.exec(cmd);
+  }
+
+  async sync_db(isError = false) {
+    let set_body = {},
+      addFields_body;
+
+    if (isError) {
+      addFields_body = {
+        status: InstanceStatus.JOB_ERROR,
+        name: { $concat: ["$name", `-errored-${createRandomName(8)}`] },
+        old_name: "$name",
+        active: false,
+      };
+      set_body = null;
+    } else {
+      set_body.status = InstanceStatus.UP;
+      set_body.server_ip = this.instance.server_ip;
+
+      // add custom domain
+      if (this.instance.domains_result)
+        set_body.domains = this.instance.domains_result;
+    }
+
+    const newInsDoc = await instanceModel.findByIdAndUpdate(
+      this.instance._id,
+      set_body
+        ? {
+            $set: set_body,
+          }
+        : addFields_body
+        ? [
+            {
+              $addFields: addFields_body,
+            },
+          ]
+        : {},
+      { new: true }
+    );
+
+    // set instance
+    this.instance = newInsDoc._doc;
+    return this.instance;
   }
 }

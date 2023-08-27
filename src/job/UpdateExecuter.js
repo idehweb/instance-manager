@@ -1,6 +1,10 @@
 import * as fs from "fs";
 import { Service as DockerService } from "../docker/service.js";
-import { InstanceRegion, InstanceStatus } from "../model/instance.model.js";
+import {
+  InstanceRegion,
+  InstanceStatus,
+  instanceModel,
+} from "../model/instance.model.js";
 import network, { Network, NetworkCDN } from "../common/network.js";
 import { BaseExecuter } from "./BaseExecuter.js";
 import {
@@ -128,4 +132,26 @@ export default class UpdateExecuter extends BaseExecuter {
     await this.exec(instance_cmd);
   }
   async changeProxyPrimaryDomain() {}
+  async sync_db(isError = false) {
+    const set_body = {};
+
+    set_body.status = isError
+      ? InstanceStatus.JOB_ERROR
+      : this.job.update_query.status;
+    set_body.domains = this.instance.new_domains;
+    set_body.image = this.job.update_query.image;
+    set_body.primary_domain = this.job.update_query.primary_domain;
+
+    const newInsDoc = await instanceModel.findByIdAndUpdate(
+      this.instance._id,
+      {
+        $set: set_body,
+      },
+      { new: true }
+    );
+
+    // set instance
+    this.instance = newInsDoc._doc;
+    return this.instance;
+  }
 }

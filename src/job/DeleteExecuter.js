@@ -1,9 +1,13 @@
 import { Global } from "../global.js";
 import { Service as DockerService } from "../docker/service.js";
 import network, { Network, NetworkCDN } from "../common/network.js";
-import { getPublicPath } from "../utils/helpers.js";
+import { createRandomName, getPublicPath } from "../utils/helpers.js";
 import { Remote } from "../utils/remote.js";
-import { InstanceRegion } from "../model/instance.model.js";
+import {
+  InstanceRegion,
+  InstanceStatus,
+  instanceModel,
+} from "../model/instance.model.js";
 import { join } from "path";
 import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
@@ -109,5 +113,30 @@ export default class DeleteExecuter extends BaseExecuter {
 
     await nginx.rmDomainsConf(domains);
     this.log(`remove nginx config for domains: ${domains.join(" ")}`);
+  }
+
+  async sync_db(isError = false) {
+    if (isError) return this.instance;
+
+    const addFields_body = {
+      status: InstanceStatus.DELETED,
+      name: { $concat: ["$name", `-deleted-${createRandomName(8)}`] },
+      old_name: "$name",
+      active: false,
+    };
+
+    const newInsDoc = await instanceModel.findByIdAndUpdate(
+      this.instance._id,
+      [
+        {
+          $addFields: addFields_body,
+        },
+      ],
+      { new: true }
+    );
+
+    // set instance
+    this.instance = newInsDoc._doc;
+    return this.instance;
   }
 }
