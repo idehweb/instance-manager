@@ -43,6 +43,10 @@ export class Service {
   static getAllCmd() {
     return 'docker service ls --format "{{.Name}} {{.Replicas}}"';
   }
+  static async getAllServices(exec) {
+    const all = await exec(this.getAllCmd());
+    return all.map((s) => s.trim()).filter((s) => s);
+  }
 }
 
 export default Service;
