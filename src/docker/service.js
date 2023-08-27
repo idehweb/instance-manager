@@ -1,8 +1,11 @@
 import { Global } from "../global.js";
 import { Network } from "../common/network.js";
+import { InstanceStatus } from "../model/instance.model.js";
 export class Service {
   static async getSystemStatus() {}
-  static async getServiceStatus(name) {}
+  static async getServiceStatus(name) {
+    return InstanceStatus.UP;
+  }
   static getCreateServiceCommand(
     dockerServiceName,
     subDomainName,

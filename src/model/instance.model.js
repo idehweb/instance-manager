@@ -38,7 +38,11 @@ export const instanceSchema = new mongoose.Schema(
     memory: { type: Number, required: true },
     disk: { type: Number, required: true },
     replica: { type: Number, required: true },
-    status: { type: String, default: InstanceStatus.JOB_CREATE },
+    status: {
+      type: String,
+      default: InstanceStatus.JOB_CREATE,
+      required: true,
+    },
     image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
     site_name: { type: String, required: true },
     pattern: { type: String },
