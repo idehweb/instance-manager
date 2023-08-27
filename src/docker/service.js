@@ -45,7 +45,10 @@ export class Service {
   }
   static async getAllServices(exec) {
     const all = await exec(this.getAllCmd());
-    return all.map((s) => s.trim()).filter((s) => s);
+    return all
+      .split("\n")
+      .map((s) => s.trim())
+      .filter((s) => s);
   }
 }
 
