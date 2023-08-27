@@ -21,7 +21,7 @@ services:
       mongonet:
       imnet:
     ports:
-      - 2760:3000
+      - 2727:3000
     env_file:
       - .env.local
 
