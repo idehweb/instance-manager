@@ -99,7 +99,7 @@ export default class ExecuteManager {
       isRun = true;
     } catch (err) {
       this.log(
-        `error in step:${this.job.progress_step}, attempt:${this.job.attempt}, message:${err.message}`,
+        `Error in step:${this.job.progress_step}, attempt:${this.job.attempt}, message:${err.message}`,
         false,
         true
       );
@@ -241,6 +241,7 @@ export default class ExecuteManager {
       if (
         !Global.env.isPro &&
         [
+          JobSteps.CREATE_STATIC_DIRS,
           JobSteps.COPY_STATIC,
           JobSteps.CREATE_SERVICE,
           JobSteps.RESTORE_DB,

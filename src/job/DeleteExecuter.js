@@ -118,20 +118,11 @@ export default class DeleteExecuter extends BaseExecuter {
   async sync_db(isError = false) {
     if (isError) return this.instance;
 
-    const addFields_body = {
-      status: InstanceStatus.DELETED,
-      name: { $concat: ["$name", `-deleted-${createRandomName(8)}`] },
-      old_name: "$name",
-      active: false,
-    };
-
     const newInsDoc = await instanceModel.findByIdAndUpdate(
       this.instance._id,
-      [
-        {
-          $addFields: addFields_body,
-        },
-      ],
+      {
+        status: InstanceStatus.DELETED,
+      },
       { new: true }
     );
 

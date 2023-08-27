@@ -9,7 +9,7 @@ import network, { Network, NetworkCDN } from "../common/network.js";
 import { Global } from "../global.js";
 import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
-import { instanceModel } from "../model/instance.model.js";
+import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
@@ -143,17 +143,12 @@ export default class CreateExecuter extends BaseExecuter {
   }
 
   async sync_db(isError = false) {
-    let set_body = {},
-      addFields_body;
+    let set_body = {};
 
     if (isError) {
-      addFields_body = {
+      set_body = {
         status: InstanceStatus.JOB_ERROR,
-        name: { $concat: ["$name", `-errored-${createRandomName(8)}`] },
-        old_name: "$name",
-        active: false,
       };
-      set_body = null;
     } else {
       set_body.status = InstanceStatus.UP;
       set_body.server_ip = this.instance.server_ip;
@@ -165,17 +160,9 @@ export default class CreateExecuter extends BaseExecuter {
 
     const newInsDoc = await instanceModel.findByIdAndUpdate(
       this.instance._id,
-      set_body
-        ? {
-            $set: set_body,
-          }
-        : addFields_body
-        ? [
-            {
-              $addFields: addFields_body,
-            },
-          ]
-        : {},
+      {
+        $set: set_body,
+      },
       { new: true }
     );
 

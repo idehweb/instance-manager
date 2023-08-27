@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+function isActive(status) {
+  return [
+    InstanceStatus.UP,
+    InstanceStatus.DOWN,
+    InstanceStatus.ERROR,
+    InstanceStatus.SUSPEND,
+    InstanceStatus.JOB_CREATE,
+  ].includes(status);
+}
+
 export const InstanceStatus = {
   JOB_CREATE: "job-create",
   UP: "up",
@@ -7,7 +17,9 @@ export const InstanceStatus = {
   ERROR: "error",
   JOB_ERROR: "job-error",
   DELETED: "deleted",
+  CANCELED: "canceled",
   EXPIRED: "expired",
+  SUSPEND: "suspend",
 };
 
 export const InstanceRegion = {
@@ -20,7 +32,7 @@ export const InstancePattern = {};
 export const instanceSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, required: true },
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     old_name: String,
     cpu: { type: Number, required: true },
     memory: { type: Number, required: true },
@@ -47,6 +59,31 @@ export const instanceSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+instanceSchema.index(
+  { name: 1 },
+  {
+    unique: true,
+    name: "instance name",
+    partialFilterExpression: {
+      active: true,
+    },
+  }
+);
+
+instanceSchema.static("isActive", isActive);
+
+instanceSchema.pre(/update/i, function (next) {
+  const update = this.getUpdate();
+  const status = update?.$set?.status;
+  if (!status) return next();
+
+  // set active field
+  update.$set.active = isActive(status);
+
+  return next();
+});
+
 export const instanceModel = mongoose.model(
   "instances",
   instanceSchema,
