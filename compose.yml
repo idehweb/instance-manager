@@ -20,6 +20,7 @@ services:
     networks:
       mongonet:
       imnet:
+      webnet:
     ports:
       - 2760:3000
     env_file:
