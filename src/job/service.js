@@ -49,6 +49,8 @@ class Service {
 
       if (!Object.values(data).length) return;
 
+      if (!data.status) data.status = JobStatus.IN_PROGRESS;
+
       // connection lost
       const canSendData = sse.sendData(data);
 
