@@ -24,7 +24,7 @@ app.use(cors());
 // app.use(hostGuard);
 app.use(catchMiddleware(tokenGuard));
 
-app.use("/sse/test", (req, res) => {
+app.get("/sse/event", (req, res) => {
   const sse = new SSE(res);
   const timer = setInterval(() => {
     sse.sendData(Math.random() + "");
