@@ -33,10 +33,12 @@ export async function tokenGuard(req, res, next) {
       req.user = user.payload;
       req.user._id = req.user.id;
     } else {
+      const userType =
+        user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
       const { data } = await axios.post(
         Global.env.AUTH_API,
         {
-          userType: user.payload.type,
+          userType,
         },
         {
           headers: {
@@ -46,7 +48,7 @@ export async function tokenGuard(req, res, next) {
       );
       req.user = data.data;
     }
-    req[user.payload.type] = req.user;
+    req[userType] = req.user;
 
     req.user.id = req.user._id;
     if (req.user._id) req.user._id = new Types.ObjectId(req.user._id);
