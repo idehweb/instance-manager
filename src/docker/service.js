@@ -42,7 +42,7 @@ export class Service {
     };
 
     const mountArgs = Object.entries(mounts)
-      .map(([k, v]) => `-mount type=bind,source=${k},destination=${v}`)
+      .map(([k, v]) => `--mount type=bind,source=${k},destination=${v}`)
       .join(" ");
 
     const network = ["nodeeweb_webnet", "nodeeweb_mongonet"];
