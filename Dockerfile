@@ -9,7 +9,7 @@ ENV REMOTE_PUBLIC_PATH /var/instanceManager
 ENV MONGO_URL mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica
 ENV MONGO_REMOTE_URL mongodb://127.0.0.1:27017/
 ENV MONGO_DB InstanceManager
-ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-server:0.1.47
+ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-shop
 ENV NODEEWEB_DB Idehweb
 ENV JOB_MAX_ATTEMPTS 3
 ENV AUTH_SECRET nodeeweb-token
@@ -29,7 +29,7 @@ RUN npm ci && npm cache clean --force
 FROM base as pro
 ENV NODE_ENV production
 ENV KNOWN_HOSTS nodeeweb-server,localhost
-ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-server:0.1.47
+ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-shop
 ENV NODEEWEB_IP 185.110.190.242
 ENV GERMAN_IP 185.110.190.242
 ENV IRAN_IP 185.19.201.61

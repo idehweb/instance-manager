@@ -2,7 +2,7 @@ version: '3'
 
 services:
   im-master:
-    image: im-master:0.0.1
+    image: im-master:1.0.0
     build: .
     container_name: im-master
     volumes:

@@ -1,3 +1,5 @@
+import * as crypto from "crypto";
+
 import { Global } from "../global.js";
 import { Network } from "../common/network.js";
 import { InstanceStatus } from "../model/instance.model.js";
@@ -6,28 +8,68 @@ export class Service {
   static async getServiceStatus(name) {
     return InstanceStatus.UP;
   }
-  static getCreateServiceCommand(
-    dockerServiceName,
-    subDomainName,
-    { replica, memory, cpu, image, region, site_name }
-  ) {
+  static getCreateServiceCommand({
+    replica,
+    memory,
+    cpu,
+    image,
+    region,
+    app_name,
+    site_url,
+    service_name,
+  }) {
+    const envs = {
+      SHARED_PATH: "/app/shared",
+      MONGO_URL: Global.env.MONGO_REMOTE_URL,
+      DB_NAME: service_name,
+      PORT: "3000",
+      AUTH_SECRET: crypto.randomBytes(24).toString("hex"),
+      LOG_TO_FILE: "true",
+      APP_NAME: app_name,
+      BASE_URL: site_url,
+    };
+
+    const envArgs = Object.entries(envs)
+      .filter(([k, v]) => v)
+      .map(([k, v]) => `-e ${k}=${v}`)
+      .join(" ");
+
+    const mounts = {
+      [`/var/instances/${service_name}/shared/`]: "/app/shared/",
+      [`/var/instances/${service_name}/public/`]: "/app/public/",
+      [`/var/instances/${service_name}/logs/`]: "/app/logs/",
+    };
+
+    const mountArgs = Object.entries(mounts)
+      .map(([k, v]) => `-mount type=bind,source=${k},destination=${v}`)
+      .join(" ");
+
+    const network = ["nodeeweb_webnet", "nodeeweb_mongonet"];
+    const networkArgs = network.map((n) => `--network ${n}`).join(" ");
+
+    const limitation = {
+      cpu,
+      memory: memory === -1 ? -1 : `${memory}MB`,
+    };
+    const limitationArgs = Object.entries(limitation)
+      .filter(([k, v]) => v !== -1)
+      .map(([k, v]) => `--limit-${k}=${v}`)
+      .join(" ");
+
+    const restartPolicy =
+      "--restart-condition on-failure --restart-delay 30s --restart-max-attempts 8 --restart-window 1m30s";
+
+    const updatePolicy = `--update-parallelism ${Math.max(
+      1,
+      Math.floor(replica / 2)
+    )} --update-delay 30s`;
+
     // create docker service
     const dockerCreate =
-      `docker service create --hostname ${dockerServiceName} --name ${dockerServiceName} -e PUBLIC_PATH=/app/public -e SHARED_PATH=/app/shared -e mongodbConnectionUrl="${
-        Global.env.MONGO_URL
-      }" -e dbName=${dockerServiceName} -e SITE_NAME=${site_name} -e SERVER_PORT=3000 -e BASE_URL="https://${Network.getDefaultDomain(
-        { name: subDomainName, region }
-      )}" -e SHOP_URL="https://${Network.getDefaultDomain({
-        name: subDomainName,
-        region,
-      })}/" --mount type=bind,source=/var/instances/${dockerServiceName}/shared/,destination=/app/shared/  --mount type=bind,source=/var/instances/${dockerServiceName}/public/,destination=/app/public/  --mount type=bind,source=/var/instances/${dockerServiceName}/public/public_media/,destination=/app/public_media/  --mount type=bind,source=/var/instances/${dockerServiceName}/public/admin/,destination=/app/admin/ --mount type=bind,source=/var/instances/${dockerServiceName}/public/plugins/,destination=/app/plugins/  --mount type=bind,source=/var/instances/${dockerServiceName}/public/theme/,destination=/app/theme/ --network nodeeweb_webnet --network nodeeweb_mongonet --replicas ${replica} ${
-        cpu === -1 ? "" : `--limit-cpu=${cpu}`
-      } ${
-        memory === -1 ? "" : `--limit-memory=${memory}MB`
-      } --restart-condition on-failure --restart-delay 30s --restart-max-attempts 8 --restart-window 1m30s --update-parallelism ${Math.max(
-        1,
-        Math.floor(replica / 2)
-      )} --update-delay 30s ${image}`.replace(/\n/g, " ");
+      `docker service create --hostname ${service_name} --name ${service_name} --replicas ${replica} ${envArgs} ${limitationArgs} ${mountArgs} ${restartPolicy} ${updatePolicy} ${networkArgs} ${image}`.replace(
+        /\n/g,
+        " "
+      );
 
     return dockerCreate;
   }

@@ -40,18 +40,16 @@ export default class CreateExecuter extends BaseExecuter {
     });
 
     // create docker service
-    const dockerCreateCmd = DockerService.getCreateServiceCommand(
-      this.instance_name,
-      this.instance.name,
-      {
-        replica: this.instance.replica,
-        memory: this.instance.memory,
-        image: this.instance.image,
-        cpu: this.instance.cpu,
-        region: this.instance.region,
-        site_name: this.instance.site_name,
-      }
-    );
+    const dockerCreateCmd = DockerService.getCreateServiceCommand({
+      replica: this.instance.replica,
+      memory: this.instance.memory,
+      image: this.instance.image,
+      cpu: this.instance.cpu,
+      region: this.instance.region,
+      app_name: this.instance.site_name,
+      service_name: this.instance_name,
+      site_url: `https://${this.instance.primary_domain}`,
+    });
     // create if not exist
     if (myService) {
       if (myService.split(" ")[1].startsWith("0")) {
