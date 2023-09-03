@@ -7,8 +7,12 @@ import { DisconnectError } from "./error.js";
 const confMap = new Map();
 
 function getIP(socket) {
-  const ip = socket.handshake.address.split(":").pop();
-  return ip;
+  const forwardIp =
+    socket.handshake.headers["x-forwarded-for"]?.split(",")?.[0]?.trim() ?? "";
+  const currentIp = socket.handshake.address.split(":").pop();
+
+  if (forwardIp) return forwardIp;
+  return currentIp;
 }
 
 function addIP(socket) {

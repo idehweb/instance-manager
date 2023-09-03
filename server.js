@@ -20,10 +20,6 @@ const io = new Server(server, {
 });
 
 Global.io = io;
-io.on("connection", (socket) => {
-  console.log(socket.handshake.headers);
-});
-
 registerWs(io);
 
 io.on("connection", (socket) => {
