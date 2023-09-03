@@ -38,6 +38,7 @@ export class Service {
       [`/var/instances/${service_name}/shared/`]: "/app/shared/",
       [`/var/instances/${service_name}/public/`]: "/app/public/",
       [`/var/instances/${service_name}/logs/`]: "/app/logs/",
+      [`/var/instances/${service_name}/plugins/`]: "/app/plugins/",
     };
 
     const mountArgs = Object.entries(mounts)
