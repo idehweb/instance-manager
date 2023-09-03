@@ -18,7 +18,10 @@ export default class CreateExecuter extends BaseExecuter {
 
   async create_static_dirs() {
     // create public
-    const createFolders = `mkdir -p /var/instances/${this.instance_name} && mkdir -p /var/instances/${this.instance_name}/shared && mkdir -p /var/instances/${this.instance_name}/public`;
+    const staticDirs = ["shared", "public", "logs"].map(
+      (f) => `/var/instances/${this.instance_name}/${f}`
+    );
+    const createFolders = `mkdir -p ${staticDirs.join(" ")}`;
     await this.exec(createFolders);
   }
 
