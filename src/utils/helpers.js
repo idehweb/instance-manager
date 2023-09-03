@@ -21,6 +21,7 @@ export function wait(sec) {
 
 export function axiosError2String(error) {
   if (!error.isAxiosError) {
+    console.log(error);
     return JSON.stringify(error, null, "  ");
   }
   return JSON.stringify(
