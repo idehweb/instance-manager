@@ -37,8 +37,8 @@ export default function registerWs(io) {
     // increase limit
     socket.setMaxListeners(Number.POSITIVE_INFINITY);
 
-    socket.once("log", onLog);
-    socket.once("command", onCommand.bind(null, socket));
+    socket.on("log", onLog);
+    socket.on("command", onCommand.bind(null, socket));
     socket.on("disconnect", disconnectGlobal.bind(null, socket));
   });
 
