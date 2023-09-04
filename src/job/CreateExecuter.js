@@ -137,7 +137,7 @@ export default class CreateExecuter extends BaseExecuter {
     if (!this.instance.pattern) return;
 
     this.log(`initial db base on : ${this.instance.pattern}`);
-    const cmd = `mongorestore --db ${this.instance_name} ${
+    const cmd = `mongorestore --db ${this.instance_name} --drop ${
       Global.env.MONGO_REMOTE_URL
     } ${getInstanceDbPath(this.instance, this.remote)}`;
     await this.exec(cmd);

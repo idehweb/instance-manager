@@ -27,6 +27,7 @@ export class Service {
       LOG_TO_FILE: "true",
       APP_NAME: app_name,
       BASE_URL: site_url,
+      MAX_NUM_OF_PROXY: 1,
     };
 
     const envArgs = Object.entries(envs)

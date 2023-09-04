@@ -24,7 +24,6 @@ export function hostGuard(req, res, next) {
 
 export async function tokenGuard(req, res, next) {
   try {
-    console.log(req.headers["x-forwarded-for"]);
     const token =
       req.headers.authorization?.split("Bearer ")?.[1] ?? req.cookies?.auth;
     if (!token) return res.status(401).send("unAuthorization");
