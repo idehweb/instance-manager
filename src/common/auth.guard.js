@@ -5,7 +5,7 @@ import customerModel from "../model/customer.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import { jobModel } from "../model/job.model.js";
 import axios from "axios";
-import { axiosError2String } from "../utils/helpers.js";
+import { addForwarded, axiosError2String, getMyIp } from "../utils/helpers.js";
 import { Types } from "mongoose";
 
 export function hostGuard(req, res, next) {
@@ -45,6 +45,7 @@ export async function tokenGuard(req, res, next) {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "X-Forwarded-For": addForwarded(req, getMyIp()),
           },
         }
       );

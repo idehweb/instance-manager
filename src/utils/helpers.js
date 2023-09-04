@@ -2,6 +2,7 @@ import { customAlphabet } from "nanoid";
 import { join } from "path";
 import * as fs from "fs";
 import { Global } from "../global.js";
+import { networkInterfaces } from "os";
 
 export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
@@ -65,4 +66,29 @@ export async function isExist(path) {
   } catch (err) {
     return false;
   }
+}
+
+export function getMyIp() {
+  const nets = networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      const familyV4Value = typeof net.family === "string" ? "IPv4" : 4;
+      if (net.family === familyV4Value && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+
+  return null;
+}
+
+export function addForwarded(req, ip) {
+  const forwarded =
+    (req.headers["x-forwarded-for"] ?? "").split(",").map((ip) => ip.trim()) ??
+    [];
+
+  // push
+  if (ip) forwarded.push(ip);
+
+  return forwarded.join(", ");
 }
