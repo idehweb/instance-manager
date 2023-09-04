@@ -90,5 +90,5 @@ export function addForwarded(req, ip) {
   // push
   if (ip) forwarded.push(ip);
 
-  return forwarded.join(", ");
+  return forwarded.join(",");
 }
