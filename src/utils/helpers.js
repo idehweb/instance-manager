@@ -96,3 +96,7 @@ export function addForwarded(req, ip) {
 export function getSlaveIps(region) {
   return [...(Global.ips[region] ?? [])];
 }
+
+export function ifExist(path, cmd) {
+  return `if [ -e ${path} ]; then ${cmd}; fi;`;
+}

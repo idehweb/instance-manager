@@ -1,7 +1,7 @@
 import { Global } from "../global.js";
 import { Service as DockerService } from "../docker/service.js";
 import network, { Network, NetworkCDN } from "../common/network.js";
-import { createRandomName, getPublicPath } from "../utils/helpers.js";
+import { createRandomName, getPublicPath, ifExist } from "../utils/helpers.js";
 import { Remote } from "../utils/remote.js";
 import {
   InstanceRegion,
@@ -56,12 +56,12 @@ export default class DeleteExecuter extends BaseExecuter {
       Global.env.isPro ? "-q" : ""
     } -r ${join(backup_path, "static.zip")}  ${static_path}`;
     this.log("backup instance static files");
-    await this.exec(backup_cmd);
+    await this.exec(ifExist(static_path, backup_cmd));
   }
   async rm_static() {
     const static_path = `/var/instances/${this.instance_name}`;
     const cmd = `rm -r ${static_path}`;
-    await this.exec(cmd);
+    await this.exec(ifExist(static_path, cmd));
   }
 
   async backup_db() {

@@ -37,8 +37,8 @@ export default function registerWs(io) {
     // increase limit
     socket.setMaxListeners(Number.POSITIVE_INFINITY);
 
-    socket.once("log", onLog);
-    socket.once("command", onCommand.bind(null, socket));
+    socket.on("log", onLog);
+    socket.on("command", onCommand.bind(null, socket));
     socket.on("disconnect", disconnectGlobal.bind(null, socket));
   });
 
@@ -49,7 +49,6 @@ export default function registerWs(io) {
 
 function onLog(data) {
   const { id, log, error } = data;
-  console.log("on log", id, log);
   const conf = confMap.get(id);
   if (!conf) return;
 
@@ -59,7 +58,6 @@ function onLog(data) {
 
 function onCommand(socket, data) {
   const { code, error, id, response } = data;
-  console.log("on command", id, response);
   const conf = confMap.get(id);
   if (!conf) return;
 
@@ -68,7 +66,7 @@ function onCommand(socket, data) {
   if (code !== 0) conf.reject(error ?? code);
 
   // remove timer
-  // socket.removeListener("disconnect", conf.timer);
+  socket.removeListener("disconnect", conf.timer);
 
   // remove conf
   confMap.delete(id);
