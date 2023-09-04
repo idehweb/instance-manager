@@ -49,6 +49,7 @@ export default function registerWs(io) {
 
 function onLog(data) {
   const { id, log, error } = data;
+  console.log("on log", id, log);
   const conf = confMap.get(id);
   if (!conf) return;
 
