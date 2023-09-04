@@ -2,6 +2,7 @@ import {
   axiosError2String,
   getInstanceDbPath,
   getInstanceStaticPath,
+  getSlaveIps,
   wait,
 } from "../utils/helpers.js";
 import { Service as DockerService } from "../docker/service.js";
@@ -108,8 +109,14 @@ export default class CreateExecuter extends BaseExecuter {
     this.log(`add nginx config for domains: ${domains.join(" ")}`);
   }
   async register_cdn() {
-    const ips = [...Global.ips[this.instance.region]];
+    const ips = getSlaveIps(this.instance.region);
     const server_ip = ips[0];
+
+    if (!server_ip)
+      throw new Error(
+        `there is not any active slave in ${this.instance.region}`
+      );
+
     const defaultDomain = Network.getDefaultDomain({
       name: this.instance.name,
       region: this.instance.region,

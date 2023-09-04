@@ -92,3 +92,7 @@ export function addForwarded(req, ip) {
 
   return forwarded.join(",");
 }
+
+export function getSlaveIps(region) {
+  return [...(Global.ips[region] ?? [])];
+}

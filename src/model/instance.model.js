@@ -79,7 +79,7 @@ instanceSchema.static("isActive", isActive);
 
 instanceSchema.pre(/update/i, function (next) {
   const update = this.getUpdate();
-  const status = update?.$set?.status;
+  const status = update?.$set?.status ?? update?.status;
   if (!status) return next();
 
   // set active field
