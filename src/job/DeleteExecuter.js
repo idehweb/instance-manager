@@ -52,10 +52,9 @@ export default class DeleteExecuter extends BaseExecuter {
       `backup/${this.instance_name}`,
       this.remote
     )}`;
-    const backup_cmd = `mkdir -p ${backup_path} && zip -r ${join(
-      backup_path,
-      "static.zip"
-    )}  ${static_path}`;
+    const backup_cmd = `mkdir -p ${backup_path} && zip ${
+      Global.env.isPro ? "-q" : ""
+    } -r ${join(backup_path, "static.zip")}  ${static_path}`;
     this.log("backup instance static files");
     await this.exec(backup_cmd);
   }
@@ -70,8 +69,8 @@ export default class DeleteExecuter extends BaseExecuter {
     const backup_cmd = `mongodump --db ${
       this.instance_name
     } --out ${getPublicPath(`backup/${this.instance_name}/db`, this.remote)} ${
-      Global.env.MONGO_URL
-    }`;
+      Global.env.isPro ? "--quiet" : ""
+    } ${Global.env.MONGO_URL}`;
     await this.exec(backup_cmd);
   }
   async rm_db() {
