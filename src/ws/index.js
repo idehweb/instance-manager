@@ -27,19 +27,19 @@ function rmIP(socket) {
 export default function registerWs(io) {
   io.use(authWithToken);
 
-  io.on("connection", async (socket) => {
+  io.once("connection", async (socket) => {
     console.log(socket.id, "connected");
     socket.join(socket.instance.region);
 
     // add ip to global
     addIP(socket);
 
-    socket.on("log", onLog);
-    socket.on("command", onCommand);
+    socket.once("log", onLog);
+    socket.once("command", onCommand.bind(null, socket));
     socket.on("disconnect", disconnectGlobal.bind(null, socket));
   });
 
-  io.on("error", (err) => {
+  io.once("error", (err) => {
     console.log("error", err);
   });
 }
@@ -53,7 +53,7 @@ function onLog(data) {
   if (error) conf.logger.error(error);
 }
 
-function onCommand(data) {
+function onCommand(socket, data) {
   const { code, error, id, response } = data;
   const conf = confMap.get(id);
   if (!conf) return;
@@ -61,6 +61,9 @@ function onCommand(data) {
   // send response
   if (code === 0) conf.resolve(response);
   if (code !== 0) conf.reject(error ?? code);
+
+  // remove timer
+  socket.removeListener("disconnect", conf.timer);
 
   // remove conf
   confMap.delete(id);
@@ -75,6 +78,7 @@ function disconnectGlobal(socket) {
 async function onDisconnect(id, reject) {
   await setTimeout(5 * 60 * 1000);
   reject(new DisconnectError("client disconnect"));
+
   // remove conf
   confMap.delete(id);
 }
@@ -90,7 +94,8 @@ export async function runRemoteCmd(region, cmd, logger = console) {
   targetSocket.emit("command", { id: cmdId, cmd });
 
   return await new Promise((resolve, reject) => {
-    confMap.set(cmdId, { logger, resolve, reject });
-    targetSocket.on("disconnect", onDisconnect.bind(null, cmdId, reject));
+    const timer = onDisconnect.bind(null, cmdId, reject);
+    confMap.set(cmdId, { logger, resolve, reject, timer });
+    targetSocket.on("disconnect", timer);
   });
 }

@@ -20,11 +20,8 @@ const io = new Server(server, {
 });
 
 Global.io = io;
+io.on("connection", (socket) => {});
 registerWs(io);
-
-io.on("connection", (socket) => {
-  socket.handshake.address;
-});
 
 mongoose
   .connect(Global.env.MONGO_URL, { dbName: Global.env.MONGO_DB })
