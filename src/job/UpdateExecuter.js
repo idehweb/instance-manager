@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import { Service as DockerService } from "../docker/service.js";
 import {
   InstanceRegion,
@@ -85,9 +84,9 @@ export default class UpdateExecuter extends BaseExecuter {
   async update_domain_cdn() {
     const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
 
-    if (!domains_add.length && domains_rm.length) return;
+    if (!domains_add.length && !domains_rm.length) return;
 
-    let new_domains = this.instance.domains ?? [];
+    let new_domains = this.instance.domains ? [...this.instance.domains] : [];
 
     if (domains_add.length)
       this.log(`Going to create new domains: ${domains_add.join(" , ")}`);
@@ -95,7 +94,7 @@ export default class UpdateExecuter extends BaseExecuter {
       this.log(`Going to remove domains: ${domains_rm.join(" , ")}`);
 
     new_domains.push(
-      await network.changeCustomDomains(
+      ...(await network.changeCustomDomains(
         this.instance.region === InstanceRegion.IRAN
           ? NetworkCDN.ARVAN
           : NetworkCDN.CF,
@@ -107,7 +106,7 @@ export default class UpdateExecuter extends BaseExecuter {
           domains_add,
           domains_rm,
         }
-      )
+      ))
     );
     new_domains = new_domains.filter(
       ({ content }) => !domains_rm.includes(content)

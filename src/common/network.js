@@ -164,7 +164,7 @@ export class Network {
     );
 
     if (domains_rm.length)
-      logger.log(`remove domains , domains: ${domains_rm.join(" , ")}`);
+      logger.log(`remove domains: ${domains_rm.join(" , ")}`);
 
     return domains_add;
   }
