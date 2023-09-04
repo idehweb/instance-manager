@@ -27,7 +27,7 @@ function rmIP(socket) {
 export default function registerWs(io) {
   io.use(authWithToken);
 
-  io.once("connection", async (socket) => {
+  io.once("connection", (socket) => {
     console.log(socket.id, "connected");
     socket.join(socket.instance.region);
 
@@ -37,8 +37,8 @@ export default function registerWs(io) {
     // increase limit
     socket.setMaxListeners(Number.POSITIVE_INFINITY);
 
-    socket.on("log", onLog);
-    socket.on("command", onCommand.bind(null, socket));
+    socket.once("log", onLog);
+    socket.once("command", onCommand.bind(null, socket));
     socket.on("disconnect", disconnectGlobal.bind(null, socket));
   });
 
@@ -68,7 +68,7 @@ function onCommand(socket, data) {
   if (code !== 0) conf.reject(error ?? code);
 
   // remove timer
-  socket.removeListener("disconnect", conf.timer);
+  // socket.removeListener("disconnect", conf.timer);
 
   // remove conf
   confMap.delete(id);
