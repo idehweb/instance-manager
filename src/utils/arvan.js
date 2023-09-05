@@ -113,6 +113,7 @@ export default class Arvan {
         (!type || type === r.type) &&
         (!content || this.sameContent(r, content))
     );
+
     if (!myRecord) return;
     await this.#query({
       method: "delete",

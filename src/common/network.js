@@ -174,7 +174,10 @@ export class Network {
    * @param {string} cdn_name
    * domains: string[];
    */
-  async disconnectInstance(cdn_name, { domains = [], defaultDomain, logger }) {
+  async disconnectInstance(
+    cdn_name,
+    { domains = [], defaultDomain, logger, server_ip }
+  ) {
     const cdn = this.#getCDN(cdn_name);
     const { subdomain, domain } = this.#getSubMain(defaultDomain);
 
@@ -184,7 +187,11 @@ export class Network {
       primary_domain: "",
     });
 
-    await cdn.removeRecord(domain, subdomain);
+    await cdn.removeRecord(domain, {
+      name: subdomain,
+      type: "A",
+      content: server_ip,
+    });
     logger.log(`remove ${defaultDomain} record`);
   }
 

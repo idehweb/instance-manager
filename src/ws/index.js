@@ -27,7 +27,7 @@ function rmIP(socket) {
 export default function registerWs(io) {
   io.use(authWithToken);
 
-  io.once("connection", (socket) => {
+  io.on("connection", (socket) => {
     console.log(socket.id, "connected");
     socket.join(socket.instance.region);
 
@@ -42,7 +42,7 @@ export default function registerWs(io) {
     socket.on("disconnect", disconnectGlobal.bind(null, socket));
   });
 
-  io.once("error", (err) => {
+  io.on("error", (err) => {
     console.log("error", err);
   });
 }

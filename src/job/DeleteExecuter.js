@@ -40,6 +40,7 @@ export default class DeleteExecuter extends BaseExecuter {
           name: this.instance.name,
           region: this.instance.region,
         }),
+        server_ip: this.instance.server_ip,
         logger: { log: this.log },
         domains: this.instance.domains.map(({ content }) => content),
       }

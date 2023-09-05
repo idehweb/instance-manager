@@ -1,8 +1,15 @@
-import { JobType, jobModel } from "../model/job.model.js";
 import fs from "fs";
-import { err2Str, getPublicPath } from "../utils/helpers.js";
+import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
+import {
+  axiosError2String,
+  err2Str,
+  getPublicPath,
+  wait,
+} from "../utils/helpers.js";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
+import { Remote } from "../utils/remote.js";
+import { catchFn } from "../utils/catchAsync.js";
 import CreateExecuter from "./CreateExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
@@ -99,8 +106,8 @@ export default class ExecuteManager {
       isRun = false;
     }
     if (!isRun) {
-      const isThereChance = await this.#checkAttempts();
-      if (!isThereChance) return;
+      const isThereAnyChance = await this.#checkAttempts();
+      if (!isThereAnyChance) return;
       // failed
       this.job = {
         ...(
@@ -151,7 +158,9 @@ export default class ExecuteManager {
   async #checkAttempts() {
     // check attempts
     if (this.job.attempt < this.job.max_attempts) return true;
+    this.log("try to sync-db, after error");
     await this.#sync_db(true);
+    this.log("try to clean, after error");
     await this.clean();
     this.log("Finish with Error", true);
     this.sendResultToClient(false);
