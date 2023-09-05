@@ -53,6 +53,8 @@ export default class CreateExecuter extends BaseExecuter {
       app_name: this.instance.site_name,
       service_name: this.instance_name,
       site_url: `https://${this.instance.primary_domain}`,
+      executer: "x-docker",
+      maxRetries: 6,
     });
     // create if not exist
     if (myService) {

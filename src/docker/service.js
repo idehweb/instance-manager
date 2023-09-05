@@ -9,6 +9,8 @@ export class Service {
     return InstanceStatus.UP;
   }
   static getCreateServiceCommand({
+    executer = "x-docker",
+    maxRetries = 6,
     replica,
     memory,
     cpu,
@@ -73,19 +75,27 @@ export class Service {
         " "
       );
 
-    return dockerCreate;
+    if (executer === "docker") return dockerCreate;
+    return `x-docker --max-retries ${maxRetries} ${dockerCreate}`;
   }
   static getDeleteServiceCommand(name) {
     return `docker service rm ${name}`;
   }
-  static getUpdateServiceCommand(name, configs) {
-    return `docker service update ${Object.entries(configs)
+  static getUpdateServiceCommand(
+    name,
+    configs,
+    { executer = "x-docker", maxRetries = 6 } = {}
+  ) {
+    const cmd = `docker service update ${Object.entries(configs)
       .map(([k, v]) =>
         Array.isArray(v)
           ? `${v.map((sub_v) => `--${k} ${sub_v}`).join(" ")}`
           : `--${k} ${v}`
       )
       .join(" ")} ${name}`;
+
+    if (executer === "docker") return cmd;
+    return `x-docker --max-reties ${maxRetries} ${cmd}`;
   }
   static getAllCmd() {
     return 'docker service ls --format "{{.Name}} {{.Replicas}}"';

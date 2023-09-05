@@ -55,6 +55,10 @@ export default class UpdateExecuter extends BaseExecuter {
           this.job.update_query.status === InstanceStatus.UP
             ? this.instance.replica
             : 0,
+      },
+      {
+        executer: "x-docker",
+        maxRetries: 6,
       }
     );
     await this.exec(docker_cmd);
@@ -156,6 +160,10 @@ export default class UpdateExecuter extends BaseExecuter {
           `BASE_URL=https://${primary_domain}`,
           `SHOP_URL=https://${primary_domain}/`,
         ],
+      },
+      {
+        executer: "x-docker",
+        maxRetries: 6,
       }
     );
 
