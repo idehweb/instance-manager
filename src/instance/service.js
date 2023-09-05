@@ -3,7 +3,7 @@ import { JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
 import ExecuterManager from "../job/ExecuterManager.js";
-import { createRandomName } from "../utils/helpers.js";
+import { createRandomName, slugify } from "../utils/helpers.js";
 import { Network } from "../common/network.js";
 
 class Service {
@@ -82,6 +82,7 @@ class Service {
     const user = req.admin || req.customer;
     const region = req.body.region ?? "german";
     const name = req.body.name ?? createRandomName(8);
+    const slug = slugify(name);
     const defaultDomain = Network.getDefaultDomain({
       name,
       region,
@@ -106,7 +107,7 @@ class Service {
 
     const instance = await instanceModel.create({
       user: user._id,
-      name,
+      name: slug,
       site_name: req.body.site_name ?? name,
       cpu: Math.min(2, req.body.cpu ?? 2),
       memory: Math.min(1024, req.body.memory ?? 1024),

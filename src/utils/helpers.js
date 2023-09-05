@@ -100,3 +100,7 @@ export function getSlaveIps(region) {
 export function ifExist(path, cmd) {
   return `if [ -e ${path} ]; then ${cmd}; fi;`;
 }
+
+export function slugify(str = "") {
+  return str.trim().replace(/\s/g, "-").toLowerCase();
+}
