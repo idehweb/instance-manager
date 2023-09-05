@@ -1,17 +1,8 @@
-import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
-import { instanceModel } from "../model/instance.model.js";
+import { JobType, jobModel } from "../model/job.model.js";
 import fs from "fs";
-import {
-  axiosError2String,
-  createRandomName,
-  getPublicPath,
-  wait,
-} from "../utils/helpers.js";
-import { InstanceStatus } from "../model/instance.model.js";
+import { err2Str, getPublicPath } from "../utils/helpers.js";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
-import { Remote } from "../utils/remote.js";
-import { catchFn } from "../utils/catchAsync.js";
 import CreateExecuter from "./CreateExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
@@ -99,7 +90,9 @@ export default class ExecuteManager {
       isRun = true;
     } catch (err) {
       this.log(
-        `Error in step:${this.job.progress_step}, attempt:${this.job.attempt}, message:${err.message}`,
+        `Error in step:${this.job.progress_step}, attempt:${
+          this.job.attempt
+        }, message:${err2Str(err)}`,
         false,
         true
       );
