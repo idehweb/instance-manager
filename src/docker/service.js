@@ -61,7 +61,7 @@ export class Service {
       .join(" ");
 
     const restartPolicy =
-      "--restart-condition on-failure --restart-delay 30s --restart-max-attempts 8 --restart-window 1m30s";
+      "--restart-condition any --restart-delay 30s --restart-max-attempts 8 --restart-window 1m30s";
 
     const updatePolicy = `--update-parallelism ${Math.max(
       1,
