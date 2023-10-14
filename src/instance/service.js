@@ -1,4 +1,8 @@
-import { InstanceStatus, instanceModel } from "../model/instance.model.js";
+import {
+  InstanceRegion,
+  InstanceStatus,
+  instanceModel,
+} from "../model/instance.model.js";
 import { JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
@@ -117,7 +121,7 @@ class Service {
       expiredAt: new Date(req.body.expiredAt),
       pattern: req.body.pattern,
       primary_domain,
-      region,
+      region: InstanceRegion.GERMAN,
       domains: domains.map((d) => ({
         content: d,
       })),
