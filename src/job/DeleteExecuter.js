@@ -11,6 +11,7 @@ import {
 import { join } from "path";
 import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
+import DBCmd from "../db/index.js";
 export default class DeleteExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
     super(job, instance, log_file);
@@ -113,6 +114,11 @@ export default class DeleteExecuter extends BaseExecuter {
 
     await nginx.rmDomainsConf(domains);
     this.log(`remove nginx config for domains: ${domains.join(" ")}`);
+  }
+
+  async rm_user_from_db() {
+    await this.exec(DBCmd.deleteUser({ db: this.instance.db, user: "owner" }));
+    this.log("rm user from db");
   }
 
   async sync_db(isError = false) {

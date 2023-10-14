@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {
   axiosError2String,
   getInstanceDbPath,
@@ -11,6 +12,7 @@ import { Global } from "../global.js";
 import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
 import { InstanceStatus, instanceModel } from "../model/instance.model.js";
+import DBCmd from "../db/index.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
@@ -37,6 +39,10 @@ export default class CreateExecuter extends BaseExecuter {
     await this.exec(copyStatics);
   }
   async docker_create() {
+    // db uri
+    this.log("try to get db uri");
+    const dbUri = this.dbUri ? this.dbUri : await this.create_user_in_db();
+
     // check docker services
     const listServices = await DockerService.getAllServices(this.exec);
     const myService = listServices.find((s = "") => {
@@ -45,13 +51,11 @@ export default class CreateExecuter extends BaseExecuter {
 
     // create docker service
     const dockerCreateCmd = DockerService.getCreateServiceCommand({
-      replica: this.instance.replica,
-      memory: this.instance.memory,
-      image: this.instance.image,
-      cpu: this.instance.cpu,
-      region: this.instance.region,
+      ...this.instance.toObject(),
       app_name: this.instance.site_name,
       service_name: this.instance_name,
+      dbName: this.instance.db,
+      dbUri,
       site_url: `https://${this.instance.primary_domain}`,
       executer: "x-docker",
       maxRetries: 6,
@@ -153,6 +157,21 @@ export default class CreateExecuter extends BaseExecuter {
       this.remote
     )}`;
     await this.exec(cmd);
+  }
+
+  async create_user_in_db() {
+    this.log("try to create user in db");
+    const dbUri = (
+      await this.exec(
+        DBCmd.addUser({
+          user: "owner",
+          pass: crypto.randomBytes(24).toString("hex"),
+          db: this.instance.db,
+        })
+      )
+    ).trim();
+    this.dbUri = dbUri;
+    return dbUri;
   }
 
   async sync_db(isError = false) {

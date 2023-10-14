@@ -28,6 +28,8 @@ export const JobSteps = {
   ROLLBACK_UPDATE_DOMAIN_CERT: "rollback-update-domain-cert",
   CHANGE_IMAGE: "change-image",
   CHANGE_SERVICE_PRIMARY_DOMAIN: "change-service-primary-domain",
+  CREATE_USER_IN_DB: "create-user-in-db",
+  REMOVE_USER_FROM_DB: "remove_user-from-db",
 };
 
 export const JobStatus = {

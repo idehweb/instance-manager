@@ -33,6 +33,7 @@ export const instanceSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, required: true },
     name: { type: String, required: true },
+    db: { type: String, required: true },
     old_name: String,
     cpu: { type: Number, required: true },
     memory: { type: Number, required: true },

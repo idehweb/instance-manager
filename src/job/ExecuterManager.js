@@ -225,6 +225,7 @@ export default class ExecuteManager {
     const stack = [
       JobSteps.CREATE_STATIC_DIRS,
       JobSteps.COPY_STATIC,
+      JobSteps.CREATE_USER_IN_DB,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,
       JobSteps.ADD_DOMAIN_CERT,
@@ -443,6 +444,10 @@ export default class ExecuteManager {
         return executer.update_domain_config;
       case JobSteps.PARSE_UPDATE_QUERY:
         return executer.parse_update_query;
+      case JobSteps.CREATE_USER_IN_DB:
+        return executer.create_user_in_db;
+      case JobSteps.REMOVE_USER_FROM_DB:
+        return executer.rm_user_from_db;
     }
   }
   #convertJobTypeToExecuter() {

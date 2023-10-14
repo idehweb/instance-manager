@@ -112,6 +112,7 @@ class Service {
     const instance = await instanceModel.create({
       user: user._id,
       name: slug,
+      db: `nwi-${slug}`,
       site_name: req.body.site_name ?? name,
       cpu: Math.min(2, req.body.cpu ?? 2),
       memory: Math.min(1024, req.body.memory ?? 1024),
