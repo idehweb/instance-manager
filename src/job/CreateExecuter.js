@@ -40,8 +40,11 @@ export default class CreateExecuter extends BaseExecuter {
   }
   async docker_create() {
     // db uri
-    this.log("try to get db uri");
-    const dbUri = this.dbUri ? this.dbUri : await this.create_user_in_db();
+    let dbUri = this.dbUri;
+    if (!dbUri) {
+      this.log("try to get db uri by create new user");
+      dbUri = await this.create_user_in_db();
+    }
 
     // check docker services
     const listServices = await DockerService.getAllServices(this.exec);
