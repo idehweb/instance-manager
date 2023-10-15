@@ -28,7 +28,11 @@ export default function registerWs(io) {
   io.use(authWithToken);
 
   io.on("connection", (socket) => {
-    console.log(socket.id, "connected");
+    console.log(
+      `socket ${socket.id} from ${socket.instance.region} by ip ${getIP(
+        socket
+      )} connected`
+    );
     socket.join(socket.instance.region);
 
     // add ip to global
