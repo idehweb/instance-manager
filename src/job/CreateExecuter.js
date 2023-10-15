@@ -51,7 +51,7 @@ export default class CreateExecuter extends BaseExecuter {
 
     // create docker service
     const dockerCreateCmd = DockerService.getCreateServiceCommand({
-      ...this.instance.toObject(),
+      ...this.instance,
       app_name: this.instance.site_name,
       service_name: this.instance_name,
       dbName: this.instance.db,
