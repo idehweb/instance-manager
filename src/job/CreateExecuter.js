@@ -33,8 +33,7 @@ export default class CreateExecuter extends BaseExecuter {
 
     // copy static files
     const copyStatics = `cp -r ${getInstanceStaticPath(
-      this.instance,
-      this.remote
+      this.instance
     )} /var/instances/${this.instance_name}/public`;
     await this.exec(copyStatics);
   }
@@ -170,10 +169,7 @@ export default class CreateExecuter extends BaseExecuter {
     this.log(`initial db base on : ${this.instance.pattern}`);
     const cmd = `mongorestore --db ${this.instance_name} --drop ${
       Global.env.isPro ? "--quiet" : ""
-    } ${Global.env.MONGO_REMOTE_URL} ${getInstanceDbPath(
-      this.instance,
-      this.remote
-    )}`;
+    } ${Global.env.MONGO_REMOTE_URL} ${getInstanceDbPath(this.instance)}`;
     await this.exec(cmd);
   }
 

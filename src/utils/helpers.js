@@ -7,6 +7,11 @@ import { networkInterfaces } from "os";
 export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
 );
+
+export function getRemotePublicPath(path) {
+  return join(Global.env.REMOTE_PUBLIC_PATH, path);
+}
+
 export function getPublicPath(path, remote) {
   return join(
     remote && !remote.isInLocal()
@@ -50,11 +55,11 @@ export function getNginxPublicPath(...path) {
   return join("/var/instance/static", ...path);
 }
 
-export function getInstanceStaticPath(instance, remote) {
-  return `${getPublicPath(`static/${instance.pattern}`, remote)}/*`;
+export function getInstanceStaticPath(instance) {
+  return `${getRemotePublicPath(`static/${instance.pattern}`)}/*`;
 }
-export function getInstanceDbPath(instance, remote) {
-  return `${getPublicPath(`db/${instance.pattern}`, remote)}`;
+export function getInstanceDbPath(instance) {
+  return `${getRemotePublicPath(`db/${instance.pattern}`)}`;
 }
 export function getScripts(name) {
   return `${Global.env.SCRIPTS_PREFIX}${name}`;
