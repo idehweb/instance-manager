@@ -77,8 +77,9 @@ export default class DeleteExecuter extends BaseExecuter {
   }
   async rm_db() {
     this.log("Delete instance db");
-    const delete_cmd = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
-    await this.exec(delete_cmd);
+    const cmd_with_mongoose = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
+    const cmd_with_x_mongo = `x-mongo drop-db ${this.instance_name}`;
+    await this.exec(cmd_with_x_mongo);
   }
 
   async rm_domain_cert() {
