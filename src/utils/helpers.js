@@ -43,9 +43,7 @@ export function axiosError2String(error) {
 }
 
 export function err2Str(error) {
-  if (error.message) return error.message;
-  if (error.toString) return error.toString();
-  return JSON.stringify(err, null, "  ");
+  return JSON.stringify(error, null, "  ");
 }
 
 export function getNginxPublicPath(...path) {
