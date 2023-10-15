@@ -221,4 +221,5 @@ export class Network {
 }
 
 const network = new Network();
+
 export default network;

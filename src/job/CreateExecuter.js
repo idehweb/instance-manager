@@ -144,7 +144,22 @@ export default class CreateExecuter extends BaseExecuter {
         }
       );
     } catch (err) {
-      this.log("Axios Error in DNS:\n" + axiosError2String(err));
+      this.log(
+        "Axios Error in DNS:\n" +
+          `Request : ${JSON.stringify(
+            {
+              cdn: Network.region2CDN(this.instance.region),
+
+              defaultDomain,
+              domains: this.instance.domains.map(({ content }) => content),
+              logger: { log: this.log },
+              content: server_ip,
+            },
+            null,
+            "  "
+          )}\nResponse:` +
+          axiosError2String(err)
+      );
       throw err;
     }
     this.instance.server_ip = server_ip;

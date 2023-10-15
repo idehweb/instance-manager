@@ -34,6 +34,17 @@ export default class Cloudflare {
     return list.result;
   }
 
+  sameName(record, name, domain) {
+    return (
+      record.name === name ||
+      (name === "@" && record.name === domain) ||
+      record.name === `${name}.${domain}`
+    );
+  }
+  sameContent(record, content) {
+    return content === record?.content;
+  }
+
   async addRecord(
     domain,
     { content = Global.env.GERMAN_IP, name, type, isProxy }
@@ -44,10 +55,9 @@ export default class Cloudflare {
     if (
       records.find(
         (r) =>
-          (r.name === `${name}.${domain}` ||
-            (name === "@" && r.name === domain) ||
-            name === r.name) &&
-          r.type === type
+          this.sameName(r, name, domain) &&
+          r.type === type &&
+          this.sameContent(r, content)
       )
     )
       return;
@@ -83,7 +93,10 @@ export default class Cloudflare {
   async removeRecord(domain, { name, type, content }) {
     const records = await this.getRecords(domain);
     const myRecordId = records.find(
-      (r) => r.name === `${record_name}.${domain}`
+      (r) =>
+        this.sameName(r, name, domain) &&
+        r.type === type &&
+        this.sameContent(r, content)
     )?.id;
     if (!myRecordId) {
       return;
