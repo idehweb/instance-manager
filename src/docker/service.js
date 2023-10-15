@@ -35,7 +35,7 @@ export class Service {
 
     const envArgs = Object.entries(envs)
       .filter(([k, v]) => v)
-      .map(([k, v]) => `-e ${k}=${v}`)
+      .map(([k, v]) => `-e "${k}=${v}"`)
       .join(" ");
 
     const mounts = {
