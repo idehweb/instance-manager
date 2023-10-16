@@ -10,6 +10,7 @@ import ExecuterManager from "../job/ExecuterManager.js";
 import { createRandomName, slugify } from "../utils/helpers.js";
 import { Network } from "../common/network.js";
 import instanceCreateValSch from "../validator/instance.js";
+import imageService from "../image/service.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -81,6 +82,10 @@ class Service {
   }
   static async createOne(req, res, next) {
     const body = req.body;
+
+    if (!(await imageService.isIn(body.image)))
+      return res.status(404).json({ message: `image ${body.image} not found` });
+
     const user = req.admin || req.customer;
     // const region = body.region ?? "german";
     const region = InstanceRegion.GERMAN;

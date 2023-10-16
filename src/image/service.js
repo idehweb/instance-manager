@@ -20,10 +20,17 @@ class Service {
     }
   }
 
-  async getLatest() {}
+  async getLatest() {
+    return await imageModel.findOne({}).sort({ createdAt: -1 });
+  }
 
-  async isIn(image) {}
+  async isIn(image) {
+    const imDoc = await imageModel.findOne({ image });
+    if (!imDoc) return false;
+    return true;
+  }
 }
 
 const service = new Service();
+
 export default service;
