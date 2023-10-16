@@ -80,17 +80,7 @@ class Service {
     return res.status(202).json({ status: "success", job });
   }
   static async createOne(req, res, next) {
-    const { value: body, error } = instanceCreateValSch.validate(req.body, {
-      stripUnknown: true,
-    });
-    if (error) {
-      console.error(error);
-      return res.status(400).json({
-        status: "error",
-        message: error.message,
-      });
-    }
-
+    const body = req.body;
     const user = req.admin || req.customer;
     // const region = body.region ?? "german";
     const region = InstanceRegion.GERMAN;
