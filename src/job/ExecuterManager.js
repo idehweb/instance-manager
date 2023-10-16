@@ -81,6 +81,7 @@ export default class ExecuteManager {
     // create
     let isRun;
     this.log("Start");
+    if (this.job.attempt === 1) await this.executer.init();
 
     try {
       if (this.job.type === JobType.CREATE) {

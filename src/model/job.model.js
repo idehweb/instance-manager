@@ -71,6 +71,14 @@ export const jobSchema = new mongoose.Schema(
     },
     attempt: { type: Number, default: 1 },
     max_attempts: { type: Number, default: +Global.env.JOB_MAX_ATTEMPTS },
+    executer: {
+      type: {
+        _id: false,
+        id: { type: String, required: true },
+        ip: { type: String, required: true },
+      },
+      required: false,
+    },
   },
   { timestamps: true }
 );

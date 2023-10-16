@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import { jobModel } from "../model/job.model.js";
 import { Remote } from "../utils/remote.js";
 import { runRemoteCmd } from "../ws/index.js";
+import { getMyIp } from "../utils/helpers.js";
 
 export class BaseExecuter {
   last_log;
@@ -9,9 +11,27 @@ export class BaseExecuter {
     this.instance = instance;
     this.log_file = log_file;
     this.remote = new Remote(instance.region);
+    this.id = crypto.randomUUID();
   }
   get instance_name() {
     return `nwi-${this.instance.name}`;
+  }
+
+  async init() {
+    const newJob = await jobModel.findOneAndUpdate(
+      { _id: this.job._id, executer: { $exists: false } },
+      {
+        executer: {
+          id: this.id,
+          ip: getMyIp(true),
+        },
+      },
+      { new: true }
+    );
+
+    if (!newJob)
+      throw new Error("can not initial the job, because executer set before");
+    this.job = { ...newJob._doc };
   }
 
   log = (chunk, isEnd = false, isError = false, whenDifferent = false) => {

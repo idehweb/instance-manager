@@ -76,12 +76,12 @@ export async function isExist(path) {
   }
 }
 
-export function getMyIp() {
+export function getMyIp(canInternal = false) {
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {
     for (const net of nets[name]) {
       const familyV4Value = typeof net.family === "string" ? "IPv4" : 4;
-      if (net.family === familyV4Value && !net.internal) {
+      if (net.family === familyV4Value && (canInternal || !net.internal)) {
         return net.address;
       }
     }
