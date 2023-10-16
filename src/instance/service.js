@@ -111,25 +111,6 @@ class Service {
       ]),
     ];
 
-    return res.json({
-      user: user._id,
-      name: slug,
-      db: `nwi-${slug}`,
-      site_name: body.site_name,
-      cpu: body.cpu,
-      memory: body.memory,
-      disk: body.disk,
-      replica: body.replica,
-      image: body.image,
-      expiredAt: new Date(body.expiredAt),
-      pattern: body.pattern,
-      primary_domain,
-      region,
-      domains: domains.map((d) => ({
-        content: d,
-      })),
-    });
-
     const instance = await instanceModel.create({
       user: user._id,
       name: slug,
