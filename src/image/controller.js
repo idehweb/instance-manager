@@ -7,8 +7,9 @@ import { adminAccess } from "../common/auth.guard.js";
 
 const imageRouter = express.Router();
 
-imageRouter.get(service.getAll);
+imageRouter.get("/", service.getAll);
 imageRouter.post(
+  "/",
   catchMiddleware(adminAccess),
   useValidator("body", imageCreateValSch),
   service.add
