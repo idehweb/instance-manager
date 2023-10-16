@@ -81,7 +81,11 @@ export default class ExecuteManager {
     // create
     let isRun;
     this.log("Start");
-    if (this.job.attempt === 1) await this.executer.init();
+    if (this.job.attempt === 1) {
+      await this.executer.init();
+      // set job to map
+      Global.jobs.set(this.executer.id, this.executer);
+    }
 
     try {
       if (this.job.type === JobType.CREATE) {
