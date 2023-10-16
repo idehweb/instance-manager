@@ -9,6 +9,7 @@ import DockerService from "../docker/service.js";
 import ExecuterManager from "../job/ExecuterManager.js";
 import { createRandomName, slugify } from "../utils/helpers.js";
 import { Network } from "../common/network.js";
+import instanceCreateValSch from "../validator/instance.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -79,49 +80,68 @@ class Service {
     return res.status(202).json({ status: "success", job });
   }
   static async createOne(req, res, next) {
-    if (!req.body.expiredAt)
-      return res
-        .status(400)
-        .json({ status: "error", message: "expired at is required" });
+    const { value: body, error } = instanceCreateValSch.validate(req.body, {
+      stripUnknown: true,
+    });
+    if (error) {
+      console.error(error);
+      return res.status(400).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+
     const user = req.admin || req.customer;
-    // const region = req.body.region ?? "german";
+    // const region = body.region ?? "german";
     const region = InstanceRegion.GERMAN;
-    const name = req.body.name ?? createRandomName(8);
-    const slug = slugify(name);
+    const slug = slugify(body.name);
     const defaultDomain = Network.getDefaultDomain({
-      name,
+      name: slug,
       region,
     });
     const primary_domain =
-      req.body.primary_domain
-        ?.replace(/^https?:\/\//, "")
-        .replace(/^www\./, "") ?? defaultDomain;
+      body.primary_domain?.replace(/^https?:\/\//, "").replace(/^www\./, "") ??
+      defaultDomain;
     const domains = [
       ...new Set([
         defaultDomain,
-        ...(req.body.domains ?? []).map((d) =>
+        ...(body.domains ?? []).map((d) =>
           d.replace(/^https?:\/\//, "").replace(/^www\./, "")
         ),
       ]),
     ];
 
-    if (!domains.includes(primary_domain))
-      return res
-        .status(400)
-        .json({ message: "primary domain must in domains list" });
+    return res.json({
+      user: user._id,
+      name: slug,
+      db: `nwi-${slug}`,
+      site_name: body.site_name,
+      cpu: body.cpu,
+      memory: body.memory,
+      disk: body.disk,
+      replica: body.replica,
+      image: body.image,
+      expiredAt: new Date(body.expiredAt),
+      pattern: body.pattern,
+      primary_domain,
+      region,
+      domains: domains.map((d) => ({
+        content: d,
+      })),
+    });
 
     const instance = await instanceModel.create({
       user: user._id,
       name: slug,
       db: `nwi-${slug}`,
-      site_name: req.body.site_name ?? name,
-      cpu: Math.min(2, req.body.cpu ?? 2),
-      memory: Math.min(1024, req.body.memory ?? 1024),
-      disk: req.body.disk ?? -1,
-      replica: Math.min(2, req.body.replica ?? 2),
-      image: req.body.image,
-      expiredAt: new Date(req.body.expiredAt),
-      pattern: req.body.pattern,
+      site_name: body.site_name,
+      cpu: body.cpu,
+      memory: body.memory,
+      disk: body.disk,
+      replica: body.replica,
+      image: body.image,
+      expiredAt: new Date(body.expiredAt),
+      pattern: body.pattern,
       primary_domain,
       region,
       domains: domains.map((d) => ({
@@ -132,7 +152,7 @@ class Service {
     const job = await jobModel.create({
       instance: { _id: instance._id, user: user._id },
       type: JobType.CREATE,
-      max_attempts: req.body.max_attempts,
+      max_attempts: body.max_attempts,
     });
 
     // link instance to job

@@ -27,7 +27,14 @@ export const InstanceRegion = {
   GERMAN: "german",
 };
 
-export const InstancePattern = {};
+export const InstancePattern = {
+  Demo1: "demo1",
+  Demo2: "demo2",
+  Demo3: "demo3",
+  Demo4: "demo4",
+  Demo5: "demo5",
+  Demo6: "demo6",
+};
 
 export const instanceSchema = new mongoose.Schema(
   {
