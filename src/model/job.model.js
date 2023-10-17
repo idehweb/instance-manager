@@ -76,6 +76,7 @@ export const jobSchema = new mongoose.Schema(
         _id: false,
         id: { type: String, required: true },
         ip: { type: String, required: true },
+        isAlive: { type: Boolean, default: true },
       },
       required: false,
     },
