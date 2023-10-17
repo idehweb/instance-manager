@@ -3,7 +3,11 @@ import { InstancePattern, InstanceRegion } from "../model/instance.model.js";
 import { createRandomName } from "../utils/helpers.js";
 
 const instanceCreateValSch = Joi.object({
-  name: Joi.string().optional().min(2).max(100).default(createRandomName(8)),
+  name: Joi.string()
+    .optional()
+    .min(2)
+    .max(100)
+    .default(() => createRandomName(8)),
   site_name: Joi.string().optional().min(2).max(100).default(Joi.ref("name")),
   pattern: Joi.string()
     .optional()
