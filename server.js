@@ -25,7 +25,8 @@ registerWs(io);
 
 mongoose
   .connect(Global.env.MONGO_URL, { dbName: Global.env.MONGO_DB })
-  .then(() => {
+  .then((db) => {
+    Global.db = db;
     console.log("DB connected");
   })
   .catch((err) => {

@@ -11,5 +11,5 @@ const imageSchema = new mongoose.Schema(
 
 imageSchema.index({ createdAt: -1 }, { name: "timestamp" });
 
-const imageModel = Global.nodeeweb_db.model("Image", imageSchema);
+const imageModel = mongoose.model("Image", imageSchema);
 export default imageModel;
