@@ -21,13 +21,16 @@ const instanceCreateValSch = Joi.object({
   expiredAt: Joi.string()
     .isoDate()
     .optional()
-    .default(new Date().toISOString()),
+    .default(() => new Date().toISOString()),
   primary_domain: Joi.string().domain().optional().valid(Joi.in("domains")),
   region: Joi.string()
     .valid(...Object.values(InstanceRegion))
     .optional()
     .default(InstanceRegion.GERMAN),
-  domains: Joi.array().items(Joi.string().domain()).optional().default([]),
+  domains: Joi.array()
+    .items(Joi.string().domain())
+    .optional()
+    .default(() => []),
 });
 
 export default instanceCreateValSch;
