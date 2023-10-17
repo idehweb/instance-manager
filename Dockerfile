@@ -21,6 +21,17 @@ ENV CF_ACCOUNT_ID 8049dc6f45635baedfbd4204cd446ebc
 ENV SSH_PRIVATE_KEY_PATH /root/.ssh/host-private
 EXPOSE ${PORT}
 
+# install curl
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Health check
+HEALTHCHECK --interval=1m --timeout=15s --retries=3 --start-period=2m \
+    CMD curl -fk http://localhost:${PORT}/health || exit 1
+
+
 COPY package*.json ./
 
 # install npm packages

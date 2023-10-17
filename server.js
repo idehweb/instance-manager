@@ -20,7 +20,6 @@ const io = new Server(server, {
 });
 
 Global.io = io;
-io.on("connection", (socket) => {});
 registerWs(io);
 
 mongoose
@@ -47,7 +46,7 @@ function shutdown(code = 1) {
     io.close((err) => {
       server.close(async () => {
         try {
-          await onSignal();
+          await Promise.all(mongoose.connections.map((c) => c.close()));
         } catch (err) {}
         if (code !== null) process.exit(code);
         resolve();
@@ -56,7 +55,6 @@ function shutdown(code = 1) {
   });
 }
 async function onSignal() {
-  await Promise.all(mongoose.connections.map((c) => c.close()));
   await shutdown(null);
 }
 async function onHealthcheck() {
