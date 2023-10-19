@@ -36,9 +36,8 @@ export async function tokenGuard(req, res, next) {
 
     const userType =
       user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
-
     const targetUrl = getEnvFromMultiChoose(
-      new URL(req.originalUrl).hostname,
+      new URL(req.get("Referrer") ?? req.hostname).hostname,
       "apiUrls"
     );
     if (targetUrl === "*") {

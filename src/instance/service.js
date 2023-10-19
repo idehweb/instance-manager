@@ -95,7 +95,7 @@ class Service {
     const region =
       body.region ??
       getEnvFromMultiChoose(
-        new URL(req.originalUrl).hostname,
+        new URL(req.get("Referrer") ?? req.hostname).hostname,
         "defaultRegions"
       ) ??
       InstanceRegion.GERMAN;
