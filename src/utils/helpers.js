@@ -107,6 +107,12 @@ export function getEnv(
   return response || def;
 }
 
+export function getEnvFromMultiChoose(value, from) {
+  return Global[from].size
+    ? Global[from].get(value) ?? Global[from].get("*")
+    : "*";
+}
+
 export function getMyIp(canInternal = false) {
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {

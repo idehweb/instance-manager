@@ -9,6 +9,7 @@ import {
   addForwarded,
   axiosError2String,
   getEnv,
+  getEnvFromMultiChoose,
   getMyIp,
 } from "../utils/helpers.js";
 import { Types } from "mongoose";
@@ -38,9 +39,7 @@ export async function tokenGuard(req, res, next) {
     const userType =
       user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
 
-    const targetUrl = Global.apiUrls.size
-      ? Global.apiUrls.get(req.hostname) ?? Global.apiUrls.get("*")
-      : "*";
+    const targetUrl = getEnvFromMultiChoose(req.hostname, "apiUrls");
     if (targetUrl === "*") {
       req.user = user.payload;
       req.user._id = req.user.id;

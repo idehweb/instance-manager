@@ -7,5 +7,9 @@ export default async function prepare() {
       v.split("=")
     )
   );
-  console.log(Global.apiUrls);
+  Global.defaultRegions = new Map(
+    getEnv("default-region", { format: "array", default: [] }).map((v) =>
+      v.split("=")
+    )
+  );
 }
