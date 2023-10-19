@@ -76,6 +76,37 @@ export async function isExist(path) {
   }
 }
 
+/**
+ *
+ * @param {string} key
+ * @param {{ format: 'array' | 'string' | 'auto',default:array|string }} param1
+ * @returns
+ */
+export function getEnv(
+  key,
+  { format, default: def } = { format: "auto", default: null }
+) {
+  const value = Global.env[key.toUpperCase().replace(/-/g, "_")];
+  const response = (() => {
+    if (typeof value !== "string") return value;
+    const newValue = value
+      .split(",")
+      .map((v) => v.trim())
+      .filter((v) => v);
+
+    switch (format) {
+      case "auto":
+        if (newValue.length <= 1) return value;
+        else return newValue;
+      case "array":
+        return newValue;
+      case "string":
+        return value;
+    }
+  })();
+  return response || def;
+}
+
 export function getMyIp(canInternal = false) {
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {

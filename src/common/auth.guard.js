@@ -5,7 +5,12 @@ import customerModel from "../model/customer.model.js";
 import { instanceModel } from "../model/instance.model.js";
 import { jobModel } from "../model/job.model.js";
 import axios from "axios";
-import { addForwarded, axiosError2String, getMyIp } from "../utils/helpers.js";
+import {
+  addForwarded,
+  axiosError2String,
+  getEnv,
+  getMyIp,
+} from "../utils/helpers.js";
 import { Types } from "mongoose";
 
 export function hostGuard(req, res, next) {
@@ -26,19 +31,22 @@ export async function tokenGuard(req, res, next) {
   try {
     const token =
       req.headers.authorization?.split("Bearer ")?.[1] ?? req.cookies?.auth;
-    if (!token) return res.status(401).send("unAuthorization");
+    if (!token) return res.status(401).json({ message: "no valid token" });
     const user = jwt.decode(token, { complete: true, json: true });
-    if (!user) return res.status(401).send("unAuthorization");
+    if (!user) return res.status(401).json({ message: "no valid token" });
 
     const userType =
       user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
 
-    if (!process.env.AUTH_API) {
+    const targetUrl = Global.apiUrls.size
+      ? Global.apiUrls.get(req.hostname) ?? Global.apiUrls.get("*")
+      : "*";
+    if (targetUrl === "*") {
       req.user = user.payload;
       req.user._id = req.user.id;
     } else {
       const { data } = await axios.post(
-        Global.env.AUTH_API,
+        targetUrl,
         {
           userType,
         },
@@ -59,7 +67,7 @@ export async function tokenGuard(req, res, next) {
     return next();
   } catch (err) {
     console.error(axiosError2String(err));
-    return res.status(401).send("unAuthorization , from auth api");
+    return res.status(401).json({ message: "unAuthorization , from auth api" });
   }
 }
 

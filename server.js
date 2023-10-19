@@ -6,6 +6,7 @@ import "./src/model/nodeeweb.db.js";
 import app from "./app.js";
 import { Server } from "socket.io";
 import registerWs from "./src/ws/index.js";
+import prepare from "./src/prepar.js";
 
 const server = app.listen(Global.env.PORT, () => {
   console.log(`Server Listening at http://127.0.0.1:${Global.env.PORT}`);
@@ -32,6 +33,9 @@ mongoose
     console.log("DB connection error");
     throw err;
   });
+
+// prepare
+prepare();
 
 process.on("uncaughtException", (err) => {
   console.log("#uncaughtException:", err);
