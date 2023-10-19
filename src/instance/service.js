@@ -88,13 +88,16 @@ class Service {
   static async createOne(req, res, next) {
     const body = req.body;
 
-    // if (!(await imageService.isIn(body.image)))
-    //   return res.status(404).json({ message: `image ${body.image} not found` });
+    if (!(await imageService.isIn(body.image)))
+      return res.status(404).json({ message: `image ${body.image} not found` });
 
     const user = req.admin || req.customer;
     const region =
       body.region ??
-      getEnvFromMultiChoose(req.hostname, "defaultRegions") ??
+      getEnvFromMultiChoose(
+        new URL(req.originalUrl).hostname,
+        "defaultRegions"
+      ) ??
       InstanceRegion.GERMAN;
     const slug = slugify(body.name);
     const defaultDomain = Network.getDefaultDomain({

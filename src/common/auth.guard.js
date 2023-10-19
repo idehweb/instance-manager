@@ -19,8 +19,6 @@ export function hostGuard(req, res, next) {
     ? Global.env.KNOWN_HOSTS
     : [Global.env.KNOWN_HOSTS];
 
-  console.log(req.hostname);
-
   if (knownHosts.includes(req.hostname)) return next();
 
   return res
@@ -39,7 +37,10 @@ export async function tokenGuard(req, res, next) {
     const userType =
       user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
 
-    const targetUrl = getEnvFromMultiChoose(req.hostname, "apiUrls");
+    const targetUrl = getEnvFromMultiChoose(
+      new URL(req.originalUrl).hostname,
+      "apiUrls"
+    );
     if (targetUrl === "*") {
       req.user = user.payload;
       req.user._id = req.user.id;
