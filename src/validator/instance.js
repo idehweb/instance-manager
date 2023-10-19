@@ -25,8 +25,7 @@ const instanceCreateValSch = Joi.object({
   primary_domain: Joi.string().domain().optional().valid(Joi.in("domains")),
   region: Joi.string()
     .valid(...Object.values(InstanceRegion))
-    .optional()
-    .default(InstanceRegion.GERMAN),
+    .optional(),
   domains: Joi.array()
     .items(Joi.string().domain())
     .optional()

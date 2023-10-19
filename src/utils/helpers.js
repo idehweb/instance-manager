@@ -107,10 +107,9 @@ export function getEnv(
   return response || def;
 }
 
-export function getEnvFromMultiChoose(value, from) {
-  return Global[from].size
-    ? Global[from].get(value) ?? Global[from].get("*")
-    : "*";
+export function getEnvFromMultiChoose(value, from, def = "*") {
+  const fromVal = typeof from === "string" ? Global[from] : from;
+  return fromVal.size ? fromVal.get(value) ?? fromVal.get("*") : def;
 }
 
 export function getMyIp(canInternal = false) {

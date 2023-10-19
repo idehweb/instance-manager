@@ -7,10 +7,15 @@ import { JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
 import ExecuterManager from "../job/ExecuterManager.js";
-import { createRandomName, slugify } from "../utils/helpers.js";
+import {
+  createRandomName,
+  getEnvFromMultiChoose,
+  slugify,
+} from "../utils/helpers.js";
 import { Network } from "../common/network.js";
 import instanceCreateValSch from "../validator/instance.js";
 import imageService from "../image/service.js";
+import { Global } from "../global.js";
 
 class Service {
   static async getAll(req, res, next) {
@@ -83,12 +88,14 @@ class Service {
   static async createOne(req, res, next) {
     const body = req.body;
 
-    if (!(await imageService.isIn(body.image)))
-      return res.status(404).json({ message: `image ${body.image} not found` });
+    // if (!(await imageService.isIn(body.image)))
+    //   return res.status(404).json({ message: `image ${body.image} not found` });
 
     const user = req.admin || req.customer;
-    // const region = body.region ?? "german";
-    const region = InstanceRegion.GERMAN;
+    const region =
+      body.region ??
+      getEnvFromMultiChoose(req.hostname, "defaultRegions") ??
+      InstanceRegion.GERMAN;
     const slug = slugify(body.name);
     const defaultDomain = Network.getDefaultDomain({
       name: slug,
