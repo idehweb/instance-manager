@@ -11,6 +11,7 @@ import {
   getEnv,
   getEnvFromMultiChoose,
   getMyIp,
+  getSafeReferrer,
 } from "../utils/helpers.js";
 import { Types } from "mongoose";
 
@@ -36,10 +37,7 @@ export async function tokenGuard(req, res, next) {
 
     const userType =
       user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
-    const targetUrl = getEnvFromMultiChoose(
-      new URL(req.get("Referrer") ?? req.hostname).hostname,
-      "apiUrls"
-    );
+    const targetUrl = getEnvFromMultiChoose(getSafeReferrer(req), "apiUrls");
     if (targetUrl === "*") {
       req.user = user.payload;
       req.user._id = req.user.id;

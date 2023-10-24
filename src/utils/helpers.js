@@ -148,3 +148,11 @@ export function ifExist(path, cmd) {
 export function slugify(str = "") {
   return str.trim().replace(/\s/g, "-").toLowerCase();
 }
+
+export function getSafeReferrer(req) {
+  try {
+    return new URL(req.get("Referrer") ?? req.hostname).hostname;
+  } catch (err) {
+    return req.hostname;
+  }
+}

@@ -10,6 +10,7 @@ import ExecuterManager from "../job/ExecuterManager.js";
 import {
   createRandomName,
   getEnvFromMultiChoose,
+  getSafeReferrer,
   slugify,
 } from "../utils/helpers.js";
 import { Network } from "../common/network.js";
@@ -94,10 +95,7 @@ class Service {
     const user = req.admin || req.customer;
     const region =
       body.region ??
-      getEnvFromMultiChoose(
-        new URL(req.get("Referrer") ?? req.hostname).hostname,
-        "defaultRegions"
-      ) ??
+      getEnvFromMultiChoose(getSafeReferrer(req), "defaultRegions") ??
       InstanceRegion.GERMAN;
     const slug = slugify(body.name);
     const defaultDomain = Network.getDefaultDomain({
