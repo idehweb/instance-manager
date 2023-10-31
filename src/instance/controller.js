@@ -3,7 +3,9 @@ import Service from "./service.js";
 import { adminAccess, instanceAccess } from "../common/auth.guard.js";
 import { catchMiddleware } from "../utils/catchAsync.js";
 import { useValidator } from "../validator/index.js";
-import instanceCreateValSch from "../validator/instance.js";
+import instanceCreateValSch, {
+  instanceValidSch,
+} from "../validator/instance.js";
 
 const instanceRouter = express.Router();
 
@@ -18,6 +20,11 @@ instanceRouter.post(
   "/",
   useValidator("body", instanceCreateValSch),
   Service.createOne
+);
+instanceRouter.post(
+  "/validate",
+  useValidator("body", instanceValidSch),
+  Service.validate
 );
 instanceRouter.patch(
   "/:id",

@@ -55,14 +55,17 @@ export const instanceSchema = new mongoose.Schema(
     site_name: { type: String, required: true },
     pattern: { type: String },
     server_ip: { type: String },
-    domains: [
-      {
-        _id: false,
-        status: String,
-        content: String,
-        ns: { type: [String], default: undefined },
-      },
-    ],
+    domains: {
+      type: [
+        {
+          _id: false,
+          status: String,
+          content: String,
+          ns: { type: [String], default: undefined },
+        },
+      ],
+      required: true,
+    },
     region: { type: String, required: true },
     primary_domain: { type: String, required: true },
     active: { type: Boolean, default: true },
@@ -72,11 +75,24 @@ export const instanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// name
 instanceSchema.index(
   { name: 1 },
   {
     unique: true,
     name: "instance name",
+    partialFilterExpression: {
+      active: true,
+    },
+  }
+);
+
+// domains
+instanceSchema.index(
+  { "domains.content": 1 },
+  {
+    unique: true,
+    name: "domain",
     partialFilterExpression: {
       active: true,
     },

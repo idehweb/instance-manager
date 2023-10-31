@@ -153,6 +153,37 @@ class Service {
       system_status: await DockerService.getSystemStatus(),
     });
   }
+  static async validate(req, res, next) {
+    const body = req.body;
+
+    // extra validate
+    const errors = [];
+    // image
+    if (body.image && !(await imageService.isIn(body.image)))
+      errors.push(`image ${body.image} not found`);
+
+    // name
+    if (
+      body.name &&
+      (await instanceModel.findOne({ name: body.name }, { _id: 1 }))
+    )
+      errors.push("name is duplicate");
+
+    // domain
+    if (
+      body.domains?.length &&
+      (await instanceModel.findOne(
+        { content: { $in: body.domains } },
+        { _id: 1 }
+      ))
+    )
+      errors.push("domains have duplicate");
+
+    if (errors.length)
+      return res.status(400).json({ message: errors.join(", ") });
+
+    return res.status(200).json({ message: "successfully validate body!" });
+  }
 }
 
 classCatchBuilder(Service);

@@ -32,4 +32,17 @@ const instanceCreateValSch = Joi.object({
     .default(() => []),
 });
 
+export const instanceValidSch = Joi.object({
+  name: Joi.string().optional().min(2).max(100),
+  domains: Joi.array().items(Joi.string().domain()).optional(),
+  region: Joi.string()
+    .valid(...Object.values(InstanceRegion))
+    .optional(),
+  image: Joi.string().optional(),
+  pattern: Joi.string()
+    .optional()
+    .valid(...Object.values(InstancePattern)),
+  site_name: Joi.string().optional().min(2).max(100),
+});
+
 export default instanceCreateValSch;
