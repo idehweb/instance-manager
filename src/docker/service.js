@@ -31,6 +31,9 @@ export class Service {
       APP_NAME: app_name,
       BASE_URL: site_url,
       MAX_NUM_OF_PROXY: 1,
+      NODE_OPTIONS: `--max-old-space-size=${
+        memory === -1 ? 10240 : memory * 1024
+      }`,
     };
 
     const envArgs = Object.entries(envs)
