@@ -3,4 +3,5 @@ export const Global = {
   jobs: new Map(),
   apiUrls: new Map(),
   defaultRegions: new Map(),
+  whitelist_path: new Map(),
 };

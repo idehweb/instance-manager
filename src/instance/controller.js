@@ -6,6 +6,7 @@ import { useValidator } from "../validator/index.js";
 import instanceCreateValSch, {
   instanceValidSch,
 } from "../validator/instance.js";
+import { Global } from "../global.js";
 
 const instanceRouter = express.Router();
 
@@ -21,6 +22,8 @@ instanceRouter.post(
   useValidator("body", instanceCreateValSch),
   Service.createOne
 );
+
+Global.whitelist_path.set("/api/v1/instance/validate", true);
 instanceRouter.post(
   "/validate",
   useValidator("body", instanceValidSch),
