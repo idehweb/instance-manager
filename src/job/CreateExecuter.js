@@ -117,7 +117,9 @@ export default class CreateExecuter extends BaseExecuter {
     this.log(`add nginx config for domains: ${domains.join(" ")}`);
   }
   async register_cdn() {
+    this.log("cdn register call");
     const ips = getSlaveIps(this.instance.region);
+    this.log("after get ips" + ips);
     const server_ip = ips[0];
 
     if (!server_ip)
@@ -129,6 +131,7 @@ export default class CreateExecuter extends BaseExecuter {
       name: this.instance.name,
       region: this.instance.region,
     });
+    this.log("get default domain", defaultDomain);
 
     // ns record
     try {
