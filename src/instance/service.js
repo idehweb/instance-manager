@@ -165,7 +165,10 @@ class Service {
     // name
     if (
       body.name &&
-      (await instanceModel.findOne({ name: body.name }, { _id: 1 }))
+      (await instanceModel.findOne(
+        { name: slugify(body.name), active: true },
+        { _id: 1 }
+      ))
     )
       errors.push("name is duplicate");
 
@@ -173,7 +176,7 @@ class Service {
     if (
       body.domains?.length &&
       (await instanceModel.findOne(
-        { content: { $in: body.domains } },
+        { content: { $in: body.domains }, active: true },
         { _id: 1 }
       ))
     )
