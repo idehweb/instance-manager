@@ -1,3 +1,4 @@
+import { string } from "joi";
 import mongoose from "mongoose";
 
 function isActive(status) {
@@ -55,6 +56,10 @@ export const instanceSchema = new mongoose.Schema(
     site_name: { type: String, required: true },
     pattern: { type: String },
     server_ip: { type: String },
+    nodeewebhub: {
+      url: String,
+      api_url: String,
+    },
     domains: {
       type: [
         {

@@ -21,6 +21,7 @@ export class Service {
     dbUri,
     service_name,
     ownerId,
+    nodeewebhub,
   }) {
     const envs = {
       SHARED_PATH: "/app/shared",
@@ -38,6 +39,7 @@ export class Service {
       ADMIN_USERNAME: "admin",
       ADMIN_PASSWORD: crypto.randomBytes(32).toString("hex"),
       ADMIN_ID: ownerId,
+      NODEEWEBHUB_API_BASE_URL: nodeewebhub.api_url,
     };
 
     const envArgs = Object.entries(envs)

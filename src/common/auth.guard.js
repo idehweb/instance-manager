@@ -61,7 +61,7 @@ export async function tokenGuard(req, res, next) {
 
     req.user.id = req.user._id;
     if (req.user._id) req.user._id = new Types.ObjectId(req.user._id);
-
+    req.authInfo = { from: targetUrl };
     return next();
   } catch (err) {
     console.error(axiosError2String(err));

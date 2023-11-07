@@ -156,3 +156,9 @@ export function getSafeReferrer(req) {
     return req.hostname;
   }
 }
+
+export function getNodeewebhub(req) {
+  const { from } = req.authInfo;
+  const url = new URL(from);
+  return { url: url.origin, api_url: url.href.split("/auth")[0] };
+}

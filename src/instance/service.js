@@ -114,6 +114,8 @@ class Service {
       ]),
     ];
 
+    const nodeewebhub = getNodeewebhub(req);
+
     const instance = await instanceModel.create({
       user: user._id,
       name: slug,
@@ -131,6 +133,7 @@ class Service {
       domains: domains.map((d) => ({
         content: d,
       })),
+      nodeewebhub,
     });
 
     const job = await jobModel.create({
