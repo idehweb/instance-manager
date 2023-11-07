@@ -159,6 +159,7 @@ export default class UpdateExecuter extends BaseExecuter {
         "env-add": [
           `BASE_URL=https://${primary_domain}`,
           `SHOP_URL=https://${primary_domain}/`,
+          `SERVER_HOST=https://${primary_domain}`,
         ],
       },
       {

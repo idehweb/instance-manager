@@ -37,9 +37,10 @@ export class Service {
         memory === -1 ? 10240 : memory * 1024
       }`,
       ADMIN_USERNAME: "admin",
-      ADMIN_PASSWORD: crypto.randomBytes(32).toString("hex"),
+      ADMIN_PASSWORD: crypto.randomBytes(24).toString("hex"),
       ADMIN_ID: ownerId,
       NODEEWEBHUB_API_BASE_URL: nodeewebhub.api_url,
+      SERVER_HOST: site_url,
     };
 
     const envArgs = Object.entries(envs)
