@@ -28,7 +28,6 @@ export function hostGuard(req, res, next) {
 }
 
 export async function tokenGuard(req, res, next) {
-  console.log(req.path);
   if (Global.whitelist_path.has(req.path)) return next();
   try {
     const token =

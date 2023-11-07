@@ -20,6 +20,7 @@ export class Service {
     dbName,
     dbUri,
     service_name,
+    ownerId,
   }) {
     const envs = {
       SHARED_PATH: "/app/shared",
@@ -34,6 +35,9 @@ export class Service {
       NODE_OPTIONS: `--max-old-space-size=${
         memory === -1 ? 10240 : memory * 1024
       }`,
+      ADMIN_USERNAME: "admin",
+      ADMIN_PASSWORD: crypto.randomBytes(32).toString("hex"),
+      ADMIN_ID: ownerId,
     };
 
     const envArgs = Object.entries(envs)

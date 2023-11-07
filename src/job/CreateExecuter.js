@@ -61,6 +61,7 @@ export default class CreateExecuter extends BaseExecuter {
       site_url: `https://${this.instance.primary_domain}`,
       executer: "x-docker",
       maxRetries: 6,
+      ownerId: this.instance.user.toString(),
     });
     // create if not exist
     if (myService) {
