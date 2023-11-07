@@ -52,6 +52,7 @@ export const instanceSchema = new mongoose.Schema(
       required: true,
     },
     image: { type: String, default: process.env.INSTANCE_DEFAULT_IMAGE },
+    favicon: { type: String },
     site_name: { type: String, required: true },
     pattern: { type: String },
     server_ip: { type: String },

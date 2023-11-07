@@ -189,6 +189,12 @@ export default class UpdateExecuter extends BaseExecuter {
         image: this.job.update_query.image,
         primary_domain: this.job.update_query.primary_domain,
       };
+      if (set_body.primary_domain) {
+        const favName =
+          this.instance.favicon?.replace(/https?:\/\/[^/]+/, "") ??
+          "/favicon.ico";
+        set_body.favicon = `https://${set_body.primary_domain}${favName}`;
+      }
     }
 
     const newInsDoc = await instanceModel.findByIdAndUpdate(

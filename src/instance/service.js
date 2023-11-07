@@ -130,6 +130,7 @@ class Service {
       expiredAt: new Date(body.expiredAt),
       pattern: body.pattern,
       primary_domain,
+      favicon: `https://${primary_domain}/favicon.ico`,
       region,
       domains: domains.map((d) => ({
         content: d,
