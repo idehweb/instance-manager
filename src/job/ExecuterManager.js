@@ -249,6 +249,7 @@ export default class ExecuteManager {
       if (
         !Global.env.isPro &&
         [
+          JobSteps.CREATE_USER_IN_DB,
           JobSteps.CREATE_STATIC_DIRS,
           JobSteps.COPY_STATIC,
           JobSteps.CREATE_SERVICE,

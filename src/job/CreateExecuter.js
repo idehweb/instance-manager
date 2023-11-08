@@ -52,7 +52,7 @@ export default class CreateExecuter extends BaseExecuter {
     });
 
     // create docker service
-    const dockerCreateCmd = DockerService.getCreateServiceCommand({
+    const dockerCreateCmd = await DockerService.getCreateServiceCommand({
       ...this.instance,
       app_name: this.instance.site_name,
       service_name: this.instance_name,

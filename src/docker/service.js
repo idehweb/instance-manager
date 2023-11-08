@@ -3,12 +3,14 @@ import * as crypto from "crypto";
 import { Global } from "../global.js";
 import { Network } from "../common/network.js";
 import { InstanceStatus } from "../model/instance.model.js";
+import { getEnv, getEnvFromMultiChoose } from "../utils/helpers.js";
+import { supSignToken } from "../supervisor/utils.js";
 export class Service {
   static async getSystemStatus() {}
   static async getServiceStatus(name) {
     return InstanceStatus.UP;
   }
-  static getCreateServiceCommand({
+  static async getCreateServiceCommand({
     executer = "x-docker",
     maxRetries = 6,
     replica,
@@ -22,6 +24,7 @@ export class Service {
     service_name,
     ownerId,
     nodeewebhub,
+    ...instance
   }) {
     const envs = {
       SHARED_PATH: "/app/shared",
@@ -41,6 +44,11 @@ export class Service {
       ADMIN_ID: ownerId,
       NODEEWEBHUB_API_BASE_URL: nodeewebhub.api_url,
       SERVER_HOST: site_url,
+      SUPERVISOR_URL: getEnvFromMultiChoose(
+        instance.region,
+        "iam_supervisor_url"
+      ),
+      SUPERVISOR_TOKEN: await supSignToken(instance._id.toString(), instance),
     };
 
     const envArgs = Object.entries(envs)

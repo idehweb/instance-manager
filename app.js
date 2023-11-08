@@ -13,6 +13,7 @@ import SSE from "./src/utils/sse.js";
 import wsRouter from "./src/ws/controller.js";
 import { catchMiddleware } from "./src/utils/catchAsync.js";
 import imageRouter from "./src/image/controller.js";
+import supervisorController from "./src/supervisor/controller.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.get("/sse/event", (req, res) => {
 app.use("/api/v1/instance", instanceRouter);
 app.use("/api/v1/job", jobRouter);
 app.use("/api/v1/image", imageRouter);
+app.use("/api/v1/supervisor", supervisorController);
 app.use("/api/v1", wsRouter);
 
 // not found url

@@ -12,4 +12,10 @@ export default async function prepare() {
       v.split("=")
     )
   );
+
+  Global.iam_supervisor_url = new Map(
+    getEnv("iam-supervisor-url", { format: "array", default: [] }).map((v) =>
+      v.split("=")
+    )
+  );
 }
