@@ -14,7 +14,7 @@ class SSE {
 
   #write(data, type) {
     if (!this.res || !this.res.writable) return false;
-    // this.res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+    this.res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
     if (type === "close") {
       this.res.end();
     }

@@ -28,26 +28,25 @@ export function wait(sec) {
 }
 
 export function axiosError2String(error) {
-  return err2Str(error);
-  // if (!error.isAxiosError) {
-  //   return err2Str(error);
-  // }
-  // return JSON.stringify(
-  //   {
-  //     name: error.name,
-  //     code: error.code,
-  //     message: error.message,
-  //     url: error?.request?._url || error?.config?.url,
-  //     method: error.config?.method,
-  //     res_data: error?.response?.data,
-  //     req_data: error.config.data || error?.request?.data,
-  //     res_headers: error?.response?.headers,
-  //     req_headers: error?.config.headers,
-  //     stack: error.stack,
-  //   },
-  //   null,
-  //   "  "
-  // );
+  if (!error.isAxiosError) {
+    return err2Str(error);
+  }
+  return JSON.stringify(
+    {
+      name: error.name,
+      code: error.code,
+      message: error.message,
+      url: error?.request?._url || error?.config?.url,
+      method: error.config?.method,
+      res_data: error?.response?.data,
+      req_data: error.config.data || error?.request?.data,
+      res_headers: error?.response?.headers,
+      req_headers: error?.config.headers,
+      stack: error.stack,
+    },
+    null,
+    "  "
+  );
 }
 
 export function err2Str(error) {
@@ -55,25 +54,23 @@ export function err2Str(error) {
 }
 
 export function convertToString(a, pretty = true) {
-  return a?.toString() ?? String(a);
+  try {
+    if (a instanceof SimpleError)
+      return `{ message : ${a.message} , stack : ${a.stack} }`;
 
-  // try {
-  //   if (a instanceof SimpleError)
-  //     return `{ message : ${a.message} , stack : ${a.stack} }`;
-
-  //   if (typeof a === "object") {
-  //     const newA = {};
-  //     Object.getOwnPropertyNames(a).forEach((key) => {
-  //       newA[key] = a[key];
-  //     });
-  //     return !pretty ? JSON.stringify(newA) : JSON.stringify(newA, null, "  ");
-  //   }
-  //   return a?.toString() ?? String(a);
-  // } catch (err) {
-  //   return `(convert failed because: ${err.message}) ${
-  //     a?.toString() ?? String(a)
-  //   }`;
-  // }
+    if (typeof a === "object") {
+      const newA = {};
+      Object.getOwnPropertyNames(a).forEach((key) => {
+        newA[key] = a[key];
+      });
+      return !pretty ? JSON.stringify(newA) : JSON.stringify(newA, null, "  ");
+    }
+    return a?.toString() ?? String(a);
+  } catch (err) {
+    return `(convert failed because: ${err.message}) ${
+      a?.toString() ?? String(a)
+    }`;
+  }
 }
 
 export function getNginxPublicPath(...path) {

@@ -144,24 +144,24 @@ export default class CreateExecuter extends BaseExecuter {
         }
       );
     } catch (err) {
-      // this.log(
-      //   "Axios Error in DNS:\n" +
-      //     `Configs : ${JSON.stringify(
-      //       {
-      //         cdn: Network.region2CDN(this.instance.region),
+      this.log(
+        "Axios Error in DNS:\n" +
+          `Configs : ${JSON.stringify(
+            {
+              cdn: Network.region2CDN(this.instance.region),
 
-      //         defaultDomain,
-      //         domains: this.instance.domains.map(({ content }) => content),
-      //         logger: { log: this.log },
-      //         content: server_ip,
-      //       },
-      //       null,
-      //       "  "
-      //     )}\nAxios:` +
-      //     axiosError2String(err),
-      //   false,
-      //   true
-      // );
+              defaultDomain,
+              domains: this.instance.domains.map(({ content }) => content),
+              logger: { log: this.log },
+              content: server_ip,
+            },
+            null,
+            "  "
+          )}\nAxios:` +
+          axiosError2String(err),
+        false,
+        true
+      );
       throw err;
     }
   }
