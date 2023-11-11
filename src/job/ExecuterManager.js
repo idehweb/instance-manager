@@ -52,28 +52,36 @@ export default class ExecuteManager {
     if (this.last_log == String(chunk) && whenDifferent) return;
     this.last_log = String(chunk);
 
-    const chunk_with_id =
-      `#${this.instance_name}-${String(this.job._id).slice(0, 8)}#: ` + chunk;
+    const date = new Date().toISOString();
+    const chunk_with_time = `${date} ${chunk}`;
+    const chunk_with_time_id =
+      `${date} #${this.instance_name}-${String(this.job._id).slice(0, 8)}#: ` +
+      chunk;
 
     // console log
-    console.log(chunk_with_id);
+    console.log(chunk_with_time_id);
 
     // db log
     jobModel
       .findByIdAndUpdate(this.job._id, {
-        $push: { logs: chunk },
-        ...(isError ? { $set: { error: chunk } } : {}),
+        $push: {
+          logs: chunk_with_time,
+          ...(isError ? { errs: chunk_with_time } : {}),
+        },
       })
       .then()
       .catch();
 
     // fs log
+    const chunk_with_flag = isError
+      ? `Error: ${chunk_with_time}`
+      : chunk_with_time;
     if (this.log_file.writable) {
       if (isEnd) {
-        this.log_file.end("\n" + chunk);
+        this.log_file.end("\n" + chunk_with_flag);
         this.log_file.close();
       } else {
-        this.log_file.write("\n" + chunk);
+        this.log_file.write("\n" + chunk_with_flag);
       }
     }
   }

@@ -62,6 +62,7 @@ export const jobSchema = new mongoose.Schema(
     status: { type: String, default: JobStatus.IN_PROGRESS },
     error: { type: mongoose.Schema.Types.Mixed },
     logs: { type: [String], default: undefined },
+    errs: { type: [String], default: undefined },
     done_steps: {
       type: [String],
       default: [],
