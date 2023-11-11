@@ -18,7 +18,7 @@ export function log({
   last_log,
   log_file,
 }) {
-  const time = new Date().toISOString();
+  const time = `[${new Date().toISOString()}]`;
   const chunkArr = Array.isArray(chunk) ? chunk : [chunk];
   const _msg = chunkArr
     .map((c) =>
@@ -59,7 +59,7 @@ export function log({
     .findByIdAndUpdate(jobId, {
       $push: {
         logs: _time_labels_msg,
-        ...(isError ? { errs: _time_error_labels_msg } : {}),
+        ...(isError ? { errs: _time_labels_msg } : {}),
       },
     })
     .then()
