@@ -117,7 +117,7 @@ export async function runRemoteCmd(targetSocket, cmd, logger) {
     throw new SimpleError("not received any connected target socket");
 
   logger.log(
-    `run remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
+    `remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
     cmd
   );
 

@@ -38,7 +38,13 @@ export class BaseExecuter {
     this.job = { ...newJob._doc };
   }
 
-  log = (chunk, isEnd = false, isError = false, whenDifferent = false) => {
+  log = (
+    chunk,
+    isEnd = false,
+    isError = false,
+    whenDifferent = false,
+    labels = []
+  ) => {
     this.last_log = log({
       chunk,
       isEnd,
@@ -47,18 +53,18 @@ export class BaseExecuter {
       jobId: this.job._id,
       instanceName: this.instance_name,
       last_log: this.last_log,
-      labels: [slugify(this.constructor.name)],
+      labels: [slugify(this.constructor.name), ...labels],
       log_file: this.log_file,
     });
   };
 
   exec = (cmd) => {
-    return runRemoteCmd(this.instance.socket, cmd, {
+    return runRemoteCmd(this.instance.server_socket, cmd, {
       log: (...msgs) => {
-        this.log(msgs, false, false, true);
+        this.log(msgs, false, false, true, ["slave", this.instance.server_ip]);
       },
       error: (...msgs) => {
-        this.log(msgs, false, true, true);
+        this.log(msgs, false, true, true, ["slave", this.instance.server_ip]);
       },
     });
   };
