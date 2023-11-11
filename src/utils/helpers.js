@@ -4,7 +4,7 @@ import * as fs from "fs";
 import { Global } from "../global.js";
 import { networkInterfaces } from "os";
 import { SimpleError } from "../common/error.js";
-import { getIP } from "../ws/utils.js";
+import { getIP, isConnect } from "../ws/utils.js";
 
 export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
@@ -62,9 +62,11 @@ export function convertToString(a, pretty = true) {
     Object.getOwnPropertyNames(a).forEach((key) => {
       newA[key] = a[key];
     });
-    return !pretty
-      ? JSON.stringify(newA, replacer)
-      : JSON.stringify(newA, replacer, "  ");
+    try {
+      return !pretty ? JSON.stringify(newA) : JSON.stringify(newA, null, "  ");
+    } catch (err) {
+      return `(convert failed because: ${err.message}) ${newA.toString()}`;
+    }
   }
   return a?.toString() ?? String(a);
 }
@@ -169,7 +171,7 @@ export function getSlaveSocketOpt(region) {
   if (!Global.slaveSockets[normalRegion]) return [];
   const sockets = Global.slaveSockets[normalRegion];
   const [id, socket] = sockets.entries().next().value ?? [];
-  return { id, socket, ip: getIP(socket) };
+  return { id, socket, ip: getIP(socket), isConnect: isConnect(socket) };
 }
 
 export function ifExist(path, cmd) {
@@ -177,7 +179,11 @@ export function ifExist(path, cmd) {
 }
 
 export function slugify(str = "") {
-  return str.trim().replace(/\s/g, "-").toLowerCase();
+  return encodeURIComponent(str)
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/([a-z0-9])([A-Z])/g, (b, l, u) => `${l}-${u.toLowerCase()}`)
+    .toLowerCase();
 }
 
 export function getSafeReferrer(req) {

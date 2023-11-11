@@ -131,7 +131,7 @@ export default class CreateExecuter extends BaseExecuter {
       name: this.instance.name,
       region: this.instance.region,
     });
-    this.log("get default domain", defaultDomain);
+    this.log(["get default domain", defaultDomain]);
 
     // ns record
     try {
@@ -148,7 +148,7 @@ export default class CreateExecuter extends BaseExecuter {
     } catch (err) {
       this.log(
         "Axios Error in DNS:\n" +
-          `Request : ${JSON.stringify(
+          `Configs : ${JSON.stringify(
             {
               cdn: Network.region2CDN(this.instance.region),
 
@@ -159,8 +159,10 @@ export default class CreateExecuter extends BaseExecuter {
             },
             null,
             "  "
-          )}\nResponse:` +
-          axiosError2String(err)
+          )}\nAxios:` +
+          axiosError2String(err),
+        false,
+        true
       );
       throw err;
     }

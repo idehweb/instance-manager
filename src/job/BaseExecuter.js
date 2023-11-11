@@ -2,8 +2,9 @@ import crypto from "crypto";
 import { jobModel } from "../model/job.model.js";
 import { Remote } from "../utils/remote.js";
 import { runRemoteCmd, runRemoteCmdWithId } from "../ws/index.js";
-import { getMyIp, getSlaveSocketOpt } from "../utils/helpers.js";
+import { getMyIp, getSlaveSocketOpt, slugify } from "../utils/helpers.js";
 import { SimpleError } from "../common/error.js";
+import { log } from "./utils.js";
 
 export class BaseExecuter {
   last_log;
@@ -38,40 +39,17 @@ export class BaseExecuter {
   }
 
   log = (chunk, isEnd = false, isError = false, whenDifferent = false) => {
-    const chunkArr = Array.isArray(chunk) ? chunk : [chunk];
-    const msg = chunkArr
-      .map((c) =>
-        typeof c === "object" ? JSON.stringify(c, null, " ") : String(c)
-      )
-      .join(" ");
-
-    if (this.last_log == msg && whenDifferent) return;
-    this.last_log = msg;
-
-    const chunk_with_id =
-      `#${this.instance_name}-${String(this.job._id).slice(0, 8)}#: ` + msg;
-
-    // console log
-    console.log(chunk_with_id);
-
-    // db log
-    jobModel
-      .findByIdAndUpdate(this.job._id, {
-        $push: { logs: msg },
-        ...(isError ? { $set: { error: msg } } : {}),
-      })
-      .then()
-      .catch();
-
-    // fs log
-    if (this.log_file.writable) {
-      if (isEnd) {
-        this.log_file.end("\n" + msg);
-        this.log_file.close();
-      } else {
-        this.log_file.write("\n" + msg);
-      }
-    }
+    this.last_log = log({
+      chunk,
+      isEnd,
+      isError,
+      whenDifferent,
+      jobId: this.job._id,
+      instanceName: this.instance_name,
+      last_log: this.last_log,
+      labels: [slugify(this.constructor.name)],
+      log_file: this.log_file,
+    });
   };
 
   exec = (cmd) => {
@@ -93,9 +71,10 @@ export class BaseExecuter {
     const {
       id: server_id,
       ip: server_ip,
+      isConnect,
       socket: server_socket,
     } = getSlaveSocketOpt(this.instance.region);
-    if (!server_ip || server_id)
+    if (!server_ip || !server_id || !isConnect)
       throw new SimpleError(
         `not found any connected server with region ${this.instance.region}`
       );

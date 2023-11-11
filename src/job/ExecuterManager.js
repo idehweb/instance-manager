@@ -4,6 +4,7 @@ import {
   axiosError2String,
   err2Str,
   getPublicPath,
+  slugify,
   wait,
 } from "../utils/helpers.js";
 import { Global } from "../global.js";
@@ -13,6 +14,7 @@ import { catchFn } from "../utils/catchAsync.js";
 import CreateExecuter from "./CreateExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
+import { getLogFilePath, log } from "./utils.js";
 
 export default class ExecuteManager {
   last_log;
@@ -20,10 +22,9 @@ export default class ExecuteManager {
     this.job = { ...job._doc };
     this.instance = { ...instance._doc };
     this.remote = new Remote(instance.region);
-    this.log_file = fs.createWriteStream(
-      getPublicPath(`logs/${String(this.job._id)}-${this.instance_name}.log`),
-      { encoding: "utf8" }
-    );
+    this.log_file = fs.createWriteStream(getLogFilePath(this), {
+      encoding: "utf8",
+    });
     this.res = res;
     this.req = req;
 
@@ -40,7 +41,12 @@ export default class ExecuteManager {
       .execute()
       .then()
       .catch((err) => {
-        manager.log(`#Executer Error#\n${err.toString()}`, true, true, true);
+        manager.log(
+          `#Executer Error#\n${axiosError2String(err)}`,
+          true,
+          true,
+          true
+        );
         manager.sendResultToClient(false);
         manager.clean().then();
       });
@@ -49,41 +55,17 @@ export default class ExecuteManager {
     return `nwi-${this.instance.name}`;
   }
   log(chunk, isEnd = false, isError = false, whenDifferent = false) {
-    if (this.last_log == String(chunk) && whenDifferent) return;
-    this.last_log = String(chunk);
-
-    const date = new Date().toISOString();
-    const chunk_with_time = `${date} ${chunk}`;
-    const chunk_with_time_id =
-      `${date} #${this.instance_name}-${String(this.job._id).slice(0, 8)}#: ` +
-      chunk;
-
-    // console log
-    console.log(chunk_with_time_id);
-
-    // db log
-    jobModel
-      .findByIdAndUpdate(this.job._id, {
-        $push: {
-          logs: chunk_with_time,
-          ...(isError ? { errs: chunk_with_time } : {}),
-        },
-      })
-      .then()
-      .catch();
-
-    // fs log
-    const chunk_with_flag = isError
-      ? `[error] ${chunk_with_time}`
-      : chunk_with_time;
-    if (this.log_file.writable) {
-      if (isEnd) {
-        this.log_file.end("\n" + chunk_with_flag);
-        this.log_file.close();
-      } else {
-        this.log_file.write("\n" + chunk_with_flag);
-      }
-    }
+    this.last_log = log({
+      chunk,
+      isEnd,
+      isError,
+      whenDifferent,
+      jobId: this.job._id,
+      instanceName: this.instance_name,
+      last_log: this.last_log,
+      labels: [slugify(this.constructor.name)],
+      log_file: this.log_file,
+    });
   }
   async execute() {
     // create
@@ -115,7 +97,7 @@ export default class ExecuteManager {
       this.log(
         `Error${
           this.job.progress_step ? ` in step:${this.job.progress_step}` : ""
-        }, attempt:${this.job.attempt}, message:${err2Str(err)}`,
+        }, attempt:${this.job.attempt}, message:${axiosError2String(err)}`,
         false,
         true
       );
@@ -226,7 +208,11 @@ export default class ExecuteManager {
         ? catchFn(fn, {
             self: executer,
             onError(err) {
-              this.log(`Error step ${step} \n` + axiosError2String(err));
+              executer.log(
+                `Error step ${step} \n` + axiosError2String(err),
+                false,
+                true
+              );
             },
           })
         : fn;
