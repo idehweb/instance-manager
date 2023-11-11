@@ -28,6 +28,7 @@ export function wait(sec) {
 }
 
 export function axiosError2String(error) {
+  return err2Str(error);
   if (!error.isAxiosError) {
     return err2Str(error);
   }
