@@ -54,21 +54,23 @@ export function err2Str(error) {
 }
 
 export function convertToString(a, pretty = true) {
-  if (a instanceof SimpleError)
-    return `{ message : ${a.message} , stack : ${a.stack} }`;
+  try {
+    if (a instanceof SimpleError)
+      return `{ message : ${a.message} , stack : ${a.stack} }`;
 
-  if (typeof a === "object") {
-    const newA = {};
-    Object.getOwnPropertyNames(a).forEach((key) => {
-      newA[key] = a[key];
-    });
-    try {
+    if (typeof a === "object") {
+      const newA = {};
+      Object.getOwnPropertyNames(a).forEach((key) => {
+        newA[key] = a[key];
+      });
       return !pretty ? JSON.stringify(newA) : JSON.stringify(newA, null, "  ");
-    } catch (err) {
-      return `(convert failed because: ${err.message}) ${newA.toString()}`;
     }
+    return a?.toString() ?? String(a);
+  } catch (err) {
+    return `(convert failed because: ${err.message}) ${
+      a?.toString() ?? String(a)
+    }`;
   }
-  return a?.toString() ?? String(a);
 }
 
 export function getNginxPublicPath(...path) {
