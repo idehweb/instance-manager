@@ -82,6 +82,7 @@ export const jobSchema = new mongoose.Schema(
       },
       required: false,
     },
+    isInCleanPhase: { type: Boolean },
   },
   { timestamps: true }
 );

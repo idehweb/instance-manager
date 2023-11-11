@@ -348,6 +348,10 @@ export default class ExecuteManager {
   }
   async clean() {
     if (this.job.type != JobType.CREATE) return;
+
+    // true flag job clean phase
+    await this.#updateJobAtr({ isInCleanPhase: true });
+
     const stack = [
       JobSteps.CDN_UNREGISTER,
       JobSteps.REMOVE_SERVICE,
@@ -374,22 +378,27 @@ export default class ExecuteManager {
       filter: false,
       update_step: true,
     });
+
+    // unset job clean phase
+    await this.#updateJobAtr({ $unset: { isInCleanPhase: "" } });
   }
-  async #updateJobStep({ progress_step, done_step }) {
+  async #updateJobAtr(update, opt = {}) {
     this.job = {
       ...(
-        await jobModel.findByIdAndUpdate(
-          this.job._id,
-          {
-            ...(progress_step === null
-              ? { $unset: { progress_step: "" } }
-              : { $set: { progress_step } }),
-            ...(done_step ? { $push: { done_steps: done_step } } : {}),
-          },
-          { new: true }
-        )
+        await jobModel.findByIdAndUpdate(this.job._id, update, {
+          new: true,
+          ...opt,
+        })
       )._doc,
     };
+  }
+  async #updateJobStep({ progress_step, done_step }) {
+    await this.#updateJobAtr({
+      ...(progress_step === null
+        ? { $unset: { progress_step: "" } }
+        : { $set: { progress_step } }),
+      ...(done_step ? { $push: { done_steps: done_step } } : {}),
+    });
   }
   #convertJobStepToFunc(step, executer = this.executer) {
     switch (step) {

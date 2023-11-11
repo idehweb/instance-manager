@@ -63,11 +63,16 @@ export class BaseExecuter {
     });
   };
 
-  pre_require = async () => {
-    await this.setup_metadata();
-  };
+  async pre_require() {
+    try {
+      await this.setup_metadata();
+    } catch (err) {
+      if (this.job.isInCleanPhase) this.log(err, false, true);
+      else throw err;
+    }
+  }
 
-  setup_metadata = async () => {
+  async setup_metadata() {
     const {
       id: server_id,
       ip: server_ip,
@@ -82,7 +87,7 @@ export class BaseExecuter {
     this.instance.server_id = server_id;
     this.instance.server_socket = server_socket;
     return;
-  };
+  }
 
   async sync_db() {
     throw new Error("Sync DB Not Implement Yet");
