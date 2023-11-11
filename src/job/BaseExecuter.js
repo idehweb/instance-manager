@@ -75,7 +75,7 @@ export class BaseExecuter {
   };
 
   exec = (cmd) => {
-    return runRemoteCmdWithId(this.instance.server_id, cmd, {
+    return runRemoteCmd(this.instance.socket, cmd, {
       log: (...msgs) => {
         this.log(msgs, false, false, true);
       },
@@ -90,15 +90,18 @@ export class BaseExecuter {
   };
 
   setup_metadata = async () => {
-    const { id: server_id, ip: server_ip } = getSlaveSocketOpt(
-      this.instance.region
-    );
+    const {
+      id: server_id,
+      ip: server_ip,
+      socket: server_socket,
+    } = getSlaveSocketOpt(this.instance.region);
     if (!server_ip || server_id)
       throw new SimpleError(
         `not found any connected server with region ${this.instance.region}`
       );
     this.instance.server_ip = server_ip;
     this.instance.server_id = server_id;
+    this.instance.server_socket = server_socket;
     return;
   };
 

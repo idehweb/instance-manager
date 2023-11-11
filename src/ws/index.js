@@ -5,34 +5,26 @@ import { authWithToken } from "./auth.js";
 import { DisconnectError } from "./error.js";
 import { SimpleError } from "../common/error.js";
 import { normalizeRegion } from "../utils/helpers.js";
+import { getIP, getRegion, isConnect } from "./utils.js";
 
 const confMap = new Map();
 
-function getIP(socket) {
-  const customIp = socket.handshake.headers["x-my-ip"];
-  const forwardIp =
-    socket.handshake.headers["x-forwarded-for"]?.split(",")?.[0]?.trim() ?? "";
-  const currentIp = socket.handshake.address.split(":").pop();
-
-  return customIp || forwardIp || currentIp;
-}
-
-function addIP(socket) {
-  const region = normalizeRegion(socket.instance.region);
+function addSocket(socket) {
+  const region = normalizeRegion(getRegion(socket));
 
   // first init
-  if (!Global.ips[region]) Global.ips[region] = new Map();
+  if (!Global.slaveSockets[region]) Global.slaveSockets[region] = new Map();
 
   // add to map
-  Global.ips[region].set(socket.id, getIP(socket));
+  Global.slaveSockets[region].set(socket.id, socket);
 }
-function rmIP(socket) {
-  const region = normalizeRegion(socket.instance.region);
+function rmSocket(socket) {
+  const region = normalizeRegion(getRegion(socket));
 
   // not found or not init
-  if (!Global.ips[region]?.has(socket.id)) return;
+  if (!Global.slaveSockets[region]?.has(socket.id)) return;
 
-  Global.ips[region].delete(socket.id);
+  Global.slaveSockets[region].delete(socket.id);
 }
 
 export default function registerWs(io) {
@@ -40,14 +32,14 @@ export default function registerWs(io) {
 
   io.on("connection", (socket) => {
     console.log(
-      `socket ${socket.id} from ${socket.instance.region} by ip ${getIP(
+      `socket ${socket.id} from ${getRegion(socket)} by ip ${getIP(
         socket
       )} connected`
     );
-    socket.join(socket.instance.region);
+    socket.join(getRegion(socket));
 
     // add ip to global
-    addIP(socket);
+    addSocket(socket);
 
     // increase limit
     socket.setMaxListeners(Number.POSITIVE_INFINITY);
@@ -90,7 +82,7 @@ function onCommand(socket, data) {
 function disconnectGlobal(socket) {
   // rm ip
   console.log(socket.id, "disconnect");
-  rmIP(socket);
+  rmSocket(socket);
 }
 
 async function onDisconnect(id, reject) {
@@ -102,7 +94,6 @@ async function onDisconnect(id, reject) {
 }
 
 export async function runRemoteCmdWithRegion(region, cmd, logger = console) {
-  logger.log(`run remote command in ${region}`, cmd);
   const sockets = await Global.io.in(region).fetchSockets();
   const targetSocket = sockets?.[0];
   if (!targetSocket)
@@ -114,8 +105,6 @@ export async function runRemoteCmdWithRegion(region, cmd, logger = console) {
 }
 
 export async function runRemoteCmdWithId(id, cmd, logger) {
-  logger.log(`run remote command in ${id}`, cmd);
-
   const targetSocket = Global.io.sockets.sockets.get(id);
   if (!targetSocket)
     throw new SimpleError(`there is not any connected socket with id ${id}`);
@@ -124,7 +113,13 @@ export async function runRemoteCmdWithId(id, cmd, logger) {
 }
 
 export async function runRemoteCmd(targetSocket, cmd, logger) {
-  if (!targetSocket) throw new SimpleError("not received any target socket");
+  if (!isConnect(targetSocket))
+    throw new SimpleError("not received any connected target socket");
+
+  logger.log(
+    `run remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
+    cmd
+  );
 
   const cmdId = crypto.randomUUID();
   targetSocket.emit("command", { id: cmdId, cmd });

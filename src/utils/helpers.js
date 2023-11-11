@@ -4,6 +4,7 @@ import * as fs from "fs";
 import { Global } from "../global.js";
 import { networkInterfaces } from "os";
 import { SimpleError } from "../common/error.js";
+import { getIP } from "../ws/utils.js";
 
 export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
@@ -167,8 +168,8 @@ export function getSlaveSocketOpt(region) {
   const normalRegion = normalizeRegion(region);
   if (!Global.slaveSockets[normalRegion]) return [];
   const sockets = Global.slaveSockets[normalRegion];
-  const [id, ip] = sockets.entries().next().value ?? [];
-  return { id, ip };
+  const [id, socket] = sockets.entries().next().value ?? [];
+  return { id, socket, ip: getIP(socket) };
 }
 
 export function ifExist(path, cmd) {
