@@ -88,6 +88,9 @@ export default class ExecuteManager {
     }
 
     try {
+      // pre require
+      await this.executer.pre_require();
+
       if (this.job.type === JobType.CREATE) {
         await this.#create_instance();
       }

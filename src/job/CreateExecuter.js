@@ -21,19 +21,6 @@ export default class CreateExecuter extends BaseExecuter {
     super(job, instance, log_file);
   }
 
-  async setup_metadata() {
-    const { id: server_id, ip: server_ip } = getSlaveSocketOpt(
-      this.instance.region
-    );
-    if (!server_ip || server_id)
-      throw new SimpleError(
-        `not found any connected server with region ${this.instance.region}`
-      );
-    this.instance.server_ip = server_ip;
-    this.instance.server_id = server_id;
-    return;
-  }
-
   async create_static_dirs() {
     // create public
     const staticDirs = ["shared", "public", "logs", "plugins"].map(
@@ -133,12 +120,11 @@ export default class CreateExecuter extends BaseExecuter {
     this.log(`add nginx config for domains: ${domains.join(" ")}`);
   }
   async register_cdn() {
-    const ips = getSlaveIps(this.instance.region);
-    const server_ip = ips[0];
+    const server_ip = this.instance.server_ip;
 
     if (!server_ip)
       throw new SimpleError(
-        `there is not any active slave in ${this.instance.region}`
+        `there is not any active slave for ${this.instance.server_ip}`
       );
 
     const defaultDomain = Network.getDefaultDomain({
@@ -178,7 +164,6 @@ export default class CreateExecuter extends BaseExecuter {
       );
       throw err;
     }
-    this.instance.server_ip = server_ip;
   }
   async restore_demo() {
     if (!this.instance.pattern) return;

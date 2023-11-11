@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { jobModel } from "../model/job.model.js";
 import { Remote } from "../utils/remote.js";
 import { runRemoteCmd, runRemoteCmdWithId } from "../ws/index.js";
-import { getMyIp } from "../utils/helpers.js";
+import { getMyIp, getSlaveSocketOpt } from "../utils/helpers.js";
 import { SimpleError } from "../common/error.js";
 
 export class BaseExecuter {
@@ -83,5 +83,26 @@ export class BaseExecuter {
         this.log(msgs, false, true, true);
       },
     });
+  };
+
+  pre_require = async () => {
+    await this.setup_metadata();
+  };
+
+  setup_metadata = async () => {
+    const { id: server_id, ip: server_ip } = getSlaveSocketOpt(
+      this.instance.region
+    );
+    if (!server_ip || server_id)
+      throw new SimpleError(
+        `not found any connected server with region ${this.instance.region}`
+      );
+    this.instance.server_ip = server_ip;
+    this.instance.server_id = server_id;
+    return;
+  };
+
+  sync_db = async () => {
+    throw new Error("Sync DB Not Implement Yet");
   };
 }
