@@ -59,8 +59,8 @@ function onLog(data) {
   const conf = confMap.get(id);
   if (!conf) return;
 
-  if (log) conf.logger.log(log);
-  if (error) conf.logger.error(error);
+  if (log) conf.logger.log(true, log);
+  if (error) conf.logger.error(true, error);
 }
 
 function onCommand(socket, data) {
@@ -117,6 +117,7 @@ export async function runRemoteCmd(targetSocket, cmd, logger) {
     throw new SimpleError("not received any connected target socket");
 
   logger.log(
+    false,
     `remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
     cmd
   );

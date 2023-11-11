@@ -60,11 +60,23 @@ export class BaseExecuter {
 
   exec = (cmd) => {
     return runRemoteCmd(this.instance.server_socket, cmd, {
-      log: (...msgs) => {
-        this.log(msgs, false, false, true, ["slave", this.instance.server_ip]);
+      log: (isSlave, ...msgs) => {
+        this.log(
+          msgs,
+          false,
+          false,
+          true,
+          isSlave ? ["slave", this.instance.server_ip] : []
+        );
       },
-      error: (...msgs) => {
-        this.log(msgs, false, true, true, ["slave", this.instance.server_ip]);
+      error: (isSlave, ...msgs) => {
+        this.log(
+          msgs,
+          false,
+          true,
+          true,
+          isSlave ? ["slave", this.instance.server_ip] : []
+        );
       },
     });
   };
