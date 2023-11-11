@@ -74,7 +74,7 @@ export default class ExecuteManager {
 
     // fs log
     const chunk_with_flag = isError
-      ? `Error: ${chunk_with_time}`
+      ? `[error] ${chunk_with_time}`
       : chunk_with_time;
     if (this.log_file.writable) {
       if (isEnd) {
@@ -113,9 +113,9 @@ export default class ExecuteManager {
       isRun = true;
     } catch (err) {
       this.log(
-        `Error in step:${this.job.progress_step}, attempt:${
-          this.job.attempt
-        }, message:${err2Str(err)}`,
+        `Error${
+          this.job.progress_step ? ` in step:${this.job.progress_step}` : ""
+        }, attempt:${this.job.attempt}, message:${err2Str(err)}`,
         false,
         true
       );

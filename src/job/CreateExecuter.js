@@ -191,6 +191,7 @@ export default class CreateExecuter extends BaseExecuter {
   }
 
   async sync_db(isError = false) {
+    console.log("call my sync db");
     let set_body = {};
 
     if (isError) {

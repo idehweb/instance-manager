@@ -105,7 +105,7 @@ export class BaseExecuter {
     return;
   };
 
-  sync_db = async () => {
+  async sync_db() {
     throw new Error("Sync DB Not Implement Yet");
-  };
+  }
 }
