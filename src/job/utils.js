@@ -1,5 +1,5 @@
 import { jobModel } from "../model/job.model.js";
-import { getPublicPath } from "../utils/helpers.js";
+import { convertToString, getPublicPath } from "../utils/helpers.js";
 
 export function getLogFilePath(executer) {
   return getPublicPath(
@@ -20,11 +20,7 @@ export function log({
 }) {
   const time = `[${new Date().toISOString()}]`;
   const chunkArr = Array.isArray(chunk) ? chunk : [chunk];
-  const _msg = chunkArr
-    .map((c) =>
-      typeof c === "object" ? JSON.stringify(c, null, " ") : String(c)
-    )
-    .join(" ");
+  const _msg = chunkArr.map((c) => convertToString(c, true)).join(" ");
 
   // labels
   const _labels_msg = `${labels.map((l) => `[${l}]`).join(" ")}${
