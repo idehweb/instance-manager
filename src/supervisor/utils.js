@@ -27,7 +27,8 @@ export function supSignToken(id, extraData = {}) {
   const secret = getEnv("iam-supervisor-secret", { format: "string" });
   return new Promise((resolve, reject) => {
     jwt.sign({ ...extraData, id }, secret, (err, token) => {
-      if (err) reject(err);
+      if (err)
+        reject(new SimpleError(`[sup-sign-token] ${err.message}`, err.stack));
       return resolve(token);
     });
   });
