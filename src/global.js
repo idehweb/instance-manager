@@ -1,5 +1,5 @@
 export const Global = {
-  ips: {},
+  slaveSockets: {},
   jobs: new Map(),
   apiUrls: new Map(),
   defaultRegions: new Map(),

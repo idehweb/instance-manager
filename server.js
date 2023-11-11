@@ -7,6 +7,7 @@ import app from "./app.js";
 import { Server } from "socket.io";
 import registerWs from "./src/ws/index.js";
 import prepare from "./src/prepar.js";
+import { SimpleError } from "./src/common/error.js";
 
 const server = app.listen(Global.env.PORT, () => {
   console.log(`Server Listening at http://127.0.0.1:${Global.env.PORT}`);
@@ -19,7 +20,6 @@ const io = new Server(server, {
   transports: ["websocket", "polling"],
   allowUpgrades: true,
 });
-
 Global.io = io;
 registerWs(io);
 
@@ -63,7 +63,7 @@ async function onSignal() {
 }
 async function onHealthcheck() {
   const status = mongoose.connections.every((c) => c.readyState === 1);
-  if (!status) throw new Error("DB not connect yet!");
+  if (!status) throw new SimpleError("DB not connect yet!");
 }
 
 createTerminus(server, {

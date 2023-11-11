@@ -1,8 +1,9 @@
 import crypto from "crypto";
 import { jobModel } from "../model/job.model.js";
 import { Remote } from "../utils/remote.js";
-import { runRemoteCmd } from "../ws/index.js";
+import { runRemoteCmd, runRemoteCmdWithId } from "../ws/index.js";
 import { getMyIp } from "../utils/helpers.js";
+import { SimpleError } from "../common/error.js";
 
 export class BaseExecuter {
   last_log;
@@ -30,7 +31,9 @@ export class BaseExecuter {
     );
 
     if (!newJob)
-      throw new Error("can not initial the job, because executer set before");
+      throw new SimpleError(
+        "can not initial the job, because executer set before"
+      );
     this.job = { ...newJob._doc };
   }
 
@@ -72,7 +75,7 @@ export class BaseExecuter {
   };
 
   exec = (cmd) => {
-    return runRemoteCmd(this.instance.region, cmd, {
+    return runRemoteCmdWithId(this.instance.server_id, cmd, {
       log: (...msgs) => {
         this.log(msgs, false, false, true);
       },
@@ -80,10 +83,5 @@ export class BaseExecuter {
         this.log(msgs, false, true, true);
       },
     });
-    // return exec(this.remote.autoDiagnostic(cmd), {
-    //   onLog: (msg, isError) => {
-    //     this.log(msg, false, isError, true);
-    //   },
-    // });
   };
 }

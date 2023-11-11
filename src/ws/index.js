@@ -3,6 +3,8 @@ import { setTimeout } from "timers/promises";
 import { Global } from "../global.js";
 import { authWithToken } from "./auth.js";
 import { DisconnectError } from "./error.js";
+import { SimpleError } from "../common/error.js";
+import { normalizeRegion } from "../utils/helpers.js";
 
 const confMap = new Map();
 
@@ -16,12 +18,21 @@ function getIP(socket) {
 }
 
 function addIP(socket) {
-  if (!Global.ips[socket.instance.region])
-    Global.ips[socket.instance.region] = new Set();
-  Global.ips[socket.instance.region].add(getIP(socket));
+  const region = normalizeRegion(socket.instance.region);
+
+  // first init
+  if (!Global.ips[region]) Global.ips[region] = new Map();
+
+  // add to map
+  Global.ips[region].set(socket.id, getIP(socket));
 }
 function rmIP(socket) {
-  Global.ips[socket.instance.region].delete(getIP(socket));
+  const region = normalizeRegion(socket.instance.region);
+
+  // not found or not init
+  if (!Global.ips[region]?.has(socket.id)) return;
+
+  Global.ips[region].delete(socket.id);
 }
 
 export default function registerWs(io) {
@@ -90,12 +101,30 @@ async function onDisconnect(id, reject) {
   confMap.delete(id);
 }
 
-export async function runRemoteCmd(region, cmd, logger = console) {
-  logger.log("run remote command", cmd);
+export async function runRemoteCmdWithRegion(region, cmd, logger = console) {
+  logger.log(`run remote command in ${region}`, cmd);
   const sockets = await Global.io.in(region).fetchSockets();
   const targetSocket = sockets?.[0];
   if (!targetSocket)
-    throw new Error(`there is not any connected socket for ${region} region`);
+    throw new SimpleError(
+      `there is not any connected socket for ${region} region`
+    );
+
+  await runRemoteCmd(targetSocket, cmd, logger);
+}
+
+export async function runRemoteCmdWithId(id, cmd, logger) {
+  logger.log(`run remote command in ${id}`, cmd);
+
+  const targetSocket = Global.io.sockets.sockets.get(id);
+  if (!targetSocket)
+    throw new SimpleError(`there is not any connected socket with id ${id}`);
+
+  await runRemoteCmd(targetSocket, cmd, logger);
+}
+
+export async function runRemoteCmd(targetSocket, cmd, logger) {
+  if (!targetSocket) throw new SimpleError("not received any target socket");
 
   const cmdId = crypto.randomUUID();
   targetSocket.emit("command", { id: cmdId, cmd });

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { getEnv } from "../utils/helpers.js";
 import { InstanceStatus, instanceModel } from "../model/instance.model.js";
+import { SimpleError } from "../common/error.js";
 
 export async function supGuard(req, res, next) {
   const token = req.get("authorization");
@@ -12,7 +13,7 @@ export async function supGuard(req, res, next) {
       active: true,
     });
 
-    if (!instanceDoc) throw new Error("instance not found");
+    if (!instanceDoc) throw new SimpleError("instance not found");
     req.instance = instanceDoc;
     return next();
   } catch (err) {

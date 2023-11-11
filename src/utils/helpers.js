@@ -3,6 +3,7 @@ import { join } from "path";
 import * as fs from "fs";
 import { Global } from "../global.js";
 import { networkInterfaces } from "os";
+import { SimpleError } from "../common/error.js";
 
 export const createRandomName = customAlphabet(
   "0123456789asdfhjklmnbvcxzqwertyuiop"
@@ -48,7 +49,23 @@ export function axiosError2String(error) {
 }
 
 export function err2Str(error) {
-  return JSON.stringify(error, null, "  ");
+  return convertToString(error);
+}
+
+export function convertToString(a, pretty = true) {
+  if (a instanceof SimpleError)
+    return `{ message : ${a.message} , stack : ${a.stack} }`;
+
+  if (typeof a === "object") {
+    const newA = {};
+    Object.getOwnPropertyNames(a).forEach((key) => {
+      newA[key] = a[key];
+    });
+    return !pretty
+      ? JSON.stringify(newA, replacer)
+      : JSON.stringify(newA, replacer, "  ");
+  }
+  return a?.toString() ?? String(a);
 }
 
 export function getNginxPublicPath(...path) {
@@ -137,8 +154,21 @@ export function addForwarded(req, ip) {
   return forwarded.join(",");
 }
 
+export function normalizeRegion(region) {
+  return region.toLowerCase();
+}
+
 export function getSlaveIps(region) {
-  return [...(Global.ips[region] ?? [])];
+  const normalRegion = normalizeRegion(region);
+  if (!Global.slaveSockets[normalRegion]) return [];
+  return [...new Set(Global.slaveSockets[normalRegion].values())];
+}
+export function getSlaveSocketOpt(region) {
+  const normalRegion = normalizeRegion(region);
+  if (!Global.slaveSockets[normalRegion]) return [];
+  const sockets = Global.slaveSockets[normalRegion];
+  const [id, ip] = sockets.entries().next().value ?? [];
+  return { id, ip };
 }
 
 export function ifExist(path, cmd) {

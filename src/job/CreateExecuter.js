@@ -4,6 +4,7 @@ import {
   getInstanceDbPath,
   getInstanceStaticPath,
   getSlaveIps,
+  getSlaveSocketOpt,
   wait,
 } from "../utils/helpers.js";
 import { Service as DockerService } from "../docker/service.js";
@@ -13,10 +14,24 @@ import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
 import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import DBCmd from "../db/index.js";
+import { SimpleError } from "../common/error.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {
     super(job, instance, log_file);
+  }
+
+  async setup_metadata() {
+    const { id: server_id, ip: server_ip } = getSlaveSocketOpt(
+      this.instance.region
+    );
+    if (!server_ip || server_id)
+      throw new SimpleError(
+        `not found any connected server with region ${this.instance.region}`
+      );
+    this.instance.server_ip = server_ip;
+    this.instance.server_id = server_id;
+    return;
   }
 
   async create_static_dirs() {
@@ -118,13 +133,11 @@ export default class CreateExecuter extends BaseExecuter {
     this.log(`add nginx config for domains: ${domains.join(" ")}`);
   }
   async register_cdn() {
-    this.log("cdn register call");
     const ips = getSlaveIps(this.instance.region);
-    this.log("after get ips" + ips);
     const server_ip = ips[0];
 
     if (!server_ip)
-      throw new Error(
+      throw new SimpleError(
         `there is not any active slave in ${this.instance.region}`
       );
 
