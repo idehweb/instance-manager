@@ -24,6 +24,7 @@ export class Service {
     service_name,
     ownerId,
     nodeewebhub,
+    socket,
     ...instance
   }) {
     const envs = {
