@@ -78,9 +78,6 @@ export default class ExecuteManager {
     }
 
     try {
-      // pre require
-      await this.executer.pre_require();
-
       if (this.job.type === JobType.CREATE) {
         await this.#create_instance();
       }
@@ -189,18 +186,19 @@ export default class ExecuteManager {
     }
   ) {
     stack = [
-      ...new Set(
-        filter
+      ...new Set([
+        JobSteps.PRE_REQUIRED,
+        ...(filter
           ? stack.filter((step) => !this.job.done_steps.includes(step))
-          : stack
-      ),
+          : stack),
+      ]),
     ];
 
     for (const step of stack) {
       this.log(`Execute Stack step: ${step}`);
 
       // set db step
-      if (update_step) await this.#updateJobStep(step);
+      if (update_step) await this.#updateJobStep({ progress_step: step });
 
       // execute each step
       const fn = this.#convertJobStepToFunc(step, executer);
@@ -217,10 +215,11 @@ export default class ExecuteManager {
           })
         : fn;
       await myFn.call(executer);
-    }
 
-    // set db step
-    if (update_step) await this.#updateJobStep(null);
+      // set db step
+      if (update_step)
+        await this.#updateJobStep({ done_step: step, progress_step: null });
+    }
   }
 
   async #create_instance() {
@@ -376,10 +375,7 @@ export default class ExecuteManager {
       update_step: true,
     });
   }
-  async #updateJobStep(progress_step) {
-    // no progress
-    if (progress_step === this.job.progress_step) return;
-
+  async #updateJobStep({ progress_step, done_step }) {
     this.job = {
       ...(
         await jobModel.findByIdAndUpdate(
@@ -388,9 +384,7 @@ export default class ExecuteManager {
             ...(progress_step === null
               ? { $unset: { progress_step: "" } }
               : { $set: { progress_step } }),
-            ...(this.job.progress_step
-              ? { $addToSet: { done_steps: this.job.progress_step } }
-              : {}),
+            ...(done_step ? { $push: { done_steps: done_step } } : {}),
           },
           { new: true }
         )
@@ -399,6 +393,8 @@ export default class ExecuteManager {
   }
   #convertJobStepToFunc(step, executer = this.executer) {
     switch (step) {
+      case JobSteps.PRE_REQUIRED:
+        return executer.pre_require;
       case JobSteps.COPY_STATIC:
         return executer.copy_static;
       case JobSteps.CREATE_SERVICE:

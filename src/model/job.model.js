@@ -2,6 +2,7 @@ import mongoose, { mongo } from "mongoose";
 import { Global } from "../global.js";
 
 export const JobSteps = {
+  PRE_REQUIRED: "pre-required",
   CDN_REGISTER: "cdn-register",
   CREATE_SERVICE: "create-service",
   CREATE_STATIC_DIRS: "create-static-dirs",
