@@ -170,7 +170,19 @@ export default class UpdateExecuter extends BaseExecuter {
     await this.exec(instance_cmd);
   }
 
-  async update_site_name() {}
+  async update_site_name() {
+    const site_name = this.job.update_query.site_name;
+
+    const dockerCmd = DockerService.serviceUpdate(
+      {
+        envs_add: {
+          APP_NAME: site_name,
+        },
+      },
+      { name: this.instance_name }
+    );
+    await this.exec(dockerCmd);
+  }
 
   async sync_db(isError = false) {
     let set_body;
