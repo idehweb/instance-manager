@@ -17,7 +17,14 @@ export default class UpdateExecuter extends BaseExecuter {
     super(job, instance, log_file);
   }
 
-  async changeImage() {}
+  async changeImage() {
+    const image = this.job.update_query.image;
+    const cmd = DockerService._getUpdateServiceCommand(this.instance_name, {
+      image,
+    });
+    return await this.exec(cmd);
+  }
+
   async createCertificate() {
     const primary_domain = this.job.update_query.primary_domain;
     const certPath = getWorkerConfPath("nginx", "site_certs", primary_domain);
