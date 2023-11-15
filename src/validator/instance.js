@@ -1,5 +1,9 @@
 import Joi from "joi";
-import { InstancePattern, InstanceRegion } from "../model/instance.model.js";
+import {
+  InstancePattern,
+  InstanceRegion,
+  InstanceStatus,
+} from "../model/instance.model.js";
 import { createRandomName } from "../utils/helpers.js";
 
 const instanceCreateValSch = Joi.object({
@@ -43,6 +47,21 @@ export const instanceValidSch = Joi.object({
     .optional()
     .valid(...Object.values(InstancePattern)),
   site_name: Joi.string().optional().min(2).max(100),
+});
+
+export const instanceUpdateSch = Joi.object({
+  domains_add: Joi.array()
+    .items(Joi.string().domain())
+    .items(Joi.invalid(Joi.in("domains_rm")))
+    .optional(),
+  domains_rm: Joi.array()
+    .items(Joi.string().domain())
+    .items(Joi.invalid(Joi.in("domains_add")))
+    .optional(),
+  image: Joi.string().optional(),
+  site_name: Joi.string().optional().min(2).max(100),
+  primary_domain: Joi.string().domain().optional(),
+  status: Joi.string().valid(InstanceStatus.UP, InstanceStatus.DOWN),
 });
 
 export default instanceCreateValSch;

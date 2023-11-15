@@ -41,23 +41,40 @@ class Service {
     }
     return res.status(200).json({ status: "success", instance });
   }
+  static getUpdateCounts(update) {
+    let count = 0;
+
+    // irregular
+    const newUpdate = Object.assign({}, update);
+
+    if (newUpdate.domains_add || newUpdate.domains_rm) {
+      delete newUpdate.domains_add;
+      delete newUpdate.domains_rm;
+      count++;
+    }
+
+    count += Object.values(newUpdate).filter((v) => v).length;
+
+    return count;
+  }
   static async updateOne(req, res, next) {
     const update = req.body;
-    const statusAccept = [InstanceStatus.DOWN, InstanceStatus.UP];
-    if (update.status && !statusAccept.includes(update.status)) {
+
+    // prevent multi update
+    const updateCounts = Service.getUpdateCounts(update);
+    if (updateCounts !== 1)
       return res.status(400).json({
         status: "error",
-        message: `status must be ${statusAccept.join(" or ")}.`,
+        message: `each time you must update one attribute, received ${updateCounts} attributes`,
       });
-    }
-    if (update.status == req.instance.status) {
+
+    if (update.status == req.instance.status)
       return res.status(400).json({ status: "error", message: "same status" });
-    }
 
     const job = await jobModel.create({
       type: JobType.UPDATE,
       instance: req.instance,
-      update_query: req.body,
+      update_query: update,
     });
 
     // link instance to job

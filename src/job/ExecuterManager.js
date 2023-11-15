@@ -273,21 +273,15 @@ export default class ExecuteManager {
   async #update_instance({
     domains_add,
     domains_rm,
-    cpu,
-    memory,
     image,
-    status,
-    name,
-    replica,
+    site_name,
     primary_domain,
+    status,
   }) {
     const stack = [JobSteps.PARSE_UPDATE_QUERY];
     // change status
     if (status) {
       stack.push(JobSteps.CHANGE_STATUS);
-    }
-    // change name
-    else if (name) {
     }
 
     // change domain

@@ -4,6 +4,7 @@ import { adminAccess, instanceAccess } from "../common/auth.guard.js";
 import { catchMiddleware } from "../utils/catchAsync.js";
 import { useValidator } from "../validator/index.js";
 import instanceCreateValSch, {
+  instanceUpdateSch,
   instanceValidSch,
 } from "../validator/instance.js";
 import { Global } from "../global.js";
@@ -32,6 +33,7 @@ instanceRouter.post(
 instanceRouter.patch(
   "/:id",
   catchMiddleware(instanceAccess),
+  useValidator("body", instanceUpdateSch),
   Service.updateOne
 );
 instanceRouter.delete(
