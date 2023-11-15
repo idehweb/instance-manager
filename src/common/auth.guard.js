@@ -101,7 +101,10 @@ export async function instanceAccess(req, res, next) {
   if (!instance_id) return next();
 
   if (req.admin) {
-    req.instance = await instanceModel.findById(instance_id);
+    const instance = await instanceModel.findById(instance_id);
+    if (!instance)
+      return res.status(404).json({ message: "not found instance" });
+    req.instance = instance;
     return next();
   }
 

@@ -41,7 +41,7 @@ class Service {
     }
     return res.status(200).json({ status: "success", instance });
   }
-  static getUpdateCounts(update) {
+  static _getUpdateCounts(update) {
     let count = 0;
 
     // irregular
@@ -59,14 +59,72 @@ class Service {
   }
   static async updateOne(req, res, next) {
     const update = req.body;
+    if (!req.instance.active)
+      return res.status(403).json({ message: "instance is inactive" });
 
     // prevent multi update
-    const updateCounts = Service.getUpdateCounts(update);
+    const updateCounts = Service._getUpdateCounts(update);
     if (updateCounts !== 1)
       return res.status(400).json({
         status: "error",
         message: `each time you must update one attribute, received ${updateCounts} attributes`,
       });
+    if (update.domains_rm && update.domains_rm.length) {
+      // add and remove
+      if (update.domains_add) {
+        if (update.domains_rm.some((d) => update.domains_add.includes(d)))
+          return res.status(400).json({
+            status: "error",
+            message: "can not add and remove domain in same time",
+          });
+      }
+
+      // remove not removable
+      const canRmDomains = req.instance.domains
+        .map((d) => d.content)
+        .filter(
+          (d) =>
+            d !== req.instance.primary_domain &&
+            d !==
+              Network.getDefaultDomain({
+                name: req.instance.name,
+                region: req.instance.region,
+              })
+        );
+
+      if (update.domains_rm.some((d) => !canRmDomains.includes(d)))
+        return res.status(400).json({
+          status: "error",
+          message:
+            "some domains that want to remove is not exist or not removable",
+        });
+    }
+
+    if (update.domains_add && update.domains_add.length) {
+      const otherInstances = await instanceModel.findOne({
+        "domains.content": { $in: update.domains_add },
+        active: true,
+      });
+
+      if (otherInstances)
+        return res.status(400).json({
+          status: "error",
+          message: "some of your domains were register before",
+        });
+    }
+
+    if (update.primary_domain) {
+      if (req.instance.primary_domain === update.primary_domain)
+        return res.status(400).json({ message: "primary domain is same" });
+      if (
+        !req.instance.domains
+          .map((d) => d.content)
+          .includes(update.primary_domain)
+      )
+        return res
+          .status(400)
+          .json({ message: "primary domain is not exist on domains" });
+    }
 
     if (update.status == req.instance.status)
       return res.status(400).json({ status: "error", message: "same status" });

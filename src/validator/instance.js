@@ -51,12 +51,10 @@ export const instanceValidSch = Joi.object({
 
 export const instanceUpdateSch = Joi.object({
   domains_add: Joi.array()
-    .items(Joi.string().domain())
-    .items(Joi.invalid(Joi.in("domains_rm")))
+    .items(Joi.string().domain({ maxDomainSegments: 2 }))
     .optional(),
   domains_rm: Joi.array()
-    .items(Joi.string().domain())
-    .items(Joi.invalid(Joi.in("domains_add")))
+    .items(Joi.string().domain({ maxDomainSegments: 2 }))
     .optional(),
   image: Joi.string().optional(),
   site_name: Joi.string().optional().min(2).max(100),
