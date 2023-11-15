@@ -285,7 +285,7 @@ export default class ExecuteManager {
     }
 
     // change domain
-    else if (
+    if (
       (domains_add && domains_add.length) ||
       (domains_rm && domains_rm.length)
     ) {
@@ -297,13 +297,18 @@ export default class ExecuteManager {
     }
 
     // change image version
-    else if (image) {
+    if (image) {
       stack.push(JobSteps.CHANGE_IMAGE);
     }
 
     // change primary domain
-    else if (primary_domain) {
+    if (primary_domain) {
       stack.push(JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN);
+    }
+
+    // site name
+    if (site_name) {
+      stack.push(JobSteps.UPDATE_SITE_NAME);
     }
 
     // sync db
@@ -428,7 +433,7 @@ export default class ExecuteManager {
       case JobSteps.CHANGE_IMAGE:
         return executer.changeImage;
       case JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN:
-        return executer.changeDockerPrimaryDomain;
+        return executer.change_primary_domain;
       case JobSteps.ADD_DOMAIN_CONFIG:
         return executer.nginx_domain_config;
       case JobSteps.REMOVE_DOMAIN_CONFIG:
@@ -451,6 +456,8 @@ export default class ExecuteManager {
         return executer.create_user_in_db;
       case JobSteps.REMOVE_USER_FROM_DB:
         return executer.rm_user_from_db;
+      case JobSteps.UPDATE_SITE_NAME:
+        return executer.update_site_name;
     }
   }
   #convertJobTypeToExecuter() {

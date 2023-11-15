@@ -48,7 +48,7 @@ export default class UpdateExecuter extends BaseExecuter {
   }
 
   async changeStatus() {
-    const docker_cmd = DockerService.getUpdateServiceCommand(
+    const docker_cmd = DockerService._getUpdateServiceCommand(
       this.instance_name,
       {
         replicas:
@@ -151,31 +151,26 @@ export default class UpdateExecuter extends BaseExecuter {
     }
   }
 
-  async changeDockerPrimaryDomain() {
+  async change_primary_domain() {
     const primary_domain = this.job.update_query.primary_domain;
-    const instance_cmd = DockerService.getUpdateServiceCommand(
-      this.instance_name,
+    const site_url = `https://${primary_domain}`;
+    const instance_cmd = DockerService.serviceUpdate(
       {
-        "env-add": [
-          `BASE_URL=https://${primary_domain}`,
-          `SHOP_URL=https://${primary_domain}/`,
-          `SERVER_HOST=https://${primary_domain}`,
-        ],
+        envs_add: {
+          BASE_URL: site_url,
+          SERVER_HOST: site_url,
+        },
       },
       {
+        name: this.instance_name,
         executer: "x-docker",
         maxRetries: 6,
       }
     );
-
-    await this.exec(
-      `${getScripts("instance-nginx-conf")} ${primary_domain} ${
-        this.instance_name
-      } ${getWorkerConfPath("nginx", "sites-available")}`
-    );
-
     await this.exec(instance_cmd);
   }
+
+  async update_site_name() {}
 
   async sync_db(isError = false) {
     let set_body;

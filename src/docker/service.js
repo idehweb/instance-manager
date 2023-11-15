@@ -101,10 +101,13 @@ export class Service {
   static getDeleteServiceCommand(name) {
     return `docker service rm ${name}`;
   }
-  static getUpdateServiceCommand(
+  static _getUpdateServiceCommand(
     name,
     configs,
-    { executer = "x-docker", maxRetries = 6 } = {}
+    { executer = "x-docker", maxRetries = 6 } = {
+      executer: "x-docker",
+      maxRetries: 6,
+    }
   ) {
     const cmd = `docker service update ${Object.entries(configs)
       .map(([k, v]) =>
@@ -117,6 +120,65 @@ export class Service {
     if (executer === "docker") return cmd;
     return `x-docker --max-reties ${maxRetries} ${cmd}`;
   }
+
+  static serviceUpdate(
+    {
+      envs_add,
+      envs_rm,
+      mounts_add,
+      mounts_rm,
+      networks_add,
+      networks_rm,
+      configs_add,
+      configs_rm,
+    },
+    { name, executer, maxRetries }
+  ) {
+    const args = {};
+    if (envs_add) {
+      args["env-add"] = Object.entries(envs_add)
+        .filter(([k, v]) => v)
+        .map(([k, v]) => `${k}=${v}`);
+    }
+
+    if (envs_rm) {
+      args["env-rm"] = envs_rm.map((n) => `${n}`);
+    }
+
+    if (mounts_add) {
+      args["mount-add"] = Object.entries(mounts_add).map(
+        ([k, v]) => `type=bind,source=${k},destination=${v}`
+      );
+    }
+
+    if (mounts_rm) {
+      args["mount-rm"] = mounts_rm.map((n) => `${n}`);
+    }
+
+    if (configs_add) {
+      args["config-add"] = Object.entries(configs_add)
+        .filter(([k, v]) => v !== -1)
+        .map(([k, v]) => `source=${k},destination=${v}`);
+    }
+
+    if (configs_rm) {
+      args["config-rm"] = configs_rm.map((n) => `${n}`);
+    }
+
+    if (networks_add) {
+      args["network-add"] = networks_add.map((n) => `${n}`);
+    }
+
+    if (networks_rm) {
+      args["network-rm"] = networks_rm.map((n) => `${n}`);
+    }
+
+    return Service._getUpdateServiceCommand(name, args, {
+      executer,
+      maxRetries,
+    });
+  }
+
   static getAllCmd() {
     return 'docker service ls --format "{{.Name}} {{.Replicas}}"';
   }

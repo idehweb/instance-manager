@@ -22,6 +22,7 @@ export const JobSteps = {
   CHANGE_STATUS: "change-status",
   PARSE_UPDATE_QUERY: "parse-update-query",
   UPDATE_DOMAIN_CDN: "update-domain-cdn",
+  UPDATE_SITE_NAME: "update-site-name",
   ROLLBACK_UPDATE_DOMAIN_CDN: "rollback-update-domain-cdn",
   UPDATE_DOMAIN_CONFIG: "update-domain-config",
   ROLLBACK_UPDATE_DOMAIN_CONFIG: "rollback-update-domain-config",
