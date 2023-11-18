@@ -87,11 +87,15 @@ export class BaseExecuter {
 
   async pre_require() {
     try {
-      await this.setup_metadata();
+      await this.base_pre_require();
     } catch (err) {
       if (this.job.isInCleanPhase) this.log(err, false, true);
       else throw err;
     }
+  }
+
+  async base_pre_require() {
+    await this.setup_metadata();
   }
 
   async setup_metadata() {

@@ -52,8 +52,6 @@ export const JobSteps = {
   CHANGE_STATUS: "change-status",
   ROLLBACK_CHANGE_STATUS: "rollback-change-status",
 
-  PARSE_UPDATE_QUERY: "parse-update-query",
-
   UPDATE_DOMAIN_CDN: "update-domain-cdn",
   ROLLBACK_UPDATE_DOMAIN_CDN: "rollback-update-domain-cdn",
 

@@ -237,5 +237,8 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.UPDATE_SITE_NAME:
     case JobSteps.ROLLBACK_UPDATE_SITE_NAME:
       return executer.update_site_name;
+
+    default:
+      throw new Error(`can not convert step ${step}`);
   }
 }

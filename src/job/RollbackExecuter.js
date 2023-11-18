@@ -60,26 +60,80 @@ export default class RollbackExecuter extends BaseExecuter {
 
   // --- Start Update Executer --- //
 
+  exportPrevData(key) {
+    const value = this.job.prev_data[key];
+    if (!value) {
+      this.log(`not found previous ${key}`, false, false, false, ["warning"]);
+    }
+
+    return value;
+  }
+
   async changeStatus() {
-    await this.updateExecuter.changeStatus();
+    const status = this.exportPrevData("status");
+    if (!status) return;
+
+    await this.updateExecuter.changeStatus({
+      savePrev: false,
+      status,
+    });
   }
   async changeImage() {
-    await this.updateExecuter.changeImage();
+    const image = this.exportPrevData("image");
+    if (!image) return;
+
+    await this.updateExecuter.changeImage({
+      image,
+      savePrev: false,
+    });
   }
   async change_primary_domain() {
-    await this.updateExecuter.change_primary_domain();
+    const pd = this.exportPrevData("primary_domain");
+    if (!pd) return;
+
+    await this.updateExecuter.change_primary_domain({
+      primary_domain: pd,
+      savePrev: false,
+    });
   }
   async update_domain_cdn() {
-    await this.updateExecuter.update_domain_cdn();
+    const domains_add = this.exportPrevData("domains_add") ?? [];
+    const domains_rm = this.exportPrevData("domains_rm") ?? [];
+    if (!domains_add.length && !domains_rm.length) return;
+
+    await this.updateExecuter.update_domain_cdn({
+      savePrev: false,
+      domains_add: domains_rm,
+      domains_rm: domains_add,
+    });
   }
   async update_domain_cert() {
-    await this.updateExecuter.update_domain_cert();
+    const domains_add = this.exportPrevData("domains_add") ?? [];
+    const domains_rm = this.exportPrevData("domains_rm") ?? [];
+    if (!domains_add.length && !domains_rm.length) return;
+
+    await this.updateExecuter.update_domain_cert({
+      savePrev: false,
+      domains_add: domains_rm,
+      domains_rm: domains_add,
+    });
   }
   async update_domain_config() {
-    await this.updateExecuter.update_domain_config();
+    const domains_add = this.exportPrevData("domains_add") ?? [];
+    const domains_rm = this.exportPrevData("domains_rm") ?? [];
+    if (!domains_add.length && !domains_rm.length) return;
+
+    await this.updateExecuter.update_domain_config({
+      savePrev: false,
+      domains_add: domains_rm,
+      domains_rm: domains_add,
+    });
   }
   async update_site_name() {
-    await this.updateExecuter.update_site_name();
+    const site_name = this.exportPrevData("site_name");
+    if (!site_name) return;
+
+    await this.updateExecuter.update_site_name({ savePrev: false, site_name });
   }
   // --- End Of Update Executer --- //
 

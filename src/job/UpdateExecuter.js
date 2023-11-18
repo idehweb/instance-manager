@@ -17,31 +17,49 @@ export default class UpdateExecuter extends BaseExecuter {
     if (!this.instance.prev_data) this.instance.prev_data = {};
   }
 
-  async changeImage() {
-    // prev
-    this.instance.prev_data.image = this.instance.image;
+  async pre_require() {
+    try {
+      await this.base_pre_require();
+      await this.parse_update_query();
+    } catch (err) {
+      if (this.job.isInCleanPhase) this.log(err, false, true);
+      else throw err;
+    }
+  }
 
-    const image = this.job.update_query.image;
+  async parse_update_query() {
+    const query = { ...this.job.update_query };
+
+    const myDomains = this.instance.domains.map(({ content }) => content);
+
+    query.domains_rm = query.domains_rm
+      ? [
+          ...new Set(
+            query.domains_rm.filter(
+              (d) => d !== this.instance.primary_domain && myDomains.includes(d)
+            )
+          ),
+        ]
+      : [];
+
+    query.domains_add = query.domains_add
+      ? [...new Set(query.domains_add.filter((d) => !myDomains.includes(d)))]
+      : [];
+
+    this.job.parsed_update_query = query;
+  }
+
+  async changeImage({ image, savePrev } = { image: null, savePrev: true }) {
+    // prev
+    if (savePrev) this.instance.prev_data.image = this.instance.image;
+
+    image = image ?? this.job.update_query.image;
 
     // update new one
     const updateImageCmd = DockerService._getUpdateServiceCommand(
       this.instance_name,
       {
         image,
-      }
-    );
-    return await this.exec(updateImageCmd);
-  }
-
-  async undo_image() {
-    if (!this.instance.old_image) {
-      this.log("not found old image");
-      return;
-    }
-    const updateImageCmd = DockerService._getUpdateServiceCommand(
-      this.instance_name,
-      {
-        image: this.instance.old_image,
       }
     );
     return await this.exec(updateImageCmd);
@@ -76,17 +94,16 @@ export default class UpdateExecuter extends BaseExecuter {
     );
   }
 
-  async changeStatus() {
+  async changeStatus({ status, savePrev } = { status: null, savePrev: true }) {
     // prev status
-    this.job.prev_data.status = this.instance.status;
+    if (savePrev) this.job.prev_data.status = this.instance.status;
+
+    status = status ?? this.job.update_query.status;
 
     const docker_cmd = DockerService._getUpdateServiceCommand(
       this.instance_name,
       {
-        replicas:
-          this.job.update_query.status === InstanceStatus.UP
-            ? this.instance.replica
-            : 0,
+        replicas: status === InstanceStatus.UP ? this.instance.replica : 0,
       },
       {
         executer: "x-docker",
@@ -96,32 +113,23 @@ export default class UpdateExecuter extends BaseExecuter {
     await this.exec(docker_cmd);
   }
 
-  async parse_update_query() {
-    const query = { ...this.job.update_query };
+  async update_domain_cdn(
+    { domains_add, domains_rm, savePrev } = {
+      savePrev: true,
+      ...domains,
+    }
+  ) {
+    const { domains_rm = [], domains_add = [] } = {
+      ...this.job.parsed_update_query,
+      ...domains,
+    };
 
-    const myDomains = this.instance.domains.map(({ content }) => content);
-
-    query.domains_rm = query.domains_rm
-      ? [
-          ...new Set(
-            query.domains_rm.filter(
-              (d) => d !== this.instance.primary_domain && myDomains.includes(d)
-            )
-          ),
-        ]
-      : [];
-
-    query.domains_add = query.domains_add
-      ? [...new Set(query.domains_add.filter((d) => !myDomains.includes(d)))]
-      : [];
-
-    this.job.parsed_update_query = query;
-  }
-  async update_domain_cdn() {
     // prev
-    this.job.prev_data.domains = this.instance.domains;
-
-    const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
+    if (savePrev) {
+      this.job.prev_data.domains = this.instance.domains;
+      this.job.prev_data.domains_add = this.instance.domains_add;
+      this.job.prev_data.domains_rm = this.instance.domains_rm;
+    }
 
     if (!domains_add.length && !domains_rm.length) return;
 
@@ -153,11 +161,22 @@ export default class UpdateExecuter extends BaseExecuter {
 
     this.instance.new_domains = new_domains;
   }
-  async update_domain_cert() {
+  async update_domain_cert(
+    { domains_add, domains_rm, savePrev } = {
+      savePrev: true,
+      ...domains,
+    }
+  ) {
+    const { domains_rm = [], domains_add = [] } = {
+      ...this.job.parsed_update_query,
+      ...domains,
+    };
     // prev
-    this.job.prev_data.domains = this.instance.domains;
-
-    const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
+    if (savePrev) {
+      this.job.prev_data.domains = this.instance.domains;
+      this.job.prev_data.domains_add = this.instance.domains_add;
+      this.job.prev_data.domains_rm = this.instance.domains_rm;
+    }
 
     if (!domains_add.length && !domains_rm.length) return;
 
@@ -170,11 +189,22 @@ export default class UpdateExecuter extends BaseExecuter {
       await this.exec(`x-cert rm ${domains_rm.map((d) => `-d ${d}`)}`);
     }
   }
-  async update_domain_config() {
+  async update_domain_config(
+    { domains_add, domains_rm, savePrev } = {
+      savePrev: true,
+      ...domains,
+    }
+  ) {
+    const { domains_rm = [], domains_add = [] } = {
+      ...this.job.parsed_update_query,
+      ...domains,
+    };
     // prev
-    this.job.prev_data.domains = this.instance.domains;
-
-    const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
+    if (savePrev) {
+      this.job.prev_data.domains = this.instance.domains;
+      this.job.prev_data.domains_add = this.instance.domains_add;
+      this.job.prev_data.domains_rm = this.instance.domains_rm;
+    }
 
     if (!domains_add.length && !domains_rm.length) return;
 
@@ -192,11 +222,17 @@ export default class UpdateExecuter extends BaseExecuter {
     }
   }
 
-  async change_primary_domain() {
+  async change_primary_domain(
+    { primary_domain, savePrev } = {
+      savePrev: true,
+      primary_domain: null,
+    }
+  ) {
     // prev
-    this.job.prev_data.primary_domain = this.instance.primary_domain;
+    if (savePrev)
+      this.job.prev_data.primary_domain = this.instance.primary_domain;
 
-    const primary_domain = this.job.update_query.primary_domain;
+    primary_domain = primary_domain ?? this.job.update_query.primary_domain;
     const site_url = `https://${primary_domain}`;
     const instance_cmd = DockerService.serviceUpdate(
       {
@@ -214,11 +250,16 @@ export default class UpdateExecuter extends BaseExecuter {
     await this.exec(instance_cmd);
   }
 
-  async update_site_name() {
+  async update_site_name(
+    { site_name, savePrev } = {
+      savePrev: true,
+      site_name: null,
+    }
+  ) {
     // prev
-    this.job.prev_data.site_name = this.instance.site_name;
+    if (savePrev) this.job.prev_data.site_name = this.instance.site_name;
 
-    const site_name = this.job.update_query.site_name;
+    site_name = site_name ?? this.job.update_query.site_name;
 
     const dockerCmd = DockerService.serviceUpdate(
       {

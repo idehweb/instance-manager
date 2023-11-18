@@ -66,3 +66,20 @@ export function log({
   }
   return newLastLog;
 }
+
+export function detectAction(newArr, oldArr) {
+  const add = [],
+    rm = [];
+  // add
+  for (const str of newArr) {
+    if (oldArr.includes(str)) break;
+    add.push(str);
+  }
+  // rm
+  for (const str of oldArr) {
+    if (newArr.includes(str)) break;
+    rm.push(str);
+  }
+
+  return { add, rm };
+}

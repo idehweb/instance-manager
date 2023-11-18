@@ -311,7 +311,7 @@ export default class ExecuteManager {
     primary_domain,
     status,
   }) {
-    const stack = [JobSteps.PARSE_UPDATE_QUERY];
+    const stack = [];
     // change status
     if (status) {
       stack.push(JobSteps.CHANGE_STATUS);
