@@ -17,8 +17,8 @@ import DBCmd from "../db/index.js";
 import { SimpleError } from "../common/error.js";
 
 export default class CreateExecuter extends BaseExecuter {
-  constructor(job, instance, log_file) {
-    super(job, instance, log_file);
+  constructor(job, instance, log_file, logger) {
+    super(job, instance, log_file, logger);
   }
 
   async create_static_dirs() {

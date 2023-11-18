@@ -8,10 +8,11 @@ import { log } from "./utils.js";
 
 export class BaseExecuter {
   last_log;
-  constructor(job, instance, log_file) {
+  constructor(job, instance, log_file, logger) {
     this.job = job;
     this.instance = instance;
     this.log_file = log_file;
+    this.logger = logger;
     this.remote = new Remote(instance.region);
     this.id = crypto.randomUUID();
   }
@@ -45,7 +46,7 @@ export class BaseExecuter {
     whenDifferent = false,
     labels = []
   ) => {
-    this.last_log = log({
+    const conf = {
       chunk,
       isEnd,
       isError,
@@ -55,7 +56,10 @@ export class BaseExecuter {
       last_log: this.last_log,
       labels: [slugify(this.constructor.name), ...labels],
       log_file: this.log_file,
-    });
+    };
+
+    if (this.logger) this.last_log = this.logger(conf);
+    else this.last_log = log(conf);
   };
 
   exec = (cmd) => {

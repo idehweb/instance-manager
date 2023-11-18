@@ -13,8 +13,8 @@ import {
   isExist,
 } from "../utils/helpers.js";
 export default class UpdateExecuter extends BaseExecuter {
-  constructor(job, instance, log_file) {
-    super(job, instance, log_file);
+  constructor(job, instance, log_file, logger) {
+    super(job, instance, log_file, logger);
   }
 
   async changeImage() {

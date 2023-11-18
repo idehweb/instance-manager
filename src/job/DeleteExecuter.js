@@ -13,8 +13,8 @@ import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
 import DBCmd from "../db/index.js";
 export default class DeleteExecuter extends BaseExecuter {
-  constructor(job, instance, log_file) {
-    super(job, instance, log_file);
+  constructor(job, instance, log_file, logger) {
+    super(job, instance, log_file, logger);
   }
 
   async service_remove() {
