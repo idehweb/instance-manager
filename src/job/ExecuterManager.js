@@ -1,20 +1,19 @@
 import fs from "fs";
 import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
-import {
-  axiosError2String,
-  err2Str,
-  getPublicPath,
-  slugify,
-  wait,
-} from "../utils/helpers.js";
+import { axiosError2String, slugify, wait } from "../utils/helpers.js";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
 import { Remote } from "../utils/remote.js";
 import { catchFn } from "../utils/catchAsync.js";
-import CreateExecuter from "./CreateExecuter.js";
-import UpdateExecuter from "./UpdateExecuter.js";
-import DeleteExecuter from "./DeleteExecuter.js";
-import { convertStack, getLogFilePath, log, uniqueStack } from "./utils.js";
+import {
+  convertJobTypeToExecuter,
+  convertStack,
+  step2Rollback,
+  uniqueStack,
+  getLogFilePath,
+  convertJobStepToFunc,
+} from "./manager.utils.js";
+import { log } from "./utils.js";
 
 export default class ExecuteManager {
   last_log;
@@ -29,7 +28,7 @@ export default class ExecuteManager {
     this.req = req;
 
     // initial executer
-    this.executer = new (this.#convertJobTypeToExecuter())(
+    this.executer = new (convertJobTypeToExecuter(this.job.type))(
       this.job,
       this.instance,
       this.log_file
@@ -167,29 +166,13 @@ export default class ExecuteManager {
     // true flag job clean phase
     await this.#updateJobAtr({ isInCleanPhase: true });
 
-    const stack = [
-      JobSteps.CDN_UNREGISTER,
-      JobSteps.REMOVE_SERVICE,
-      JobSteps.REMOVE_DOMAIN_CERT,
-      JobSteps.REMOVE_DOMAIN_CONFIG,
-      JobSteps.REMOVE_STATIC,
-      JobSteps.REMOVE_DB,
-    ].filter((step) => {
-      if (
-        Global.env.isLocal &&
-        [
-          JobSteps.REMOVE_SERVICE,
-          JobSteps.REMOVE_STATIC,
-          JobSteps.REMOVE_DOMAIN_CERT,
-          JobSteps.REMOVE_DOMAIN_CONFIG,
-        ].includes(step)
-      )
-        return false;
-      return true;
-    });
-    await this.#execute_stack(stack, {
+    const needRollbackSteps = [progress_step, ...done_steps];
+    const rollbackSteps = step2Rollback(...needRollbackSteps);
+
+    // execute steps stack
+    await this.#execute_stack(rollbackSteps, {
       ignoreError: true,
-      executer: new DeleteExecuter(this.job, this.instance, this.log_file),
+      executer: this.executer,
       filter: false,
       update_step: true,
     });
@@ -395,6 +378,7 @@ export default class ExecuteManager {
 
     await this.#execute_stack(stack);
   }
+
   async #updateJobAtr(update, opt = {}) {
     this.job = {
       ...(
@@ -413,78 +397,13 @@ export default class ExecuteManager {
       ...(done_step ? { $push: { done_steps: done_step } } : {}),
     });
   }
+
   #convertJobStepToFunc(step, executer = this.executer) {
     switch (step) {
-      case JobSteps.PRE_REQUIRED:
-        return executer.pre_require;
-      case JobSteps.COPY_STATIC:
-        return executer.copy_static;
-      case JobSteps.CREATE_SERVICE:
-        return executer.docker_create;
-      case JobSteps.CDN_REGISTER:
-        return executer.register_cdn;
-      case JobSteps.CDN_UNREGISTER:
-        return executer.unregister_cdn;
-      case JobSteps.RESTORE_DB:
-        return executer.restore_demo;
-      case JobSteps.CHANGE_DOMAINS:
-        return executer.changeDomains;
-      case JobSteps.CHANGE_STATUS:
-        return executer.changeStatus;
-      case JobSteps.BACKUP_DB:
-        return executer.backup_db;
-      case JobSteps.BACKUP_STATIC:
-        return executer.backup_static;
-      case JobSteps.REMOVE_DB:
-        return executer.rm_db;
-      case JobSteps.REMOVE_SERVICE:
-        return executer.service_remove;
-      case JobSteps.REMOVE_STATIC:
-        return executer.rm_static;
       case JobSteps.SYNC_DB:
         return this.#sync_db;
-      case JobSteps.CHANGE_IMAGE:
-        return executer.changeImage;
-      case JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN:
-        return executer.change_primary_domain;
-      case JobSteps.ADD_DOMAIN_CONFIG:
-        return executer.nginx_domain_config;
-      case JobSteps.REMOVE_DOMAIN_CONFIG:
-        return executer.rm_domain_config;
-      case JobSteps.ADD_DOMAIN_CERT:
-        return executer.domain_certs;
-      case JobSteps.REMOVE_DOMAIN_CERT:
-        return executer.rm_domain_cert;
-      case JobSteps.CREATE_STATIC_DIRS:
-        return executer.create_static_dirs;
-      case JobSteps.UPDATE_DOMAIN_CDN:
-        return executer.update_domain_cdn;
-      case JobSteps.UPDATE_DOMAIN_CERT:
-        return executer.update_domain_cert;
-      case JobSteps.UPDATE_DOMAIN_CONFIG:
-        return executer.update_domain_config;
-      case JobSteps.PARSE_UPDATE_QUERY:
-        return executer.parse_update_query;
-      case JobSteps.CREATE_USER_IN_DB:
-        return executer.create_user_in_db;
-      case JobSteps.REMOVE_USER_FROM_DB:
-        return executer.rm_user_from_db;
-      case JobSteps.UPDATE_SITE_NAME:
-        return executer.update_site_name;
-      case JobSteps.UNDO_IMAGE:
-        return executer.undo_image;
-    }
-  }
-  #convertJobTypeToExecuter() {
-    switch (this.job.type) {
-      case JobType.CREATE:
-        return CreateExecuter;
-
-      case JobType.UPDATE:
-        return UpdateExecuter;
-
-      case JobType.DELETE:
-        return DeleteExecuter;
+      default:
+        return convertJobStepToFunc(step, executer);
     }
   }
 }
