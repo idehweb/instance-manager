@@ -72,3 +72,26 @@ export function log({
   }
   return newLastLog;
 }
+
+export function convertStack(conf, ...stacks) {
+  const convertedStacks = stacks.map((s) => {
+    if (typeof s === "string") return { ...conf, step: s };
+    return { ...conf, ...s };
+  });
+
+  if (convertedStacks.length < 2) return convertedStacks[0];
+  return convertedStacks;
+}
+
+export function uniqueStack(...stacks) {
+  const uniqueStacks = Object.values(
+    stacks.reduce((tree, s) => {
+      // if (tree[s.stack]) return tree;
+      tree[s.stack] = s;
+      return tree;
+    }, {})
+  );
+
+  if (uniqueStacks.length < 2) return uniqueStacks[0];
+  return uniqueStacks;
+}

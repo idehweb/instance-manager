@@ -14,7 +14,7 @@ import { catchFn } from "../utils/catchAsync.js";
 import CreateExecuter from "./CreateExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
-import { getLogFilePath, log } from "./utils.js";
+import { convertStack, getLogFilePath, log, uniqueStack } from "./utils.js";
 
 export default class ExecuteManager {
   last_log;
@@ -161,7 +161,8 @@ export default class ExecuteManager {
   }
 
   async #rollback() {
-    if (this.job.type != JobType.CREATE) return;
+    const done_steps = this.job.done_steps ?? [];
+    const progress_step = this.job.progress_step;
 
     // true flag job clean phase
     await this.#updateJobAtr({ isInCleanPhase: true });
@@ -232,16 +233,17 @@ export default class ExecuteManager {
       filter: true,
     }
   ) {
-    stack = [
-      ...new Set([
-        JobSteps.PRE_REQUIRED,
-        ...(filter
-          ? stack.filter((step) => !this.job.done_steps.includes(step))
-          : stack),
-      ]),
-    ];
+    const normalizeStack = uniqueStack(
+      ...convertStack(
+        { ignoreError, update_step, executer, filter },
+        JobStatus.PRE_REQUIRED,
+        ...stack
+      ).filter(
+        ({ step, filter }) => !filter || !this.job.done_steps.includes(step)
+      )
+    );
 
-    for (const step of stack) {
+    for (const { step, update_step, executer, ignoreError } of normalizeStack) {
       this.log(`Execute Stack step: ${step}`);
 
       // set db step
