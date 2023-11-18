@@ -30,31 +30,66 @@ export default class RollbackExecuter extends BaseExecuter {
     this.log(conf);
   };
 
+  // --- Start Create Executer --- //
   async copy_static() {
     await this.deleteExecuter.rm_static();
   }
-  async docker_create() {}
-  async register_cdn() {}
-  async unregister_cdn() {}
-  async restore_demo() {}
-  async changeDomains() {}
-  async changeStatus() {}
+  async docker_create() {
+    await this.deleteExecuter.service_remove();
+  }
+
+  async register_cdn() {
+    await this.deleteExecuter.unregister_cdn();
+  }
+  async create_user_in_db() {
+    await this.deleteExecuter.rm_user_from_db();
+  }
+  //   TODO
+  async nginx_domain_config() {}
+
+  async add_domain_certs() {
+    await this.deleteExecuter.rm_domain_cert();
+  }
+
+  async restore_demo() {
+    await this.deleteExecuter.rm_db();
+  }
+  // --- End Of Create Executer --- //
+
+  // --- Start Update Executer --- //
+
+  async changeStatus() {
+    await this.updateExecuter.changeStatus();
+  }
+  async changeImage() {
+    await this.updateExecuter.changeImage();
+  }
+  async change_primary_domain() {
+    await this.updateExecuter.change_primary_domain();
+  }
+  async update_domain_cdn() {
+    await this.updateExecuter.update_domain_cdn();
+  }
+  async update_domain_cert() {
+    await this.updateExecuter.update_domain_cert();
+  }
+  async update_domain_config() {
+    await this.updateExecuter.update_domain_config();
+  }
+  async update_site_name() {
+    await this.updateExecuter.update_site_name();
+  }
+  // --- End Of Update Executer --- //
+
+  // --- Start Delete Executer --- //
   async backup_db() {}
   async backup_static() {}
   async rm_db() {}
   async service_remove() {}
   async rm_static() {}
-  async changeImage() {}
-  async change_primary_domain() {}
-  async nginx_domain_config() {}
   async rm_domain_config() {}
-  async domain_certs() {}
   async rm_domain_cert() {}
-  async create_static_dirs() {}
-  async update_domain_cdn() {}
-  async update_domain_cert() {}
-  async update_domain_config() {}
-  async create_user_in_db() {}
   async rm_user_from_db() {}
-  async update_site_name() {}
+  async unregister_cdn() {}
+  // --- End Of Delete Executer --- //
 }

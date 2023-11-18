@@ -39,7 +39,7 @@ export function step2Rollback(...steps) {
           return JobSteps.PRE_REQUIRED;
 
         case JobSteps.COPY_STATIC:
-          return JobSteps.ROLLBACK_COPY_STATIC;
+          return JobSteps.ROLLBACK_STATIC_FILES;
 
         case JobSteps.CREATE_SERVICE:
           return JobSteps.ROLLBACK_CREATE_SERVICE;
@@ -93,7 +93,7 @@ export function step2Rollback(...steps) {
           return JobSteps.ROLLBACK_REMOVE_DOMAIN_CERT;
 
         case JobSteps.CREATE_STATIC_DIRS:
-          return JobSteps.ROLLBACK_CREATE_STATIC_DIRS;
+          return JobSteps.ROLLBACK_STATIC_FILES;
 
         case JobSteps.UPDATE_DOMAIN_CDN:
           return JobSteps.ROLLBACK_UPDATE_DOMAIN_CDN;
@@ -115,7 +115,8 @@ export function step2Rollback(...steps) {
       }
     })
     .filter((s) => s);
-  return rollbackSteps;
+
+  return [...new Set(rollbackSteps)];
 }
 
 export function convertJobTypeToExecuter(type) {
@@ -139,11 +140,13 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.PRE_REQUIRED:
       return executer.pre_require;
 
+    case JobSteps.CREATE_SERVICE:
+      return executer.create_static_dirs;
+
     case JobSteps.COPY_STATIC:
-    case JobSteps.ROLLBACK_COPY_STATIC:
+    case JobSteps.ROLLBACK_STATIC_FILES:
       return executer.copy_static;
 
-    case JobSteps.CREATE_SERVICE:
     case JobSteps.ROLLBACK_CREATE_SERVICE:
       return executer.docker_create;
 
@@ -158,10 +161,6 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.RESTORE_DB:
     case JobSteps.ROLLBACK_RESTORE_DB:
       return executer.restore_demo;
-
-    case JobSteps.CHANGE_DOMAINS:
-    case JobSteps.ROLLBACK_CHANGE_IMAGE:
-      return executer.changeDomains;
 
     case JobSteps.CHANGE_STATUS:
     case JobSteps.ROLLBACK_CHANGE_STATUS:
@@ -205,7 +204,7 @@ export function convertJobStepToFunc(step, executer) {
 
     case JobSteps.ADD_DOMAIN_CERT:
     case JobSteps.ROLLBACK_ADD_DOMAIN_CERT:
-      return executer.domain_certs;
+      return executer.add_domain_certs;
 
     case JobSteps.REMOVE_DOMAIN_CERT:
     case JobSteps.ROLLBACK_REMOVE_DOMAIN_CERT:

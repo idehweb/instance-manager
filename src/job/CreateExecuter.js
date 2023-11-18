@@ -84,7 +84,7 @@ export default class CreateExecuter extends BaseExecuter {
     }
   }
 
-  async domain_certs() {
+  async add_domain_certs() {
     if (this.instance.domains.length <= 1) return;
 
     const nginx = new Nginx(this.exec);

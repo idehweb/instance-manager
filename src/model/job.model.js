@@ -11,10 +11,8 @@ export const JobSteps = {
   ROLLBACK_CREATE_SERVICE: "rollback-create-service",
 
   CREATE_STATIC_DIRS: "create-static-dirs",
-  ROLLBACK_CREATE_STATIC_DIRS: "rollback-create-static-dirs",
-
   COPY_STATIC: "copy-static",
-  ROLLBACK_COPY_STATIC: "rollback-copy-static",
+  ROLLBACK_STATIC_FILES: "rollback-static-files",
 
   ADD_DOMAIN_CONFIG: "add-domain-config",
   ROLLBACK_ADD_DOMAIN_CONFIG: "rollback-add-domain-config",
@@ -55,7 +53,6 @@ export const JobSteps = {
   ROLLBACK_CHANGE_STATUS: "rollback-change-status",
 
   PARSE_UPDATE_QUERY: "parse-update-query",
-  ROLLBACK_PARSE_UPDATE_QUERY: "rollback-parse-update-query",
 
   UPDATE_DOMAIN_CDN: "update-domain-cdn",
   ROLLBACK_UPDATE_DOMAIN_CDN: "rollback-update-domain-cdn",
