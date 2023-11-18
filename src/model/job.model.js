@@ -29,6 +29,7 @@ export const JobSteps = {
   UPDATE_DOMAIN_CERT: "update-domain-cert",
   ROLLBACK_UPDATE_DOMAIN_CERT: "rollback-update-domain-cert",
   CHANGE_IMAGE: "change-image",
+  UNDO_IMAGE: "undo-image",
   CHANGE_SERVICE_PRIMARY_DOMAIN: "change-service-primary-domain",
   CREATE_USER_IN_DB: "create-user-in-db",
   REMOVE_USER_FROM_DB: "remove_user-from-db",

@@ -12,7 +12,6 @@ import { SimpleError } from "./src/common/error.js";
 const server = app.listen(Global.env.PORT, () => {
   console.log(`Server Listening at http://127.0.0.1:${Global.env.PORT}`);
 });
-
 const io = new Server(server, {
   path: "/ws",
   cookie: true,

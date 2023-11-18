@@ -19,10 +19,32 @@ export default class UpdateExecuter extends BaseExecuter {
 
   async changeImage() {
     const image = this.job.update_query.image;
-    const cmd = DockerService._getUpdateServiceCommand(this.instance_name, {
-      image,
-    });
-    return await this.exec(cmd);
+
+    const inspectCmd = `docker service inspect ${this.instance_name} -f json`;
+    const inspect = JSON.parse((await this.exec(inspectCmd)).trim());
+    const oldImage = inspect?.[0]?.Inspect?.TaskTemplate?.ContainerSpec?.Image;
+    this.instance.old_image = oldImage;
+    const updateImageCmd = DockerService._getUpdateServiceCommand(
+      this.instance_name,
+      {
+        image,
+      }
+    );
+    return await this.exec(updateImageCmd);
+  }
+
+  async undo_image() {
+    if (!this.instance.old_image) {
+      this.log("not found old image");
+      return;
+    }
+    const updateImageCmd = DockerService._getUpdateServiceCommand(
+      this.instance_name,
+      {
+        image: this.instance.old_image,
+      }
+    );
+    return await this.exec(updateImageCmd);
   }
 
   async createCertificate() {

@@ -41,20 +41,22 @@ export default class ExecuteManager {
       .execute()
       .then()
       .catch((err) => {
-        manager.log(
-          `#Executer Error#\n${axiosError2String(err)}`,
-          true,
-          true,
-          true
-        );
-        manager.sendResultToClient(false);
-        manager.clean().then();
+        manager.log(axiosError2String(err), false, true, true, [
+          "manager-global-catch",
+        ]);
+        manager.finishWithError().then();
       });
   }
   get instance_name() {
     return `nwi-${this.instance.name}`;
   }
-  log(chunk, isEnd = false, isError = false, whenDifferent = false) {
+  log(
+    chunk,
+    isEnd = false,
+    isError = false,
+    whenDifferent = false,
+    labels = []
+  ) {
     this.last_log = log({
       chunk,
       isEnd,
@@ -63,7 +65,7 @@ export default class ExecuteManager {
       jobId: this.job._id,
       instanceName: this.instance_name,
       last_log: this.last_log,
-      labels: [slugify(this.constructor.name)],
+      labels: [this.constructor.name, ...labels].map(slugify),
       log_file: this.log_file,
     });
   }
@@ -102,7 +104,9 @@ export default class ExecuteManager {
     }
     if (!isRun) {
       const isThereAnyChance = await this.#checkAttempts();
-      if (!isThereAnyChance) return;
+      if (!isThereAnyChance) {
+        return await this.finishWithError();
+      }
       // failed
       this.job = {
         ...(
@@ -153,14 +157,57 @@ export default class ExecuteManager {
   async #checkAttempts() {
     // check attempts
     if (this.job.attempt < this.job.max_attempts) return true;
-    this.log("try to sync-db, after error");
-    await this.#sync_db(true);
-    this.log("try to clean, after error");
-    await this.clean();
-    this.log("Finish with Error", true);
-    this.sendResultToClient(false);
     return false;
   }
+
+  async #rollback() {
+    if (this.job.type != JobType.CREATE) return;
+
+    // true flag job clean phase
+    await this.#updateJobAtr({ isInCleanPhase: true });
+
+    const stack = [
+      JobSteps.CDN_UNREGISTER,
+      JobSteps.REMOVE_SERVICE,
+      JobSteps.REMOVE_DOMAIN_CERT,
+      JobSteps.REMOVE_DOMAIN_CONFIG,
+      JobSteps.REMOVE_STATIC,
+      JobSteps.REMOVE_DB,
+    ].filter((step) => {
+      if (
+        Global.env.isLocal &&
+        [
+          JobSteps.REMOVE_SERVICE,
+          JobSteps.REMOVE_STATIC,
+          JobSteps.REMOVE_DOMAIN_CERT,
+          JobSteps.REMOVE_DOMAIN_CONFIG,
+        ].includes(step)
+      )
+        return false;
+      return true;
+    });
+    await this.#execute_stack(stack, {
+      ignoreError: true,
+      executer: new DeleteExecuter(this.job, this.instance, this.log_file),
+      filter: false,
+      update_step: true,
+    });
+
+    // unset job clean phase
+    await this.#updateJobAtr({ $unset: { isInCleanPhase: "" } });
+  }
+
+  async finishWithError() {
+    this.log("sync-db", false, true, false, ["finishWithError"]);
+    await this.#sync_db(true);
+
+    this.log("rollback", false, true, false, ["finishWithError"]);
+    await this.#rollback();
+
+    this.log("Finish with Error", true, true, false, ["finishWithError"]);
+    this.sendResultToClient(false);
+  }
+
   #sync_db = async (isError = false) => {
     // inner sync
     const newInstance = await this.executer.sync_db(isError);
@@ -346,42 +393,6 @@ export default class ExecuteManager {
 
     await this.#execute_stack(stack);
   }
-  async clean() {
-    if (this.job.type != JobType.CREATE) return;
-
-    // true flag job clean phase
-    await this.#updateJobAtr({ isInCleanPhase: true });
-
-    const stack = [
-      JobSteps.CDN_UNREGISTER,
-      JobSteps.REMOVE_SERVICE,
-      JobSteps.REMOVE_DOMAIN_CERT,
-      JobSteps.REMOVE_DOMAIN_CONFIG,
-      JobSteps.REMOVE_STATIC,
-      JobSteps.REMOVE_DB,
-    ].filter((step) => {
-      if (
-        Global.env.isLocal &&
-        [
-          JobSteps.REMOVE_SERVICE,
-          JobSteps.REMOVE_STATIC,
-          JobSteps.REMOVE_DOMAIN_CERT,
-          JobSteps.REMOVE_DOMAIN_CONFIG,
-        ].includes(step)
-      )
-        return false;
-      return true;
-    });
-    await this.#execute_stack(stack, {
-      ignoreError: true,
-      executer: new DeleteExecuter(this.job, this.instance, this.log_file),
-      filter: false,
-      update_step: true,
-    });
-
-    // unset job clean phase
-    await this.#updateJobAtr({ $unset: { isInCleanPhase: "" } });
-  }
   async #updateJobAtr(update, opt = {}) {
     this.job = {
       ...(
@@ -458,6 +469,8 @@ export default class ExecuteManager {
         return executer.rm_user_from_db;
       case JobSteps.UPDATE_SITE_NAME:
         return executer.update_site_name;
+      case JobSteps.UNDO_IMAGE:
+        return executer.undo_image;
     }
   }
   #convertJobTypeToExecuter() {
