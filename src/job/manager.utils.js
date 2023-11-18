@@ -138,59 +138,105 @@ export function convertJobStepToFunc(step, executer) {
   switch (step) {
     case JobSteps.PRE_REQUIRED:
       return executer.pre_require;
+
     case JobSteps.COPY_STATIC:
+    case JobSteps.ROLLBACK_COPY_STATIC:
       return executer.copy_static;
+
     case JobSteps.CREATE_SERVICE:
+    case JobSteps.ROLLBACK_CREATE_SERVICE:
       return executer.docker_create;
+
     case JobSteps.CDN_REGISTER:
+    case JobSteps.ROLLBACK_CDN_REGISTER:
       return executer.register_cdn;
+
     case JobSteps.CDN_UNREGISTER:
+    case JobSteps.ROLLBACK_CDN_UNREGISTER:
       return executer.unregister_cdn;
+
     case JobSteps.RESTORE_DB:
+    case JobSteps.ROLLBACK_RESTORE_DB:
       return executer.restore_demo;
+
     case JobSteps.CHANGE_DOMAINS:
+    case JobSteps.ROLLBACK_CHANGE_IMAGE:
       return executer.changeDomains;
+
     case JobSteps.CHANGE_STATUS:
+    case JobSteps.ROLLBACK_CHANGE_STATUS:
       return executer.changeStatus;
+
     case JobSteps.BACKUP_DB:
+    case JobSteps.ROLLBACK_BACKUP_DB:
       return executer.backup_db;
+
     case JobSteps.BACKUP_STATIC:
+    case JobSteps.ROLLBACK_BACKUP_STATIC:
       return executer.backup_static;
+
     case JobSteps.REMOVE_DB:
+    case JobSteps.ROLLBACK_REMOVE_DB:
       return executer.rm_db;
+
     case JobSteps.REMOVE_SERVICE:
+    case JobSteps.ROLLBACK_REMOVE_SERVICE:
       return executer.service_remove;
+
     case JobSteps.REMOVE_STATIC:
+    case JobSteps.ROLLBACK_REMOVE_SERVICE:
       return executer.rm_static;
+
     case JobSteps.CHANGE_IMAGE:
+    case JobSteps.ROLLBACK_CHANGE_IMAGE:
       return executer.changeImage;
+
     case JobSteps.CHANGE_SERVICE_PRIMARY_DOMAIN:
+    case JobSteps.ROLLBACK_CHANGE_SERVICE_PRIMARY_DOMAIN:
       return executer.change_primary_domain;
+
     case JobSteps.ADD_DOMAIN_CONFIG:
+    case JobSteps.ROLLBACK_ADD_DOMAIN_CONFIG:
       return executer.nginx_domain_config;
+
     case JobSteps.REMOVE_DOMAIN_CONFIG:
+    case JobSteps.ROLLBACK_REMOVE_DOMAIN_CONFIG:
       return executer.rm_domain_config;
+
     case JobSteps.ADD_DOMAIN_CERT:
+    case JobSteps.ROLLBACK_ADD_DOMAIN_CERT:
       return executer.domain_certs;
+
     case JobSteps.REMOVE_DOMAIN_CERT:
+    case JobSteps.ROLLBACK_REMOVE_DOMAIN_CERT:
       return executer.rm_domain_cert;
+
     case JobSteps.CREATE_STATIC_DIRS:
+    case JobSteps.ROLLBACK_CREATE_STATIC_DIRS:
       return executer.create_static_dirs;
+
     case JobSteps.UPDATE_DOMAIN_CDN:
+    case JobSteps.ROLLBACK_UPDATE_DOMAIN_CDN:
       return executer.update_domain_cdn;
+
     case JobSteps.UPDATE_DOMAIN_CERT:
+    case JobSteps.ROLLBACK_UPDATE_DOMAIN_CERT:
       return executer.update_domain_cert;
+
     case JobSteps.UPDATE_DOMAIN_CONFIG:
+    case JobSteps.ROLLBACK_UPDATE_DOMAIN_CONFIG:
       return executer.update_domain_config;
-    case JobSteps.PARSE_UPDATE_QUERY:
-      return executer.parse_update_query;
+
     case JobSteps.CREATE_USER_IN_DB:
+    case JobSteps.ROLLBACK_CREATE_USER_IN_DB:
       return executer.create_user_in_db;
+
     case JobSteps.REMOVE_USER_FROM_DB:
+    case JobSteps.ROLLBACK_REMOVE_USER_FROM_DB:
       return executer.rm_user_from_db;
+
     case JobSteps.UPDATE_SITE_NAME:
+    case JobSteps.ROLLBACK_UPDATE_SITE_NAME:
       return executer.update_site_name;
-    case JobSteps.UNDO_IMAGE:
-      return executer.undo_image;
   }
 }
