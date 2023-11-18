@@ -14,6 +14,7 @@ import {
   convertJobStepToFunc,
 } from "./manager.utils.js";
 import { log } from "./utils.js";
+import RollbackExecuter from "./RollbackExecuter.js";
 
 export default class ExecuteManager {
   last_log;
@@ -172,7 +173,7 @@ export default class ExecuteManager {
     // execute steps stack
     await this.#execute_stack(rollbackSteps, {
       ignoreError: true,
-      executer: this.executer,
+      executer: new RollbackExecuter(this.job, this.instance, this.log_file),
       filter: false,
       update_step: true,
     });
@@ -397,7 +398,6 @@ export default class ExecuteManager {
       ...(done_step ? { $push: { done_steps: done_step } } : {}),
     });
   }
-
   #convertJobStepToFunc(step, executer = this.executer) {
     switch (step) {
       case JobSteps.SYNC_DB:
