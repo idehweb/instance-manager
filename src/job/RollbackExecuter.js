@@ -1,7 +1,7 @@
-import { BaseExecuter } from "./BaseExecuter";
-import CreateExecuter from "./CreateExecuter";
-import DeleteExecuter from "./DeleteExecuter";
-import UpdateExecuter from "./UpdateExecuter";
+import { BaseExecuter } from "./BaseExecuter.js";
+import CreateExecuter from "./CreateExecuter.js";
+import DeleteExecuter from "./DeleteExecuter.js";
+import UpdateExecuter from "./UpdateExecuter.js";
 
 export default class RollbackExecuter extends BaseExecuter {
   constructor(job, instance, log_file) {

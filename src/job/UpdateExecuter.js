@@ -114,9 +114,8 @@ export default class UpdateExecuter extends BaseExecuter {
   }
 
   async update_domain_cdn(
-    { domains_add, domains_rm, savePrev } = {
+    { savePrev, ...domains } = {
       savePrev: true,
-      ...domains,
     }
   ) {
     const { domains_rm = [], domains_add = [] } = {
@@ -162,9 +161,8 @@ export default class UpdateExecuter extends BaseExecuter {
     this.instance.new_domains = new_domains;
   }
   async update_domain_cert(
-    { domains_add, domains_rm, savePrev } = {
+    { savePrev, ...domains } = {
       savePrev: true,
-      ...domains,
     }
   ) {
     const { domains_rm = [], domains_add = [] } = {
@@ -190,9 +188,8 @@ export default class UpdateExecuter extends BaseExecuter {
     }
   }
   async update_domain_config(
-    { domains_add, domains_rm, savePrev } = {
+    { savePrev, ...domains } = {
       savePrev: true,
-      ...domains,
     }
   ) {
     const { domains_rm = [], domains_add = [] } = {
