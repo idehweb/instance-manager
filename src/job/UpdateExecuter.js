@@ -10,20 +10,20 @@ import {
   getNginxPublicPath,
   getScripts,
   getWorkerConfPath,
-  isExist,
 } from "../utils/helpers.js";
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
+    if (!this.instance.prev_data) this.instance.prev_data = {};
   }
 
   async changeImage() {
+    // prev
+    this.instance.prev_data.image = this.instance.image;
+
     const image = this.job.update_query.image;
 
-    const inspectCmd = `docker service inspect ${this.instance_name} -f json`;
-    const inspect = JSON.parse((await this.exec(inspectCmd)).trim());
-    const oldImage = inspect?.[0]?.Inspect?.TaskTemplate?.ContainerSpec?.Image;
-    this.instance.old_image = oldImage;
+    // update new one
     const updateImageCmd = DockerService._getUpdateServiceCommand(
       this.instance_name,
       {
@@ -77,6 +77,9 @@ export default class UpdateExecuter extends BaseExecuter {
   }
 
   async changeStatus() {
+    // prev status
+    this.job.prev_data.status = this.instance.status;
+
     const docker_cmd = DockerService._getUpdateServiceCommand(
       this.instance_name,
       {
@@ -115,6 +118,9 @@ export default class UpdateExecuter extends BaseExecuter {
     this.job.parsed_update_query = query;
   }
   async update_domain_cdn() {
+    // prev
+    this.job.prev_data.domains = this.instance.domains;
+
     const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
 
     if (!domains_add.length && !domains_rm.length) return;
@@ -148,6 +154,9 @@ export default class UpdateExecuter extends BaseExecuter {
     this.instance.new_domains = new_domains;
   }
   async update_domain_cert() {
+    // prev
+    this.job.prev_data.domains = this.instance.domains;
+
     const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
 
     if (!domains_add.length && !domains_rm.length) return;
@@ -162,6 +171,9 @@ export default class UpdateExecuter extends BaseExecuter {
     }
   }
   async update_domain_config() {
+    // prev
+    this.job.prev_data.domains = this.instance.domains;
+
     const { domains_rm = [], domains_add = [] } = this.job.parsed_update_query;
 
     if (!domains_add.length && !domains_rm.length) return;
@@ -181,6 +193,9 @@ export default class UpdateExecuter extends BaseExecuter {
   }
 
   async change_primary_domain() {
+    // prev
+    this.job.prev_data.primary_domain = this.instance.primary_domain;
+
     const primary_domain = this.job.update_query.primary_domain;
     const site_url = `https://${primary_domain}`;
     const instance_cmd = DockerService.serviceUpdate(
@@ -200,6 +215,9 @@ export default class UpdateExecuter extends BaseExecuter {
   }
 
   async update_site_name() {
+    // prev
+    this.job.prev_data.site_name = this.instance.site_name;
+
     const site_name = this.job.update_query.site_name;
 
     const dockerCmd = DockerService.serviceUpdate(

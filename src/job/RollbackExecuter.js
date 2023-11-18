@@ -45,7 +45,9 @@ export default class RollbackExecuter extends BaseExecuter {
     await this.deleteExecuter.rm_user_from_db();
   }
   //   TODO
-  async nginx_domain_config() {}
+  async nginx_domain_config() {
+    await this.deleteExecuter.rm_domain_config();
+  }
 
   async add_domain_certs() {
     await this.deleteExecuter.rm_domain_cert();

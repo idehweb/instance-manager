@@ -96,6 +96,7 @@ export const jobSchema = new mongoose.Schema(
   {
     type: { type: String, required: true },
     update_query: { type: mongoose.Schema.Types.Mixed },
+    prev_data: { type: mongoose.Schema.Types.Mixed },
     instance: {
       _id: {
         type: mongoose.Schema.Types.ObjectId,

@@ -121,6 +121,16 @@ export class Service {
     return `x-docker --max-reties ${maxRetries} ${cmd}`;
   }
 
+  static async getInspect(name, executer) {
+    const raw = await Service.getRawInspect(name, executer);
+    return raw?.[0]?.Inspect?.TaskTemplate?.ContainerSpec ?? {};
+  }
+  static async getRawInspect(name, executer) {
+    const inspectCmd = `docker service inspect ${name} -f json`;
+    const inspect = JSON.parse((await executer(inspectCmd)).trim());
+    return inspect;
+  }
+
   static serviceUpdate(
     {
       envs_add,
