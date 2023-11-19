@@ -15,15 +15,14 @@ export function convertStack(conf, ...stacks) {
     if (typeof s === "string") return { ...conf, step: s };
     return { ...conf, ...s };
   });
-
   return convertedStacks;
 }
 
 export function uniqueStack(...stacks) {
   const uniqueStacks = Object.values(
     stacks.reduce((tree, s) => {
-      // if (tree[s.stack]) return tree;
-      tree[s.stack] = s;
+      // if (tree[s.step]) return tree;
+      tree[s.step] = s;
       return tree;
     }, {})
   );

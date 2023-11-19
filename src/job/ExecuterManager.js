@@ -183,10 +183,10 @@ export default class ExecuteManager {
   }
 
   async finishWithError() {
-    this.log("sync-db", false, true, false, ["finishWithError"]);
+    this.log("try to sync db", false, true, false, ["finishWithError"]);
     await this.#sync_db(true);
 
-    this.log("rollback", false, true, false, ["finishWithError"]);
+    this.log("start rollback", false, true, false, ["finishWithError"]);
     await this.#rollback();
 
     this.log("Finish with Error", true, true, false, ["finishWithError"]);
@@ -220,13 +220,12 @@ export default class ExecuteManager {
     const normalizeStack = uniqueStack(
       ...convertStack(
         { ignoreError, update_step, executer, filter },
-        JobStatus.PRE_REQUIRED,
+        JobSteps.PRE_REQUIRED,
         ...stack
       ).filter(
         ({ step, filter }) => !filter || !this.job.done_steps.includes(step)
       )
     );
-
     for (const { step, update_step, executer, ignoreError } of normalizeStack) {
       this.log(`Execute Stack step: ${step}`);
 
@@ -279,12 +278,12 @@ export default class ExecuteManager {
         !Global.env.isPro &&
         [
           // JobSteps.CREATE_USER_IN_DB,
-          JobSteps.CDN_REGISTER,
-          JobSteps.CREATE_STATIC_DIRS,
-          JobSteps.COPY_STATIC,
-          JobSteps.CREATE_SERVICE,
-          JobSteps.RESTORE_DB,
-          JobSteps.ADD_DOMAIN_CONFIG,
+          // JobSteps.CDN_REGISTER,
+          // JobSteps.CREATE_STATIC_DIRS,
+          // JobSteps.COPY_STATIC,
+          // JobSteps.CREATE_SERVICE,
+          // JobSteps.RESTORE_DB,
+          // JobSteps.ADD_DOMAIN_CONFIG,
           JobSteps.ADD_DOMAIN_CERT,
         ].includes(step)
       )

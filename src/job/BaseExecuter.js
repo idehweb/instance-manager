@@ -58,6 +58,9 @@ export class BaseExecuter {
       log_file: this.log_file,
     };
 
+    this.logWithConf(conf);
+  };
+  logWithConf = (conf) => {
     if (this.logger) this.last_log = this.logger(conf);
     else this.last_log = log(conf);
   };

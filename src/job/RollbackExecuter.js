@@ -10,24 +10,30 @@ export default class RollbackExecuter extends BaseExecuter {
       job,
       instance,
       log_file,
-      this.logger
+      this.myLogger
     );
     this.deleteExecuter = new DeleteExecuter(
       job,
       instance,
       log_file,
-      this.logger
+      this.myLogger
     );
     this.updateExecuter = new UpdateExecuter(
       job,
       instance,
       log_file,
-      this.logger
+      this.myLogger
     );
   }
 
-  logger = (conf) => {
-    this.log(conf);
+  myLogger = (conf) => {
+    this.log(
+      conf.chunk,
+      conf.isEnd,
+      conf.isError,
+      conf.whenDifferent,
+      conf.labels
+    );
   };
 
   // --- Start Create Executer --- //
