@@ -52,7 +52,7 @@ export default class UpdateExecuter extends BaseExecuter {
 
   async changeImage({ image, savePrev } = { image: null, savePrev: true }) {
     // prev
-    if (savePrev) this.instance.prev_data.image = this.instance.image;
+    if (savePrev) this.job.prev_data.image = this.instance.image;
 
     image = image ?? this.job.update_query.image;
 

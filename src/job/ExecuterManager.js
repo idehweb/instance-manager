@@ -237,14 +237,19 @@ export default class ExecuteManager {
       filter: true,
     }
   ) {
+    const inputStack = convertStack(
+      { ignoreError, update_step, executer, filter },
+      ...stack
+    ).filter(
+      ({ step, filter }) => !filter || !this.job.done_steps.includes(step)
+    );
+
     const normalizeStack = uniqueStack(
-      ...convertStack(
+      convertStack(
         { ignoreError, update_step, executer, filter },
-        JobSteps.PRE_REQUIRED,
-        ...stack
-      ).filter(
-        ({ step, filter }) => !filter || !this.job.done_steps.includes(step)
-      )
+        JobSteps.PRE_REQUIRED
+      )[0],
+      ...inputStack
     );
     for (const { step, update_step, executer, ignoreError } of normalizeStack) {
       this.log(
