@@ -69,6 +69,8 @@ class Service {
         status: "error",
         message: `each time you must update one attribute, received ${updateCounts} attributes`,
       });
+
+    // domains rm
     if (update.domains_rm && update.domains_rm.length) {
       // add and remove
       if (update.domains_add) {
@@ -100,6 +102,7 @@ class Service {
         });
     }
 
+    // domains add
     if (update.domains_add && update.domains_add.length) {
       const otherInstances = await instanceModel.findOne({
         "domains.content": { $in: update.domains_add },
@@ -113,6 +116,7 @@ class Service {
         });
     }
 
+    // primary domain
     if (update.primary_domain) {
       if (req.instance.primary_domain === update.primary_domain)
         return res.status(400).json({ message: "primary domain is same" });
@@ -126,8 +130,16 @@ class Service {
           .json({ message: "primary domain is not exist on domains" });
     }
 
+    // status
     if (update.status == req.instance.status)
       return res.status(400).json({ status: "error", message: "same status" });
+
+    // image
+    if (update.image && !(await imageService.isIn(update.image)))
+      return res.status(400).json({
+        status: "error",
+        message: "image must exist in available images",
+      });
 
     const job = await jobModel.create({
       type: JobType.UPDATE,
