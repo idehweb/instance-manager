@@ -14,7 +14,7 @@ import {
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
-    if (!this.instance.prev_data) this.instance.prev_data = {};
+    if (!this.job.prev_data) this.job.prev_data = {};
   }
 
   async pre_require() {
