@@ -3,7 +3,7 @@ import {
   InstanceStatus,
   instanceModel,
 } from "../model/instance.model.js";
-import { JobType, jobModel } from "../model/job.model.js";
+import { JobStatus, JobType, jobModel } from "../model/job.model.js";
 import { classCatchBuilder } from "../utils/catchAsync.js";
 import DockerService from "../docker/service.js";
 import ExecuterManager from "../job/ExecuterManager.js";
@@ -61,6 +61,17 @@ class Service {
     const update = req.body;
     if (!req.instance.active)
       return res.status(403).json({ message: "instance is inactive" });
+
+    // busy instance
+    if (
+      req.instance.jobs.some(({ status }) => status === JobStatus.IN_PROGRESS)
+    )
+      return res
+        .status(400)
+        .json({
+          status: "error",
+          message: "please wait until in progress jobs done!",
+        });
 
     // prevent multi update
     const updateCounts = Service._getUpdateCounts(update);
