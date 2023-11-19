@@ -48,7 +48,7 @@ export function log({
   jobModel
     .findByIdAndUpdate(jobId, {
       $push: {
-        logs: _time_labels_msg,
+        logs: _time_error_labels_msg,
         ...(isError ? { errs: _time_labels_msg } : {}),
       },
     })

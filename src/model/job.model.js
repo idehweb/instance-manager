@@ -29,8 +29,8 @@ export const JobSteps = {
   REMOVE_STATIC: "remove-static",
   ROLLBACK_REMOVE_STATIC: "rollback-remove-static",
 
-  RESTORE_DB: "restore-db",
-  ROLLBACK_RESTORE_DB: "rollback-restore-db",
+  RESTORE_DEMO: "restore-demo-db",
+  ROLLBACK_RESTORE_DEMO: "rollback-restore-demo-db",
 
   REMOVE_DB: "remove-db",
   ROLLBACK_REMOVE_DB: "rollback-remove-db",

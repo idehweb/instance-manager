@@ -202,7 +202,9 @@ export default class ExecuteManager {
 
   async finishWithError() {
     this.log("try to sync db", false, true, false, ["finishWithError"]);
+    await this.#updateJobStep({ progress_step: JobSteps.SYNC_DB });
     await this.#sync_db(true);
+    await this.#updateJobStep({ done_step: JobSteps.SYNC_DB });
 
     this.log("start rollback", false, true, false, ["finishWithError"]);
     await this.#rollback();
@@ -285,13 +287,13 @@ export default class ExecuteManager {
       JobSteps.CDN_REGISTER,
       JobSteps.ADD_DOMAIN_CERT,
       JobSteps.ADD_DOMAIN_CONFIG,
-      JobSteps.RESTORE_DB,
+      JobSteps.RESTORE_DEMO,
       JobSteps.SYNC_DB,
     ].filter((step) => {
       // not use demo steps on none pattern mode
       if (
         !this.instance.pattern &&
-        [JobSteps.COPY_STATIC, JobSteps.RESTORE_DB].includes(step)
+        [JobSteps.COPY_STATIC, JobSteps.RESTORE_DEMO].includes(step)
       )
         return false;
 
@@ -304,7 +306,7 @@ export default class ExecuteManager {
           // JobSteps.CREATE_STATIC_DIRS,
           // JobSteps.COPY_STATIC,
           // JobSteps.CREATE_SERVICE,
-          // JobSteps.RESTORE_DB,
+          // JobSteps.RESTORE_DEMO,
           // JobSteps.ADD_DOMAIN_CONFIG,
           JobSteps.ADD_DOMAIN_CERT,
         ].includes(step)

@@ -49,8 +49,8 @@ export function step2Rollback(...steps) {
         case JobSteps.CDN_UNREGISTER:
           return JobSteps.ROLLBACK_CDN_UNREGISTER;
 
-        case JobSteps.RESTORE_DB:
-          return JobSteps.ROLLBACK_RESTORE_DB;
+        case JobSteps.RESTORE_DEMO:
+          return JobSteps.ROLLBACK_RESTORE_DEMO;
 
         case JobSteps.CHANGE_DOMAINS:
           return JobSteps.ROLLBACK_CHANGE_IMAGE;
@@ -158,8 +158,8 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.ROLLBACK_CDN_UNREGISTER:
       return executer.unregister_cdn;
 
-    case JobSteps.RESTORE_DB:
-    case JobSteps.ROLLBACK_RESTORE_DB:
+    case JobSteps.RESTORE_DEMO:
+    case JobSteps.ROLLBACK_RESTORE_DEMO:
       return executer.restore_demo;
 
     case JobSteps.CHANGE_STATUS:
@@ -209,10 +209,6 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.REMOVE_DOMAIN_CERT:
     case JobSteps.ROLLBACK_REMOVE_DOMAIN_CERT:
       return executer.rm_domain_cert;
-
-    case JobSteps.CREATE_STATIC_DIRS:
-    case JobSteps.ROLLBACK_CREATE_STATIC_DIRS:
-      return executer.create_static_dirs;
 
     case JobSteps.UPDATE_DOMAIN_CDN:
     case JobSteps.ROLLBACK_UPDATE_DOMAIN_CDN:
