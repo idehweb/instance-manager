@@ -139,13 +139,14 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.PRE_REQUIRED:
       return executer.pre_require;
 
-    case JobSteps.CREATE_SERVICE:
+    case JobSteps.CREATE_STATIC_DIRS:
       return executer.create_static_dirs;
 
     case JobSteps.COPY_STATIC:
     case JobSteps.ROLLBACK_STATIC_FILES:
       return executer.copy_static;
 
+    case JobSteps.CREATE_SERVICE:
     case JobSteps.ROLLBACK_CREATE_SERVICE:
       return executer.docker_create;
 

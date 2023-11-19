@@ -4,8 +4,8 @@ import DeleteExecuter from "./DeleteExecuter.js";
 import UpdateExecuter from "./UpdateExecuter.js";
 
 export default class RollbackExecuter extends BaseExecuter {
-  constructor(job, instance, log_file) {
-    super(job, instance, log_file);
+  constructor(job, instance, log_file, logger) {
+    super(job, instance, log_file, logger);
     this.createExecuter = new CreateExecuter(
       job,
       instance,

@@ -32,7 +32,8 @@ export default class ExecuteManager {
     this.executer = new (convertJobTypeToExecuter(this.job.type))(
       this.job,
       this.instance,
-      this.log_file
+      this.log_file,
+      this.myLogger
     );
   }
   static buildAndRun(job, instance, res, req) {
@@ -69,6 +70,16 @@ export default class ExecuteManager {
       log_file: this.log_file,
     });
   }
+  myLogger = (conf) => {
+    this.log(
+      conf.chunk,
+      conf.isEnd,
+      conf.isError,
+      conf.whenDifferent,
+      conf.labels
+    );
+  };
+
   async execute() {
     // create
     let isRun;
@@ -95,8 +106,10 @@ export default class ExecuteManager {
     } catch (err) {
       this.log(
         `Error${
-          this.job.progress_step ? ` in step:${this.job.progress_step}` : ""
-        }, attempt:${this.job.attempt}, message:${axiosError2String(err)}`,
+          this.job.progress_step ? ` in step: ${this.job.progress_step}` : ""
+        } attempt ${this.job.attempt} with executer: ${
+          this.executer?.constructor?.name
+        }, message: ${axiosError2String(err)}`,
         false,
         true
       );
@@ -173,7 +186,12 @@ export default class ExecuteManager {
     // execute steps stack
     await this.#execute_stack(rollbackSteps, {
       ignoreError: true,
-      executer: new RollbackExecuter(this.job, this.instance, this.log_file),
+      executer: new RollbackExecuter(
+        this.job,
+        this.instance,
+        this.log_file,
+        this.myLogger
+      ),
       filter: false,
       update_step: true,
     });
@@ -227,7 +245,9 @@ export default class ExecuteManager {
       )
     );
     for (const { step, update_step, executer, ignoreError } of normalizeStack) {
-      this.log(`Execute Stack step: ${step}`);
+      this.log(
+        `Execute Stack step: ${step}, executer: ${executer?.constructor?.name}`
+      );
 
       // set db step
       if (update_step) await this.#updateJobStep({ progress_step: step });
@@ -237,9 +257,11 @@ export default class ExecuteManager {
       const myFn = ignoreError
         ? catchFn(fn, {
             self: executer,
-            onError(err) {
-              executer.log(
-                `Error step ${step} \n` + axiosError2String(err),
+            onError: (err) => {
+              this.log(
+                `Error in step ${step} with executer ${
+                  executer?.constructor?.name
+                }, message: ${axiosError2String(err)}`,
                 false,
                 true
               );

@@ -22,6 +22,7 @@ export default class CreateExecuter extends BaseExecuter {
   }
 
   async create_static_dirs() {
+    return;
     // create public
     const staticDirs = ["shared", "public", "logs", "plugins"].map(
       (f) => `/var/instances/${this.instance_name}/${f}`
@@ -40,6 +41,7 @@ export default class CreateExecuter extends BaseExecuter {
     await this.exec(copyStatics);
   }
   async docker_create() {
+    this.log("here in docker create");
     // db uri
     let dbUri = this.dbUri;
     if (!dbUri) {
@@ -49,6 +51,7 @@ export default class CreateExecuter extends BaseExecuter {
 
     // check docker services
     const listServices = await DockerService.getAllServices(this.exec);
+    this.log("after list service", listServices);
     const myService = listServices.find((s = "") => {
       return s.includes(this.instance_name);
     });
