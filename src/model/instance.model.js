@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { JobStatus } from "./job.model.js";
 
 function isActive(status) {
   return [
@@ -74,7 +75,14 @@ export const instanceSchema = new mongoose.Schema(
     region: { type: String, required: true },
     primary_domain: { type: String, required: true },
     active: { type: Boolean, default: true },
-    jobs: { type: [mongoose.Schema.Types.ObjectId] },
+    jobs: {
+      type: [
+        {
+          _id: { type: mongoose.Schema.Types.ObjectId, ref: "Job" },
+          status: { type: String, default: JobStatus.IN_PROGRESS },
+        },
+      ],
+    },
     expiredAt: { type: Date, required: true },
   },
   { timestamps: true }

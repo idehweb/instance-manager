@@ -12,6 +12,7 @@ import { join } from "path";
 import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
 import DBCmd from "../db/index.js";
+import { JobStatus } from "../model/job.model.js";
 export default class DeleteExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
@@ -123,13 +124,21 @@ export default class DeleteExecuter extends BaseExecuter {
   }
 
   async sync_db(isError = false) {
-    if (isError) return this.instance;
-
-    const newInsDoc = await instanceModel.findByIdAndUpdate(
-      this.instance._id,
-      {
+    let set_body;
+    if (isError) {
+      set_body = {
+        "jobs.$.status": JobStatus.ERROR,
+      };
+    } else {
+      set_body = {
         status: InstanceStatus.DELETED,
-      },
+        "jobs.$.status": JobStatus.SUCCESS,
+      };
+    }
+
+    const newInsDoc = await instanceModel.findOneAndUpdate(
+      { _id: this.instance._id, "jobs._id": this.job._id },
+      set_body,
       { new: true }
     );
 

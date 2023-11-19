@@ -11,6 +11,7 @@ import {
   getScripts,
   getWorkerConfPath,
 } from "../utils/helpers.js";
+import { JobStatus } from "../model/job.model.js";
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
@@ -273,13 +274,15 @@ export default class UpdateExecuter extends BaseExecuter {
     let set_body;
 
     if (isError) {
-      set_body = { status: InstanceStatus.JOB_ERROR };
+      set_body = { "jobs.$.status": JobStatus.ERROR };
     } else {
       set_body = {
         status: this.job.update_query.status,
         domains: this.instance.new_domains,
         image: this.job.update_query.image,
         primary_domain: this.job.update_query.primary_domain,
+        site_name: this.job.update_query.site_name,
+        "jobs.$.status": JobStatus.SUCCESS,
       };
       if (set_body.primary_domain) {
         const favName =
@@ -289,8 +292,8 @@ export default class UpdateExecuter extends BaseExecuter {
       }
     }
 
-    const newInsDoc = await instanceModel.findByIdAndUpdate(
-      this.instance._id,
+    const newInsDoc = await instanceModel.findOneAndUpdate(
+      { _id: this.instance._id, "jobs._id": this.job._id },
       {
         $set: set_body,
       },

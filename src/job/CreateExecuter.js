@@ -15,6 +15,7 @@ import Nginx from "../common/nginx.js";
 import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import DBCmd from "../db/index.js";
 import { SimpleError } from "../common/error.js";
+import { JobStatus } from "../model/job.model.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
@@ -197,6 +198,7 @@ export default class CreateExecuter extends BaseExecuter {
     if (isError) {
       set_body = {
         status: InstanceStatus.JOB_ERROR,
+        "jobs.$.status": JobStatus.ERROR,
       };
     } else {
       set_body.status = InstanceStatus.UP;
@@ -205,10 +207,13 @@ export default class CreateExecuter extends BaseExecuter {
       // add custom domain
       if (this.instance.domains_result)
         set_body.domains = this.instance.domains_result;
+
+      // update job status
+      set_body["jobs.$.status"] = JobStatus.SUCCESS;
     }
 
-    const newInsDoc = await instanceModel.findByIdAndUpdate(
-      this.instance._id,
+    const newInsDoc = await instanceModel.findOneAndUpdate(
+      { _id: this.instance._id, "jobs._id": this.job._id },
       {
         $set: set_body,
       },

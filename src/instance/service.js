@@ -136,7 +136,7 @@ class Service {
     });
 
     // link instance to job
-    await req.instance.updateOne({ $push: { jobs: job._id } });
+    await req.instance.updateOne({ $push: { jobs: { _id: job._id } } });
 
     //  assign execute manager
     ExecuterManager.buildAndRun(job, req.instance, null, req);
@@ -155,7 +155,7 @@ class Service {
     });
 
     // link instance to job
-    await req.instance.updateOne({ $push: { jobs: job._id } });
+    await req.instance.updateOne({ $push: { jobs: { _id: job._id } } });
 
     //  assign executer
     ExecuterManager.buildAndRun(job, req.instance, null, req);
@@ -220,7 +220,7 @@ class Service {
     });
 
     // link instance to job
-    await instance.updateOne({ $push: { jobs: job._id } });
+    await instance.updateOne({ $push: { jobs: { _id: job._id } } });
 
     //  assign execute manager
     ExecuterManager.buildAndRun(job, instance, null, req);
