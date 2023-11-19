@@ -16,6 +16,7 @@ import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import DBCmd from "../db/index.js";
 import { SimpleError } from "../common/error.js";
 import { JobStatus } from "../model/job.model.js";
+import { nameToDir } from "./utils.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
@@ -25,10 +26,22 @@ export default class CreateExecuter extends BaseExecuter {
   async create_static_dirs() {
     // create public
     const staticDirs = ["shared", "public", "logs", "plugins"].map(
-      (f) => `/var/instances/${this.instance_name}/${f}`
+      (f) => `${nameToDir(this.instance_name)}/${f}`
     );
     const createFolders = `mkdir -p ${staticDirs.join(" ")}`;
     await this.exec(createFolders);
+  }
+
+  async create_links() {
+    // to
+    const targets = this.instance.domains
+      .map(({ content }) => content)
+      .map((d) => nameToDir(d));
+    const source = nameToDir(this.instance_name);
+
+    await this.exec(
+      targets.map((target) => `ln -s ${source} ${target}`).join(" && ")
+    );
   }
 
   async copy_static() {
@@ -37,7 +50,7 @@ export default class CreateExecuter extends BaseExecuter {
     // copy static files
     const copyStatics = `cp -r ${getInstanceStaticPath(
       this.instance
-    )} /var/instances/${this.instance_name}/public`;
+    )} ${nameToDir(this.instance_name)}/public`;
     await this.exec(copyStatics);
   }
   async docker_create() {
@@ -66,6 +79,7 @@ export default class CreateExecuter extends BaseExecuter {
       executer: "x-docker",
       maxRetries: 6,
       ownerId: this.instance.user.toString(),
+      domains: this.instance.domains.map((d) => d.content),
     });
     // create if not exist
     if (myService) {
@@ -121,6 +135,7 @@ export default class CreateExecuter extends BaseExecuter {
     await nginx.addDomainsConf(domains, this.instance_name);
     this.log(`add nginx config for domains: ${domains.join(" ")}`);
   }
+
   async register_cdn() {
     const server_ip = this.instance.server_ip;
 

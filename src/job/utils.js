@@ -83,3 +83,7 @@ export function detectAction(newArr, oldArr) {
 
   return { add, rm };
 }
+
+export function nameToDir(name, root = "/var/instances") {
+  return `${root}/${name.startsWith("nwi-") ? name : `nwi-${name}`}`;
+}

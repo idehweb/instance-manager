@@ -13,6 +13,7 @@ import { BaseExecuter } from "./BaseExecuter.js";
 import Nginx from "../common/nginx.js";
 import DBCmd from "../db/index.js";
 import { JobStatus } from "../model/job.model.js";
+import { nameToDir } from "./utils.js";
 export default class DeleteExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
@@ -50,7 +51,7 @@ export default class DeleteExecuter extends BaseExecuter {
   }
 
   async backup_static() {
-    const static_path = `/var/instances/${this.instance_name}`;
+    const static_path = nameToDir(this.instance_name);
     const backup_path = `${getPublicPath(
       `backup/${this.instance_name}`,
       this.remote
@@ -62,9 +63,18 @@ export default class DeleteExecuter extends BaseExecuter {
     await this.exec(ifExist(static_path, backup_cmd));
   }
   async rm_static() {
-    const static_path = `/var/instances/${this.instance_name}`;
+    const static_path = nameToDir(this.instance_name);
     const cmd = `rm -r ${static_path}`;
     await this.exec(ifExist(static_path, cmd));
+  }
+
+  async rm_links() {
+    const targets = this.domains.map((d) => d.content).map((d) => nameToDir(d));
+    try {
+      await this.exec(`rm -r ${targets.join(" ")}`);
+    } catch (error) {
+      this.log(error.message, false, true);
+    }
   }
 
   async backup_db() {

@@ -12,6 +12,7 @@ import {
   getWorkerConfPath,
 } from "../utils/helpers.js";
 import { JobStatus } from "../model/job.model.js";
+import { nameToDir } from "./utils.js";
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
@@ -26,6 +27,20 @@ export default class UpdateExecuter extends BaseExecuter {
       if (this.job.isInCleanPhase) this.log(err, false, true);
       else throw err;
     }
+  }
+
+  #exportDomains(domains, savePrev) {
+    const { domains_rm = [], domains_add = [] } = {
+      ...this.job.parsed_update_query,
+      ...domains,
+    };
+    // prev
+    if (savePrev) {
+      this.job.prev_data.domains = this.instance.domains;
+      this.job.prev_data.domains_add = this.instance.domains_add;
+      this.job.prev_data.domains_rm = this.instance.domains_rm;
+    }
+    return { domains_add, domains_rm };
   }
 
   async parse_update_query() {
@@ -119,17 +134,10 @@ export default class UpdateExecuter extends BaseExecuter {
       savePrev: true,
     }
   ) {
-    const { domains_rm = [], domains_add = [] } = {
-      ...this.job.parsed_update_query,
-      ...domains,
-    };
-
-    // prev
-    if (savePrev) {
-      this.job.prev_data.domains = this.instance.domains;
-      this.job.prev_data.domains_add = this.instance.domains_add;
-      this.job.prev_data.domains_rm = this.instance.domains_rm;
-    }
+    const { domains_rm = [], domains_add = [] } = this.#exportDomains(
+      domains,
+      savePrev
+    );
 
     if (!domains_add.length && !domains_rm.length) return;
 
@@ -166,17 +174,10 @@ export default class UpdateExecuter extends BaseExecuter {
       savePrev: true,
     }
   ) {
-    const { domains_rm = [], domains_add = [] } = {
-      ...this.job.parsed_update_query,
-      ...domains,
-    };
-    // prev
-    if (savePrev) {
-      this.job.prev_data.domains = this.instance.domains;
-      this.job.prev_data.domains_add = this.instance.domains_add;
-      this.job.prev_data.domains_rm = this.instance.domains_rm;
-    }
-
+    const { domains_rm = [], domains_add = [] } = this.#exportDomains(
+      domains,
+      savePrev
+    );
     if (!domains_add.length && !domains_rm.length) return;
 
     if (domains_add.length) {
@@ -193,16 +194,10 @@ export default class UpdateExecuter extends BaseExecuter {
       savePrev: true,
     }
   ) {
-    const { domains_rm = [], domains_add = [] } = {
-      ...this.job.parsed_update_query,
-      ...domains,
-    };
-    // prev
-    if (savePrev) {
-      this.job.prev_data.domains = this.instance.domains;
-      this.job.prev_data.domains_add = this.instance.domains_add;
-      this.job.prev_data.domains_rm = this.instance.domains_rm;
-    }
+    const { domains_rm = [], domains_add = [] } = this.#exportDomains(
+      domains,
+      savePrev
+    );
 
     if (!domains_add.length && !domains_rm.length) return;
 
@@ -220,16 +215,10 @@ export default class UpdateExecuter extends BaseExecuter {
     }
   }
   async update_service_aliases({ savePrev, ...domains } = { savePrev: true }) {
-    const { domains_rm = [], domains_add = [] } = {
-      ...this.job.parsed_update_query,
-      ...domains,
-    };
-    // prev
-    if (savePrev) {
-      this.job.prev_data.domains = this.instance.domains;
-      this.job.prev_data.domains_add = this.instance.domains_add;
-      this.job.prev_data.domains_rm = this.instance.domains_rm;
-    }
+    const { domains_rm = [], domains_add = [] } = this.#exportDomains(
+      domains,
+      savePrev
+    );
 
     if (!domains_add.length && !domains_rm.length) return;
 
@@ -239,7 +228,7 @@ export default class UpdateExecuter extends BaseExecuter {
           (d) => !domains_rm.includes(d)
         )
       ),
-    ];
+    ].map((d) => `${d}.nwi`);
 
     // update
     const dockerCmd = DockerService.serviceUpdate(
@@ -248,13 +237,39 @@ export default class UpdateExecuter extends BaseExecuter {
         networks_add: [
           {
             name: "nodeeweb_webnet",
-            alias: newDomains.join(" "),
+            alias: newDomains.join(","),
           },
         ],
       },
       { name: this.instance_name }
     );
     await this.exec(dockerCmd);
+  }
+  async update_service_links({ savePrev, ...domains } = { savePrev: true }) {
+    const { domains_rm = [], domains_add = [] } = this.#exportDomains(
+      domains,
+      savePrev
+    );
+
+    if (!domains_add.length && !domains_rm.length) return;
+
+    // path
+    const addTargets = domains_add.map((d) => nameToDir(d));
+    const rmTargets = domains_rm.map((d) => nameToDir(d));
+
+    // link
+    if (addTargets.length) {
+      await this.exec(
+        addTargets
+          .map((target) => `ln -s ${nameToDir(this.instance_name)} ${target}`)
+          .join(" && ")
+      );
+    }
+
+    // unlink
+    if (rmTargets.length) {
+      await this.exec(`rm -r ${rmTargets.jon(" ")}`);
+    }
   }
 
   async change_primary_domain(

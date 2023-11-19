@@ -26,6 +26,7 @@ export class Service {
     ownerId,
     nodeewebhub,
     server_socket,
+    domains,
     ...instance
   }) {
     const envs = {
@@ -69,8 +70,11 @@ export class Service {
       .map(([k, v]) => `--mount type=bind,source=${k},destination=${v}`)
       .join(" ");
 
-    const network = ["nodeeweb_webnet", "nodeeweb_mongonet"];
-    const networkArgs = network.map((n) => `--network ${n}`).join(" ");
+    const network = [
+      `name=nodeeweb_webnet,alias=${domains.map((d) => `${d}.nwi`).join(",")}`,
+      "nodeeweb_mongonet",
+    ];
+    const networkArgs = network.map((n) => `--network "${n}"`).join(" ");
 
     const limitation = {
       cpu,
