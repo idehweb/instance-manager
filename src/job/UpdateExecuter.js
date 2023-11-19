@@ -15,13 +15,13 @@ import { JobStatus } from "../model/job.model.js";
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
-    if (!this.job.prev_data) this.job.prev_data = {};
   }
 
   async pre_require() {
     try {
       await this.base_pre_require();
       await this.parse_update_query();
+      if (!this.job.prev_data) this.job.prev_data = {};
     } catch (err) {
       if (this.job.isInCleanPhase) this.log(err, false, true);
       else throw err;
