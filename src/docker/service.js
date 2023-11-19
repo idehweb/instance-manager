@@ -5,6 +5,7 @@ import { Network } from "../common/network.js";
 import { InstanceStatus } from "../model/instance.model.js";
 import { getEnv, getEnvFromMultiChoose } from "../utils/helpers.js";
 import { supSignToken } from "../supervisor/utils.js";
+import { normalizeArg } from "./utils.js";
 export class Service {
   static async getSystemStatus() {}
   static async getServiceStatus(name) {
@@ -112,8 +113,8 @@ export class Service {
     const cmd = `docker service update ${Object.entries(configs)
       .map(([k, v]) =>
         Array.isArray(v)
-          ? `${v.map((sub_v) => `--${k} ${sub_v}`).join(" ")}`
-          : `--${k} ${v}`
+          ? `${v.map((sub_v) => `--${k} ${normalizeArg(sub_v)}`).join(" ")}`
+          : `--${k} ${normalizeArg(v)}`
       )
       .join(" ")} ${name}`;
 
