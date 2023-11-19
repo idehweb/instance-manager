@@ -353,7 +353,7 @@ export default class ExecuteManager {
       stack.push(
         JobSteps.UPDATE_DOMAIN_CDN,
         JobSteps.UPDATE_DOMAIN_CERT,
-        JobSteps.UPDATE_DOMAIN_CONFIG
+        JobSteps.UPDATE_SERVICE_ALIASES
       );
     }
 

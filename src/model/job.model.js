@@ -61,6 +61,9 @@ export const JobSteps = {
   UPDATE_DOMAIN_CONFIG: "update-domain-config",
   ROLLBACK_UPDATE_DOMAIN_CONFIG: "rollback-update-domain-config",
 
+  UPDATE_SERVICE_ALIASES: "update-service-aliases",
+  ROLLBACK_UPDATE_SERVICE_ALIASES: "rollback-update-service-aliases",
+
   UPDATE_DOMAIN_CERT: "update-domain-cert",
   ROLLBACK_UPDATE_DOMAIN_CERT: "rollback-update-domain-cert",
 

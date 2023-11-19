@@ -135,12 +135,24 @@ export default class RollbackExecuter extends BaseExecuter {
       domains_rm: domains_add,
     });
   }
+  async update_service_aliases() {
+    const domains_add = this.exportPrevData("domains_add") ?? [];
+    const domains_rm = this.exportPrevData("domains_rm") ?? [];
+    if (!domains_add.length && !domains_rm.length) return;
+
+    await this.updateExecuter.update_service_aliases({
+      savePrev: false,
+      domains_add: domains_rm,
+      domains_rm: domains_add,
+    });
+  }
   async update_site_name() {
     const site_name = this.exportPrevData("site_name");
     if (!site_name) return;
 
     await this.updateExecuter.update_site_name({ savePrev: false, site_name });
   }
+
   // --- End Of Update Executer --- //
 
   // --- Start Delete Executer --- //

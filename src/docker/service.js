@@ -177,7 +177,12 @@ export class Service {
     }
 
     if (networks_add) {
-      args["network-add"] = networks_add.map((n) => `${n}`);
+      args["network-add"] = networks_add.map((n) => {
+        if (typeof n === "string") return n;
+        return Object.entries(n)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(",");
+      });
     }
 
     if (networks_rm) {

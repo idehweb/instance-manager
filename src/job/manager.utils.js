@@ -103,6 +103,9 @@ export function step2Rollback(...steps) {
         case JobSteps.UPDATE_DOMAIN_CONFIG:
           return JobSteps.ROLLBACK_UPDATE_DOMAIN_CONFIG;
 
+        case JobSteps.UPDATE_SERVICE_ALIASES:
+          return JobSteps.ROLLBACK_UPDATE_SERVICE_ALIASES;
+
         case JobSteps.CREATE_USER_IN_DB:
           return JobSteps.ROLLBACK_CREATE_USER_IN_DB;
 
@@ -221,6 +224,10 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.UPDATE_DOMAIN_CONFIG:
     case JobSteps.ROLLBACK_UPDATE_DOMAIN_CONFIG:
       return executer.update_domain_config;
+
+    case JobSteps.UPDATE_SERVICE_ALIASES:
+    case JobSteps.ROLLBACK_UPDATE_SERVICE_ALIASES:
+      return executer.update_service_aliases;
 
     case JobSteps.CREATE_USER_IN_DB:
     case JobSteps.ROLLBACK_CREATE_USER_IN_DB:

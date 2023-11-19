@@ -219,6 +219,43 @@ export default class UpdateExecuter extends BaseExecuter {
       await this.exec(`x-nginx rm ${domains_rm.map((d) => `-d ${d}`)}`);
     }
   }
+  async update_service_aliases({ savePrev, ...domains } = { savePrev: true }) {
+    const { domains_rm = [], domains_add = [] } = {
+      ...this.job.parsed_update_query,
+      ...domains,
+    };
+    // prev
+    if (savePrev) {
+      this.job.prev_data.domains = this.instance.domains;
+      this.job.prev_data.domains_add = this.instance.domains_add;
+      this.job.prev_data.domains_rm = this.instance.domains_rm;
+    }
+
+    if (!domains_add.length && !domains_rm.length) return;
+
+    const newDomains = [
+      ...new Set(
+        [...this.instance.domains.map((d) => d.content), ...domains_add].filter(
+          (d) => !domains_rm.includes(d)
+        )
+      ),
+    ];
+
+    // update
+    const dockerCmd = DockerService.serviceUpdate(
+      {
+        networks_rm: ["nodeeweb_webnet"],
+        networks_add: [
+          {
+            name: "nodeeweb_webnet",
+            alias: newDomains.join(" "),
+          },
+        ],
+      },
+      { name: this.instance_name }
+    );
+    await this.exec(dockerCmd);
+  }
 
   async change_primary_domain(
     { primary_domain, savePrev } = {
