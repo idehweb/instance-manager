@@ -286,12 +286,12 @@ export default class ExecuteManager {
   async #create_instance() {
     const stack = [
       JobSteps.CREATE_STATIC_DIRS,
+      JobSteps.CREATE_LINKS,
       JobSteps.COPY_STATIC,
       JobSteps.CREATE_USER_IN_DB,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,
       JobSteps.ADD_DOMAIN_CERT,
-      JobSteps.ADD_DOMAIN_CONFIG,
       JobSteps.RESTORE_DEMO,
       JobSteps.SYNC_DB,
     ].filter((step) => {
@@ -353,6 +353,7 @@ export default class ExecuteManager {
       stack.push(
         JobSteps.UPDATE_DOMAIN_CDN,
         JobSteps.UPDATE_DOMAIN_CERT,
+        JobSteps.UPDATE_SERVICE_LINKS,
         JobSteps.UPDATE_SERVICE_ALIASES
       );
     }
@@ -382,7 +383,7 @@ export default class ExecuteManager {
     const stack = [
       JobSteps.CDN_UNREGISTER,
       JobSteps.REMOVE_DOMAIN_CERT,
-      JobSteps.REMOVE_DOMAIN_CONFIG,
+      JobSteps.REMOVE_LINKS,
       JobSteps.REMOVE_SERVICE,
       JobSteps.BACKUP_STATIC,
       JobSteps.REMOVE_STATIC,
@@ -396,7 +397,6 @@ export default class ExecuteManager {
           JobSteps.REMOVE_SERVICE,
           JobSteps.BACKUP_STATIC,
           JobSteps.REMOVE_DOMAIN_CERT,
-          JobSteps.REMOVE_DOMAIN_CONFIG,
           JobSteps.REMOVE_STATIC,
           JobSteps.BACKUP_DB,
         ].includes(step)

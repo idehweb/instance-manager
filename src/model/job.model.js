@@ -14,6 +14,9 @@ export const JobSteps = {
   COPY_STATIC: "copy-static",
   ROLLBACK_STATIC_FILES: "rollback-static-files",
 
+  CREATE_LINKS: "create-links",
+  ROLLBACK_CREATE_LINKS: "rollback-create-links",
+
   ADD_DOMAIN_CONFIG: "add-domain-config",
   ROLLBACK_ADD_DOMAIN_CONFIG: "rollback-add-domain-config",
 
@@ -28,6 +31,9 @@ export const JobSteps = {
 
   REMOVE_STATIC: "remove-static",
   ROLLBACK_REMOVE_STATIC: "rollback-remove-static",
+
+  REMOVE_LINKS: "remove-links",
+  ROLLBACK_REMOVE_LINKS: "rollback-remove-links",
 
   RESTORE_DEMO: "restore-demo-db",
   ROLLBACK_RESTORE_DEMO: "rollback-restore-demo-db",
@@ -64,6 +70,9 @@ export const JobSteps = {
   UPDATE_SERVICE_ALIASES: "update-service-aliases",
   ROLLBACK_UPDATE_SERVICE_ALIASES: "rollback-update-service-aliases",
 
+  UPDATE_SERVICE_LINKS: "update-service-links",
+  ROLLBACK_UPDATE_SERVICE_LINKS: "rollback-update-service-links",
+
   UPDATE_DOMAIN_CERT: "update-domain-cert",
   ROLLBACK_UPDATE_DOMAIN_CERT: "rollback-update-domain-cert",
 
@@ -77,8 +86,8 @@ export const JobSteps = {
   CREATE_USER_IN_DB: "create-user-in-db",
   ROLLBACK_CREATE_USER_IN_DB: "rollback-create-user-in-db",
 
-  REMOVE_USER_FROM_DB: "remove_user-from-db",
-  ROLLBACK_REMOVE_USER_FROM_DB: "rollback-remove_user-from-db",
+  REMOVE_USER_FROM_DB: "remove-user-from-db",
+  ROLLBACK_REMOVE_USER_FROM_DB: "rollback-remove-user-from-db",
 };
 
 export const JobStatus = {

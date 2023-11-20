@@ -38,7 +38,11 @@ export function step2Rollback(...steps) {
           return JobSteps.PRE_REQUIRED;
 
         case JobSteps.COPY_STATIC:
+        case JobSteps.CREATE_STATIC_DIRS:
           return JobSteps.ROLLBACK_STATIC_FILES;
+
+        case JobSteps.CREATE_LINKS:
+          return JobSteps.ROLLBACK_CREATE_LINKS;
 
         case JobSteps.CREATE_SERVICE:
           return JobSteps.ROLLBACK_CREATE_SERVICE;
@@ -51,9 +55,6 @@ export function step2Rollback(...steps) {
 
         case JobSteps.RESTORE_DEMO:
           return JobSteps.ROLLBACK_RESTORE_DEMO;
-
-        case JobSteps.CHANGE_DOMAINS:
-          return JobSteps.ROLLBACK_CHANGE_IMAGE;
 
         case JobSteps.CHANGE_STATUS:
           return JobSteps.ROLLBACK_CHANGE_STATUS;
@@ -71,7 +72,10 @@ export function step2Rollback(...steps) {
           return JobSteps.ROLLBACK_REMOVE_SERVICE;
 
         case JobSteps.REMOVE_STATIC:
-          return JobSteps.ROLLBACK_REMOVE_SERVICE;
+          return JobSteps.ROLLBACK_REMOVE_STATIC;
+
+        case JobSteps.REMOVE_LINKS:
+          return JobSteps.ROLLBACK_REMOVE_LINKS;
 
         case JobSteps.CHANGE_IMAGE:
           return JobSteps.ROLLBACK_CHANGE_IMAGE;
@@ -90,9 +94,6 @@ export function step2Rollback(...steps) {
 
         case JobSteps.REMOVE_DOMAIN_CERT:
           return JobSteps.ROLLBACK_REMOVE_DOMAIN_CERT;
-
-        case JobSteps.CREATE_STATIC_DIRS:
-          return JobSteps.ROLLBACK_STATIC_FILES;
 
         case JobSteps.UPDATE_DOMAIN_CDN:
           return JobSteps.ROLLBACK_UPDATE_DOMAIN_CDN;
@@ -145,6 +146,14 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.CREATE_STATIC_DIRS:
       return executer.create_static_dirs;
 
+    case JobSteps.CREATE_LINKS:
+    case JobSteps.ROLLBACK_CREATE_LINKS:
+      return executer.create_links;
+
+    case JobSteps.REMOVE_LINKS:
+    case JobSteps.ROLLBACK_REMOVE_LINKS:
+      return executer.rm_links;
+
     case JobSteps.COPY_STATIC:
     case JobSteps.ROLLBACK_STATIC_FILES:
       return executer.copy_static;
@@ -186,7 +195,7 @@ export function convertJobStepToFunc(step, executer) {
       return executer.service_remove;
 
     case JobSteps.REMOVE_STATIC:
-    case JobSteps.ROLLBACK_REMOVE_SERVICE:
+    case JobSteps.ROLLBACK_REMOVE_STATIC:
       return executer.rm_static;
 
     case JobSteps.CHANGE_IMAGE:
