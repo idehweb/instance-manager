@@ -69,7 +69,9 @@ export default class DeleteExecuter extends BaseExecuter {
   }
 
   async rm_links() {
-    const targets = this.domains.map((d) => d.content).map((d) => nameToDir(d));
+    const targets = this.instance.domains
+      .map((d) => d.content)
+      .map((d) => nameToDir(d));
     await this.exec(
       targets
         .map((target) => ifExist(target, `rm -r ${target}`, "&&"))
