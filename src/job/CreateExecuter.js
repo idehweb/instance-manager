@@ -3,9 +3,6 @@ import {
   axiosError2String,
   getInstanceDbPath,
   getInstanceStaticPath,
-  getSlaveIps,
-  getSlaveSocketOpt,
-  ifExist,
   ifNotExist,
   wait,
 } from "../utils/helpers.js";
@@ -43,7 +40,13 @@ export default class CreateExecuter extends BaseExecuter {
 
     await this.exec(
       targets
-        .map((target) => ifNotExist(target, `ln -s ${source} ${target}`, "&&"))
+        .map((target, i, arr) =>
+          ifNotExist(
+            target,
+            `ln -s ${source} ${target}`,
+            i < arr.length - 1 ? "&&" : ";"
+          )
+        )
         .join(" ")
     );
   }

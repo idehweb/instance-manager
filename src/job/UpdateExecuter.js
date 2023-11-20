@@ -262,11 +262,11 @@ export default class UpdateExecuter extends BaseExecuter {
     if (addTargets.length) {
       await this.exec(
         addTargets
-          .map((target) =>
+          .map((target, i, arr) =>
             ifNotExist(
               target,
               `ln -s ${nameToDir(this.instance_name)} ${target}`,
-              "&&"
+              i < arr.length - 1 ? "&&" : ";"
             )
           )
           .join(" ")
@@ -276,8 +276,12 @@ export default class UpdateExecuter extends BaseExecuter {
     // unlink
     if (rmTargets.length) {
       await this.exec(
-        rmTargets.map((target) =>
-          ifExist(target, `rm -r ${target}`, "&&").join(" ")
+        rmTargets.map((target, i, arr) =>
+          ifExist(
+            target,
+            `rm -r ${target}`,
+            i < arr.length - 1 ? "&&" : ";"
+          ).join(" ")
         )
       );
     }

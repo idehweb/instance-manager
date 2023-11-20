@@ -1,8 +1,7 @@
 import { Global } from "../global.js";
 import { Service as DockerService } from "../docker/service.js";
 import network, { Network, NetworkCDN } from "../common/network.js";
-import { createRandomName, getPublicPath, ifExist } from "../utils/helpers.js";
-import { Remote } from "../utils/remote.js";
+import { getPublicPath, ifExist } from "../utils/helpers.js";
 import {
   InstanceRegion,
   InstanceStatus,
@@ -74,7 +73,9 @@ export default class DeleteExecuter extends BaseExecuter {
       .map((d) => nameToDir(d));
     await this.exec(
       targets
-        .map((target) => ifExist(target, `rm -r ${target}`, "&&"))
+        .map((target, i, arr) =>
+          ifExist(target, `rm -r ${target}`, i < arr.length - 1 ? "&&" : ";")
+        )
         .join(" ")
     );
   }
