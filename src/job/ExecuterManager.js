@@ -173,15 +173,13 @@ export default class ExecuteManager {
     return false;
   }
 
-  async #rollback() {
+  async #rollback(progress_step) {
     const done_steps = this.job.done_steps ?? [];
-    const progress_step = this.job.progress_step;
 
     // true flag job clean phase
     await this.#updateJobAtr({ isInCleanPhase: true });
 
     const needRollbackSteps = [progress_step, ...done_steps.reverse()];
-    this.log({ needRollbackSteps });
     const rollbackSteps = step2Rollback(...needRollbackSteps);
     this.log({ rollbackSteps });
 
@@ -203,14 +201,20 @@ export default class ExecuteManager {
   }
 
   async finishWithError() {
+    // snapshot of step
+    const progress_step = this.job.progress_step;
+
+    // sync db
     this.log("try to sync db", false, true, false, ["finishWithError"]);
     await this.#updateJobStep({ progress_step: JobSteps.SYNC_DB });
     await this.#sync_db(true);
     await this.#updateJobStep({ done_step: JobSteps.SYNC_DB });
 
+    // rollback
     this.log("start rollback", false, true, false, ["finishWithError"]);
-    await this.#rollback();
+    await this.#rollback(progress_step);
 
+    // serve
     this.log("Finish with Error", true, true, false, ["finishWithError"]);
     this.sendResultToClient(false);
   }
