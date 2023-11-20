@@ -157,6 +157,10 @@ export default class DeleteExecuter extends BaseExecuter {
 
     // set instance
     this.instance = newInsDoc._doc;
-    return this.instance;
+
+    // super
+    const superRes = await super.sync_db(isError);
+
+    return { ...superRes, instance: this.instance };
   }
 }

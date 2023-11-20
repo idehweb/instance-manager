@@ -13,7 +13,7 @@ import {
   ifExist,
   ifNotExist,
 } from "../utils/helpers.js";
-import { JobStatus } from "../model/job.model.js";
+import { JobStatus, jobModel } from "../model/job.model.js";
 import { nameToDir } from "./utils.js";
 export default class UpdateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
@@ -360,6 +360,7 @@ export default class UpdateExecuter extends BaseExecuter {
       }
     }
 
+    // instance
     const newInsDoc = await instanceModel.findOneAndUpdate(
       { _id: this.instance._id, "jobs._id": this.job._id },
       {
@@ -368,8 +369,20 @@ export default class UpdateExecuter extends BaseExecuter {
       { new: true }
     );
 
-    // set instance
+    // job
+    const jobDoc = await jobModel.findByIdAndUpdate(
+      this.job._id,
+      {
+        status: isError ? JobStatus.ERROR : JobStatus.SUCCESS,
+        prev_data: this.job.prev_data,
+      },
+      { new: true }
+    );
+
+    // set
     this.instance = newInsDoc._doc;
-    return this.instance;
+    this.job = jobDoc._doc;
+
+    return { instance: this.instance, job: this.job };
   }
 }

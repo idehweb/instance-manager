@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { jobModel } from "../model/job.model.js";
+import { JobStatus, jobModel } from "../model/job.model.js";
 import { Remote } from "../utils/remote.js";
 import { runRemoteCmd, runRemoteCmdWithId } from "../ws/index.js";
 import { getMyIp, getSlaveSocketOpt, slugify } from "../utils/helpers.js";
@@ -118,7 +118,15 @@ export class BaseExecuter {
     return;
   }
 
-  async sync_db() {
-    throw new Error("Sync DB Not Implement Yet");
+  async sync_db(isError) {
+    // job sync
+    const newJob = await jobModel.findByIdAndUpdate(
+      this.job._id,
+      { $set: { status: isError ? JobStatus.ERROR : JobStatus.SUCCESS } },
+      { new: true }
+    );
+
+    this.job = newJob._doc;
+    return { jon: this.job };
   }
 }

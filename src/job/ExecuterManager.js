@@ -220,18 +220,10 @@ export default class ExecuteManager {
   }
 
   #sync_db = async (isError = false) => {
-    // inner sync
-    const newInstance = await this.executer.sync_db(isError);
-    this.instance = newInstance;
-
-    // outer sync
-    const newJob = await jobModel.findByIdAndUpdate(
-      this.job._id,
-      { $set: { status: isError ? JobStatus.ERROR : JobStatus.SUCCESS } },
-      { new: true }
-    );
-    this.job = newJob._doc;
-    this.executer.job = this.job;
+    // sync
+    const { instance, job } = await this.executer.sync_db(isError);
+    this.instance = instance;
+    this.job = job;
   };
 
   async #execute_stack(
