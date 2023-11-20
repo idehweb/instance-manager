@@ -180,7 +180,7 @@ export default class ExecuteManager {
     // true flag job clean phase
     await this.#updateJobAtr({ isInCleanPhase: true });
 
-    const needRollbackSteps = [progress_step, ...done_steps];
+    const needRollbackSteps = [progress_step, ...done_steps.reverse()];
     const rollbackSteps = step2Rollback(...needRollbackSteps);
 
     // execute steps stack

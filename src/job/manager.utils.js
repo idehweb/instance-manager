@@ -119,7 +119,16 @@ export function step2Rollback(...steps) {
     })
     .filter((s) => s);
 
-  return [...new Set(rollbackSteps)];
+  // unique by oldest step strategy
+  const uniqueSteps = Object.keys(
+    rollbackSteps.reduce((prev, step) => {
+      delete prev[step];
+      prev[step] = true;
+      return prev;
+    }, {})
+  );
+
+  return uniqueSteps;
 }
 
 export function convertJobTypeToExecuter(type) {
