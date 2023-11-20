@@ -247,6 +247,10 @@ export function convertJobStepToFunc(step, executer) {
     case JobSteps.ROLLBACK_UPDATE_SERVICE_ALIASES:
       return executer.update_service_aliases;
 
+    case JobSteps.UPDATE_SERVICE_LINKS:
+    case JobSteps.ROLLBACK_UPDATE_SERVICE_LINKS:
+      return executer.update_service_links;
+
     case JobSteps.CREATE_USER_IN_DB:
     case JobSteps.ROLLBACK_CREATE_USER_IN_DB:
       return executer.create_user_in_db;

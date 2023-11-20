@@ -1,3 +1,4 @@
+import { JobType } from "../model/job.model.js";
 import { BaseExecuter } from "./BaseExecuter.js";
 import CreateExecuter from "./CreateExecuter.js";
 import DeleteExecuter from "./DeleteExecuter.js";
@@ -24,6 +25,19 @@ export default class RollbackExecuter extends BaseExecuter {
       log_file,
       this.myLogger
     );
+  }
+  async pre_require() {
+    switch (this.job.type) {
+      case JobType.CREATE:
+        await this.deleteExecuter.pre_require();
+        break;
+      case JobType.DELETE:
+        await this.createExecuter.pre_require();
+        break;
+      case JobType.UPDATE:
+        await this.updateExecuter.pre_require();
+        break;
+    }
   }
 
   myLogger = (conf) => {
