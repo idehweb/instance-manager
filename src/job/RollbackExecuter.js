@@ -84,7 +84,7 @@ export default class RollbackExecuter extends BaseExecuter {
   // --- Start Update Executer --- //
 
   exportPrevData(key) {
-    const value = this.job.prev_data[key];
+    const value = this.job.snapshot[key];
     if (!value) {
       this.log(`not found previous ${key}`, false, false, false, ["warning"]);
     }

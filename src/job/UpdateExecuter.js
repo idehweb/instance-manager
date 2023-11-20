@@ -24,7 +24,7 @@ export default class UpdateExecuter extends BaseExecuter {
     try {
       await this.base_pre_require();
       await this.parse_update_query();
-      if (!this.job.prev_data) this.job.prev_data = {};
+      if (!this.job.snapshot) this.job.snapshot = {};
     } catch (err) {
       if (this.job.isInCleanPhase) this.log(err, false, true);
       else throw err;
@@ -38,9 +38,9 @@ export default class UpdateExecuter extends BaseExecuter {
     };
     // prev
     if (savePrev) {
-      this.job.prev_data.domains = this.instance.domains;
-      this.job.prev_data.domains_add = domains_add;
-      this.job.prev_data.domains_rm = domains_rm;
+      this.job.snapshot.domains = this.instance.domains;
+      this.job.snapshot.domains_add = domains_add;
+      this.job.snapshot.domains_rm = domains_rm;
     }
     return { domains_add, domains_rm };
   }
@@ -69,7 +69,7 @@ export default class UpdateExecuter extends BaseExecuter {
 
   async changeImage({ image, savePrev } = { image: null, savePrev: true }) {
     // prev
-    if (savePrev) this.job.prev_data.image = this.instance.image;
+    if (savePrev) this.job.snapshot.image = this.instance.image;
 
     image = image ?? this.job.update_query.image;
 
@@ -114,7 +114,7 @@ export default class UpdateExecuter extends BaseExecuter {
 
   async changeStatus({ status, savePrev } = { status: null, savePrev: true }) {
     // prev status
-    if (savePrev) this.job.prev_data.status = this.instance.status;
+    if (savePrev) this.job.snapshot.status = this.instance.status;
 
     status = status ?? this.job.update_query.status;
 
@@ -294,7 +294,7 @@ export default class UpdateExecuter extends BaseExecuter {
   ) {
     // prev
     if (savePrev)
-      this.job.prev_data.primary_domain = this.instance.primary_domain;
+      this.job.snapshot.primary_domain = this.instance.primary_domain;
 
     primary_domain = primary_domain ?? this.job.update_query.primary_domain;
     const site_url = `https://${primary_domain}`;
@@ -321,7 +321,7 @@ export default class UpdateExecuter extends BaseExecuter {
     }
   ) {
     // prev
-    if (savePrev) this.job.prev_data.site_name = this.instance.site_name;
+    if (savePrev) this.job.snapshot.site_name = this.instance.site_name;
 
     site_name = site_name ?? this.job.update_query.site_name;
 
@@ -372,7 +372,7 @@ export default class UpdateExecuter extends BaseExecuter {
       this.job._id,
       {
         status: isError ? JobStatus.ERROR : JobStatus.SUCCESS,
-        prev_data: this.job.prev_data,
+        snapshot: this.job.snapshot,
       },
       { new: true }
     );
