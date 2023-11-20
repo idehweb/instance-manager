@@ -181,7 +181,9 @@ export default class ExecuteManager {
     await this.#updateJobAtr({ isInCleanPhase: true });
 
     const needRollbackSteps = [progress_step, ...done_steps.reverse()];
+    this.log({ needRollbackSteps });
     const rollbackSteps = step2Rollback(...needRollbackSteps);
+    this.log({ rollbackSteps });
 
     // execute steps stack
     await this.#execute_stack(rollbackSteps, {

@@ -10,6 +10,7 @@ import {
   getNginxPublicPath,
   getScripts,
   getWorkerConfPath,
+  ifExist,
   ifNotExist,
 } from "../utils/helpers.js";
 import { JobStatus } from "../model/job.model.js";
@@ -247,6 +248,7 @@ export default class UpdateExecuter extends BaseExecuter {
     await this.exec(dockerCmd);
   }
   async update_service_links({ savePrev, ...domains } = { savePrev: true }) {
+    throw new Error("my error");
     const { domains_rm = [], domains_add = [] } = this.#exportDomains(
       domains,
       savePrev
