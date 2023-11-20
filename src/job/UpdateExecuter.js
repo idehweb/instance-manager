@@ -39,8 +39,8 @@ export default class UpdateExecuter extends BaseExecuter {
     // prev
     if (savePrev) {
       this.job.prev_data.domains = this.instance.domains;
-      this.job.prev_data.domains_add = this.instance.domains_add;
-      this.job.prev_data.domains_rm = this.instance.domains_rm;
+      this.job.prev_data.domains_add = domains_add;
+      this.job.prev_data.domains_rm = domains_rm;
     }
     return { domains_add, domains_rm };
   }
@@ -277,13 +277,11 @@ export default class UpdateExecuter extends BaseExecuter {
     // unlink
     if (rmTargets.length) {
       await this.exec(
-        rmTargets.map((target, i, arr) =>
-          ifExist(
-            target,
-            `rm -r ${target}`,
-            i < arr.length - 1 ? "&&" : ";"
-          ).join(" ")
-        )
+        rmTargets
+          .map((target, i, arr) =>
+            ifExist(target, `rm -r ${target}`, i < arr.length - 1 ? "&&" : ";")
+          )
+          .join(" ")
       );
     }
   }
