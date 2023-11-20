@@ -50,9 +50,12 @@ export default class RollbackExecuter extends BaseExecuter {
   async create_user_in_db() {
     await this.deleteExecuter.rm_user_from_db();
   }
-  //   TODO
   async nginx_domain_config() {
     await this.deleteExecuter.rm_domain_config();
+  }
+
+  async create_links() {
+    await this.deleteExecuter.rm_links();
   }
 
   async add_domain_certs() {
@@ -146,6 +149,17 @@ export default class RollbackExecuter extends BaseExecuter {
       domains_rm: domains_add,
     });
   }
+  async update_service_links() {
+    const domains_add = this.exportPrevData("domains_add") ?? [];
+    const domains_rm = this.exportPrevData("domains_rm") ?? [];
+    if (!domains_add.length && !domains_rm.length) return;
+
+    await this.updateExecuter.update_service_links({
+      savePrev: false,
+      domains_add: domains_rm,
+      domains_rm: domains_add,
+    });
+  }
   async update_site_name() {
     const site_name = this.exportPrevData("site_name");
     if (!site_name) return;
@@ -164,6 +178,7 @@ export default class RollbackExecuter extends BaseExecuter {
   async rm_domain_config() {}
   async rm_domain_cert() {}
   async rm_user_from_db() {}
+  async rm_links() {}
   async unregister_cdn() {}
   // --- End Of Delete Executer --- //
 }

@@ -176,8 +176,11 @@ export function getSlaveSocketOpt(region) {
   return { id, socket, ip: getIP(socket), isConnect: isConnect(socket) };
 }
 
-export function ifExist(path, cmd) {
-  return `if [ -e ${path} ]; then ${cmd}; fi;`;
+export function ifExist(path, cmd, endWith = ";") {
+  return `if [ -e ${path} ]; then ${cmd}; fi${endWith}`;
+}
+export function ifNotExist(path, cmd, endWith = ";") {
+  return `if [ ! -e ${path} ]; then ${cmd}; fi${endWith}`;
 }
 
 export function slugify(str = "") {

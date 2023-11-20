@@ -10,6 +10,7 @@ import {
   getNginxPublicPath,
   getScripts,
   getWorkerConfPath,
+  ifNotExist,
 } from "../utils/helpers.js";
 import { JobStatus } from "../model/job.model.js";
 import { nameToDir } from "./utils.js";
@@ -261,14 +262,24 @@ export default class UpdateExecuter extends BaseExecuter {
     if (addTargets.length) {
       await this.exec(
         addTargets
-          .map((target) => `ln -s ${nameToDir(this.instance_name)} ${target}`)
-          .join(" && ")
+          .map((target) =>
+            ifNotExist(
+              target,
+              `ln -s ${nameToDir(this.instance_name)} ${target}`,
+              "&&"
+            )
+          )
+          .join(" ")
       );
     }
 
     // unlink
     if (rmTargets.length) {
-      await this.exec(`rm -r ${rmTargets.jon(" ")}`);
+      await this.exec(
+        rmTargets.map((target) =>
+          ifExist(target, `rm -r ${target}`, "&&").join(" ")
+        )
+      );
     }
   }
 

@@ -5,6 +5,8 @@ import {
   getInstanceStaticPath,
   getSlaveIps,
   getSlaveSocketOpt,
+  ifExist,
+  ifNotExist,
   wait,
 } from "../utils/helpers.js";
 import { Service as DockerService } from "../docker/service.js";
@@ -40,7 +42,9 @@ export default class CreateExecuter extends BaseExecuter {
     const source = nameToDir(this.instance_name);
 
     await this.exec(
-      targets.map((target) => `ln -s ${source} ${target}`).join(" && ")
+      targets
+        .map((target) => ifNotExist(target, `ln -s ${source} ${target}`, "&&"))
+        .join(" ")
     );
   }
 

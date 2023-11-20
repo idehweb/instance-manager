@@ -70,11 +70,11 @@ export default class DeleteExecuter extends BaseExecuter {
 
   async rm_links() {
     const targets = this.domains.map((d) => d.content).map((d) => nameToDir(d));
-    try {
-      await this.exec(`rm -r ${targets.join(" ")}`);
-    } catch (error) {
-      this.log(error.message, false, true);
-    }
+    await this.exec(
+      targets
+        .map((target) => ifExist(target, `rm -r ${target}`, "&&"))
+        .join(" ")
+    );
   }
 
   async backup_db() {
@@ -88,7 +88,7 @@ export default class DeleteExecuter extends BaseExecuter {
   }
   async rm_db() {
     this.log("Delete instance db");
-    const cmd_with_mongoose = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
+    const cmd_with_mongosh = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
     const cmd_with_x_mongo = `x-mongo drop-db ${this.instance_name}`;
     await this.exec(cmd_with_x_mongo);
   }
