@@ -107,6 +107,9 @@ export function step2Rollback(...steps) {
         case JobSteps.UPDATE_SERVICE_ALIASES:
           return JobSteps.ROLLBACK_UPDATE_SERVICE_ALIASES;
 
+        case JobSteps.UPDATE_SERVICE_LINKS:
+          return JobSteps.ROLLBACK_UPDATE_SERVICE_LINKS;
+
         case JobSteps.CREATE_USER_IN_DB:
           return JobSteps.ROLLBACK_CREATE_USER_IN_DB;
 
