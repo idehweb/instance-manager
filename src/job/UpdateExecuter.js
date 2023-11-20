@@ -238,7 +238,7 @@ export default class UpdateExecuter extends BaseExecuter {
         networks_add: [
           {
             name: "nodeeweb_webnet",
-            alias: newDomains.join(","),
+            alias: newDomains,
           },
         ],
       },

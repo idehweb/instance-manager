@@ -71,7 +71,7 @@ export class Service {
       .join(" ");
 
     const network = [
-      `name=nodeeweb_webnet,alias=${domains.map((d) => `${d}.nwi`).join(",")}`,
+      `name=nodeeweb_webnet,${domains.map((d) => `alias=${d}.nwi`).join(",")}`,
       "nodeeweb_mongonet",
     ];
     const networkArgs = network.map((n) => `--network "${n}"`).join(" ");
@@ -184,7 +184,12 @@ export class Service {
       args["network-add"] = networks_add.map((n) => {
         if (typeof n === "string") return n;
         return Object.entries(n)
-          .map(([k, v]) => `${k}=${v}`)
+          .flatMap(([k, v]) => {
+            if (Array.isArray(v)) {
+              return v.map((sv) => `${k}=${sv}`);
+            }
+            return `${k}=${v}`;
+          })
           .join(",");
       });
     }
