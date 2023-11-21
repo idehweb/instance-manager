@@ -52,4 +52,4 @@ ENV CF_DOMAIN nodeeweb.com
 COPY . .
 # COPY ./docker-entrypoint.sh /usr/local/bin
 # ENTRYPOINT [ "docker-entrypoint.sh" ]
-CMD [ "node","server" ]
+CMD [ "server" ]

@@ -38,11 +38,11 @@ prepare();
 
 process.on("uncaughtException", (err) => {
   console.log("#uncaughtException:", err);
-  shutdown();
+  shutdown(1);
 });
 process.on("unhandledRejection", (err) => {
   console.log("#unhandledRejection:", err);
-  shutdown();
+  shutdown(1);
 });
 function shutdown(code = 1) {
   return new Promise((resolve) => {
@@ -51,7 +51,9 @@ function shutdown(code = 1) {
         try {
           await Promise.all(mongoose.connections.map((c) => c.close()));
         } catch (err) {}
-        if (code !== null) process.exit(code);
+        if (code !== null) {
+          process.exit(code);
+        }
         resolve();
       });
     });
