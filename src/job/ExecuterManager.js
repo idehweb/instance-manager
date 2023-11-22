@@ -1,6 +1,7 @@
 import fs from "fs";
+import crypto from "crypto";
 import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
-import { axiosError2String, slugify, wait } from "../utils/helpers.js";
+import { axiosError2String, getMyIp, slugify, wait } from "../utils/helpers.js";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
 import { Remote } from "../utils/remote.js";
@@ -18,7 +19,8 @@ import RollbackExecuter from "./RollbackExecuter.js";
 
 export default class ExecuteManager {
   last_log;
-  constructor(job, instance, res, req) {
+  constructor(job, instance, res, req, id) {
+    this.id = id ?? crypto.randomUUID();
     this.job = { ...job._doc };
     this.instance = { ...instance._doc };
     this.remote = new Remote(instance.region);
@@ -36,17 +38,31 @@ export default class ExecuteManager {
       this.myLogger
     );
   }
-  static buildAndRun(job, instance, res, req) {
-    const manager = new ExecuteManager(job, instance, res, req);
-    manager
-      .execute()
-      .then()
-      .catch((err) => {
-        manager.log(axiosError2String(err), false, true, true, [
-          "manager-global-catch",
-        ]);
-        manager.finishWithError().then();
-      });
+  static async buildAndRun(job, instance, res, req, id) {
+    const manager = new ExecuteManager(job, instance, res, req, id);
+
+    // undertake
+    try {
+      await manager.undertakeJob();
+    } catch (err) {
+      manager.log(axiosError2String(err), false, true, true, [
+        "manager-global-catch",
+      ]);
+      return false;
+    }
+
+    // execute
+    try {
+      await manager.execute();
+    } catch (err) {
+      manager.log(axiosError2String(err), false, true, true, [
+        "manager-global-catch",
+      ]);
+      await manager.finishWithError();
+      return false;
+    }
+
+    return manager;
   }
   get instance_name() {
     return `nwi-${this.instance.name}`;
@@ -83,15 +99,38 @@ export default class ExecuteManager {
     );
   };
 
+  async undertakeJob() {
+    const newJob = await this.#updateJobAtr(
+      {
+        executer: {
+          id: this.id,
+          ip: getMyIp(false),
+        },
+      },
+      {
+        filter: {
+          _id: this.job._id,
+          $expr: {
+            $or: [
+              { executer: { $exists: false } },
+              { "executer.isAlive": false },
+              { "executer.id": this.id },
+            ],
+          },
+        },
+      }
+    );
+
+    // set job to map
+    Global.jobs.set(this.job.id, this);
+
+    if (!newJob) throw new Error("can not undertake this job");
+  }
+
   async execute() {
     // create
     let isRun;
     this.log("Start");
-    if (this.job.attempt === 1) {
-      await this.executer.init();
-      // set job to map
-      Global.jobs.set(this.executer.id, this.executer);
-    }
 
     try {
       if (this.job.type === JobType.CREATE) {
@@ -409,14 +448,19 @@ export default class ExecuteManager {
   }
 
   async #updateJobAtr(update, opt = {}) {
+    const filter = opt.filter ?? { _id: this.job._id };
+    const newJob = await jobModel.findOneAndUpdate(filter, update, {
+      new: true,
+      ...opt,
+    });
+
+    if (!newJob) return null;
+
     this.job = {
-      ...(
-        await jobModel.findByIdAndUpdate(this.job._id, update, {
-          new: true,
-          ...opt,
-        })
-      )._doc,
+      ...newJob._doc,
     };
+
+    return this.job;
   }
   async #updateJobStep({ progress_step, done_step }) {
     await this.#updateJobAtr({

@@ -1,14 +1,50 @@
-import axios from "axios";
 import crypto from "crypto";
-import { JobStatus, jobModel } from "../model/job.model";
-import { Global } from "../global";
-import { getMyIp } from "../utils/helpers";
+import axios from "axios";
+import { JobStatus, jobModel } from "../model/job.model.js";
+import { Global } from "../global.js";
+import { getMyIp, wait } from "../utils/helpers.js";
+import ExecuteManager from "../job/ExecuterManager.js";
+import { instanceModel } from "../model/instance.model.js";
 
-export default class Doctor {
-  constructor() {}
+export class Doctor {
+  constructor(logger) {
+    this.logger = logger;
+  }
 
-  async block(job) {
+  async examine() {
+    this.logger.log("start examine");
+    const jobs = await this.getAloneJobs();
+    this.logger.log("fetch jobs");
+
+    for (const job of jobs) {
+      const instance = await instanceModel.findOne({
+        _id: job._id,
+        active: true,
+      });
+
+      // not instance
+      if (!instance) break;
+
+      // undertake
+      const execId = await this.undertake(job);
+
+      if (!execId)
+        // can not undertake job
+        break;
+
+      // build and run
+      ExecuteManager.buildAndRun(job, instance, null, null, execId);
+
+      this.logger.log(`build and execute for job ${job._id}`);
+
+      // wait
+      await wait(10);
+    }
+  }
+
+  async undertake(job) {
     const execId = crypto.randomUUID();
+
     const newJob = await jobModel.findOneAndUpdate(
       {
         $and: [
@@ -40,24 +76,29 @@ export default class Doctor {
     return execId;
   }
 
-  async getWithoutExecuterJobs() {
+  async getAloneJobs() {
     const jobs = await jobModel.find({ status: JobStatus.IN_PROGRESS });
     const target = [];
     for (const job of jobs) {
-      if (!(await this.checkHealthy(job))) {
+      if (!(await this.checkAliveness(job))) {
         target.push(job);
         await job.updateOne({ "executer.isAlive": false });
       }
     }
+    return target;
   }
 
-  async checkHealthy(job) {
+  async checkAliveness(job) {
     if (!job.executer?.isAlive) return false;
     try {
-      await axios.get(`http://${job.executer.ip}:${Global.env.PORT}/health`);
+      await axios.get(
+        `http://${job.executer.ip}:${Global.env.PORT}/api/v1/doctor/${job.executer.id}`
+      );
       return true;
     } catch (err) {
       return false;
     }
   }
 }
+
+export default Doctor;

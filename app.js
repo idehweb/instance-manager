@@ -14,6 +14,7 @@ import wsRouter from "./src/ws/controller.js";
 import { catchMiddleware } from "./src/utils/catchAsync.js";
 import imageRouter from "./src/image/controller.js";
 import supervisorController from "./src/supervisor/controller.js";
+import doctorRouter from "./src/doctor/controller.js";
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/v1/instance", instanceRouter);
 app.use("/api/v1/job", jobRouter);
 app.use("/api/v1/image", imageRouter);
 app.use("/api/v1/supervisor", supervisorController);
+app.use("/api/v1/doctor", doctorRouter);
 app.use("/api/v1", wsRouter);
 
 // not found url

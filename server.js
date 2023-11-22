@@ -8,33 +8,47 @@ import { Server } from "socket.io";
 import registerWs from "./src/ws/index.js";
 import prepare from "./src/prepar.js";
 import { SimpleError } from "./src/common/error.js";
+import registerDoctor from "./src/doctor/index.js";
 
-const server = app.listen(Global.env.PORT, () => {
-  console.log(`Server Listening at http://127.0.0.1:${Global.env.PORT}`);
-});
-const io = new Server(server, {
-  path: "/ws",
-  cookie: true,
-  cors: { origin: "*" },
-  transports: ["websocket", "polling"],
-  allowUpgrades: true,
-});
-Global.io = io;
-registerWs(io);
+async function bootstrap() {
+  const server = app.listen(Global.env.PORT, () => {
+    console.log(`Server Listening at http://127.0.0.1:${Global.env.PORT}`);
+  });
+  Global.server = server;
+  const io = new Server(server, {
+    path: "/ws",
+    cookie: true,
+    cors: { origin: "*" },
+    transports: ["websocket", "polling"],
+    allowUpgrades: true,
+  });
+  Global.io = io;
+  registerWs(io);
 
-mongoose
-  .connect(Global.env.MONGO_URL, { dbName: Global.env.MONGO_DB })
-  .then((db) => {
+  try {
+    const db = await mongoose.connect(Global.env.MONGO_URL, {
+      dbName: Global.env.MONGO_DB,
+    });
     Global.db = db;
     console.log("DB connected");
-  })
-  .catch((err) => {
+  } catch (err) {
     console.log("DB connection error");
     throw err;
-  });
+  }
 
-// prepare
-prepare();
+  // prepare
+  prepare();
+
+  // doctor
+  registerDoctor();
+
+  createTerminus(server, {
+    healthChecks: { "/health": onHealthcheck },
+    onSignal,
+    signals: ["SIGINT", "SIGTERM"],
+    useExit0: true,
+  });
+}
 
 process.on("uncaughtException", (err) => {
   console.log("#uncaughtException:", err);
@@ -46,8 +60,8 @@ process.on("unhandledRejection", (err) => {
 });
 function shutdown(code = 1) {
   return new Promise((resolve) => {
-    io.close((err) => {
-      server.close(async () => {
+    Global.io.close((err) => {
+      Global.server.close(async () => {
         try {
           await Promise.all(mongoose.connections.map((c) => c.close()));
         } catch (err) {}
@@ -67,9 +81,4 @@ async function onHealthcheck() {
   if (!status) throw new SimpleError("DB not connect yet!");
 }
 
-createTerminus(server, {
-  healthChecks: { "/health": onHealthcheck },
-  onSignal,
-  signals: ["SIGINT", "SIGTERM"],
-  useExit0: true,
-});
+bootstrap();
