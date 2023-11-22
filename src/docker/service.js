@@ -147,7 +147,7 @@ export class Service {
   static async getRawInspect(name, executer) {
     const inspectCmd = `docker service inspect ${name} -f json`;
     const inspect = JSON.parse(
-      (await executer(new Command({ cmd: inspectCmd }))).trim()
+      (await executer(new Command({ cmd: inspectCmd, out: false }))).trim()
     );
     return inspect;
   }
@@ -224,6 +224,7 @@ export class Service {
   static getAllCmd() {
     return new Command({
       cmd: 'docker service ls --format "{{.Name}} {{.Replicas}}"',
+      out: false,
     });
   }
   static async getAllServices(exec) {
