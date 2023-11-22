@@ -46,7 +46,8 @@ export default class RollbackExecuter extends BaseExecuter {
       conf.isEnd,
       conf.isError,
       conf.whenDifferent,
-      conf.labels
+      conf.labels,
+      conf.credentials
     );
   };
 

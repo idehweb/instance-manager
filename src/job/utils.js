@@ -1,5 +1,5 @@
 import { jobModel } from "../model/job.model.js";
-import { convertToString } from "../utils/helpers.js";
+import { convertToString, regexFactory } from "../utils/helpers.js";
 
 export function log({
   chunk,
@@ -11,10 +11,23 @@ export function log({
   instanceName,
   last_log,
   log_file,
+  credentials = [],
 }) {
   const time = `[${new Date().toISOString()}]`;
   const chunkArr = Array.isArray(chunk) ? chunk : [chunk];
-  const _msg = chunkArr.map((c) => convertToString(c, true)).join(" ");
+
+  let _msg = chunkArr.map((c) => convertToString(c, true)).join(" ");
+
+  // filter credentials
+  if (credentials.length) {
+    _msg = _msg.replace(
+      regexFactory(credentials.replace(/\|/g, "|").join("|"), {
+        flags: "ig",
+        exposeSpec: ["|"],
+      }),
+      "***"
+    );
+  }
 
   // labels
   const _labels_msg = `${labels.map((l) => `[${l}]`).join(" ")}${

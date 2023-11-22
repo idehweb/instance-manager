@@ -44,7 +44,8 @@ export class BaseExecuter {
     isEnd = false,
     isError = false,
     whenDifferent = false,
-    labels = []
+    labels = [],
+    credentials = []
   ) => {
     const conf = {
       chunk,
@@ -56,6 +57,7 @@ export class BaseExecuter {
       last_log: this.last_log,
       labels: [slugify(this.constructor.name), ...labels],
       log_file: this.log_file,
+      credentials,
     };
 
     this.logWithConf(conf);

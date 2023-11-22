@@ -56,7 +56,8 @@ export default class ExecuteManager {
     isEnd = false,
     isError = false,
     whenDifferent = false,
-    labels = []
+    labels = [],
+    credentials = []
   ) {
     this.last_log = log({
       chunk,
@@ -68,6 +69,7 @@ export default class ExecuteManager {
       last_log: this.last_log,
       labels: [this.constructor.name, ...labels].map(slugify),
       log_file: this.log_file,
+      credentials,
     });
   }
   myLogger = (conf) => {
@@ -76,7 +78,8 @@ export default class ExecuteManager {
       conf.isEnd,
       conf.isError,
       conf.whenDifferent,
-      conf.labels
+      conf.labels,
+      conf.credentials
     );
   };
 

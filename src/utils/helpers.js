@@ -204,3 +204,43 @@ export function getNodeewebhub(req) {
   const url = new URL(from);
   return { url: url.origin, api_url: url.href.split("/auth")[0] };
 }
+
+export function regexFactory(
+  str,
+  { specChars, exposeSpec, excludeSpec, flags } = {}
+) {
+  let specialChars = specChars ?? [
+    ".",
+    "+",
+    "*",
+    "?",
+    "/",
+    "(",
+    ")",
+    "[",
+    "]",
+    "^",
+    "$",
+    "&",
+    "|",
+    "{",
+    "}",
+    "\\",
+  ];
+
+  // exclude
+  specialChars.push(...(excludeSpec ?? []));
+
+  // expose
+  specialChars = specialChars.filter((c) => !(exposeSpec ?? []).includes(c));
+
+  // unique
+  specialChars = [...new Set(specialChars)];
+
+  let pattern = "";
+  for (const char of str) {
+    if (specialChars.includes(char)) pattern += `\\${char}`;
+    else pattern += char;
+  }
+  return new RegExp(pattern, flags);
+}
