@@ -127,6 +127,6 @@ export class BaseExecuter {
     );
 
     this.job = newJob._doc;
-    return { jon: this.job };
+    return { job: this.job };
   }
 }
