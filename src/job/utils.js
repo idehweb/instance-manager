@@ -21,10 +21,16 @@ export function log({
   // filter credentials
   if (credentials.length) {
     _msg = _msg.replace(
-      regexFactory(credentials.replace(/\|/g, "|").join("|"), {
-        flags: "ig",
-        exposeSpec: ["|"],
-      }),
+      regexFactory(
+        credentials
+          .filter((c) => c)
+          .map((c) => c.replace(/\|/g, "|"))
+          .join("|"),
+        {
+          flags: "ig",
+          exposeSpec: ["|"],
+        }
+      ),
       "***"
     );
   }

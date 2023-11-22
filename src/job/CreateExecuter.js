@@ -16,6 +16,7 @@ import DBCmd from "../db/index.js";
 import { SimpleError } from "../common/error.js";
 import { JobStatus } from "../model/job.model.js";
 import { nameToDir } from "./utils.js";
+import { Command } from "../common/Command.js";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
@@ -70,7 +71,6 @@ export default class CreateExecuter extends BaseExecuter {
 
     // check docker services
     const listServices = await DockerService.getAllServices(this.exec);
-    this.log("after list service", listServices);
     const myService = listServices.find((s = "") => {
       return s.includes(this.instance_name);
     });
@@ -81,7 +81,7 @@ export default class CreateExecuter extends BaseExecuter {
       app_name: this.instance.site_name,
       service_name: this.instance_name,
       dbName: this.instance.db,
-      dbUri,
+      dbURL: new URL(dbUri),
       site_url: `https://${this.instance.primary_domain}`,
       executer: "x-docker",
       maxRetries: 6,
@@ -92,7 +92,9 @@ export default class CreateExecuter extends BaseExecuter {
     if (myService) {
       if (myService.split(" ")[1].startsWith("0")) {
         // must remove service
-        const dockerRm = `docker service rm ${this.instance_name}`;
+        const dockerRm = DockerService.getDeleteServiceCommand(
+          this.instance_name
+        );
         await this.exec(dockerRm);
 
         // create new one
@@ -196,7 +198,9 @@ export default class CreateExecuter extends BaseExecuter {
     const cmd = `mongorestore --db ${this.instance_name} --drop ${
       Global.env.isPro ? "--quiet" : ""
     } ${Global.env.MONGO_REMOTE_URL} ${getInstanceDbPath(this.instance)}`;
-    await this.exec(cmd);
+    await this.exec(
+      new Command({ cmd, credentials: [Global.env.MONGO_REMOTE_URL] })
+    );
   }
 
   async create_user_in_db() {

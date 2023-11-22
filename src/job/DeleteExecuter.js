@@ -13,6 +13,7 @@ import Nginx from "../common/nginx.js";
 import DBCmd from "../db/index.js";
 import { JobStatus } from "../model/job.model.js";
 import { nameToDir } from "./utils.js";
+import { Command } from "../common/Command.js";
 export default class DeleteExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
     super(job, instance, log_file, logger);
@@ -82,18 +83,15 @@ export default class DeleteExecuter extends BaseExecuter {
 
   async backup_db() {
     this.log("backup instance db");
-    const backup_cmd = `mongodump --db ${
-      this.instance_name
-    } --out ${getPublicPath(`backup/${this.instance_name}/db`, this.remote)} ${
-      Global.env.isPro ? "--quiet" : ""
-    } ${Global.env.MONGO_URL}`;
-    await this.exec(backup_cmd);
+    if (!this.instance.db)
+      return this.log("not initial any db for backup instance db");
+    await this.exec(DBCmd.backupDB(this.instance.db));
   }
   async rm_db() {
     this.log("Delete instance db");
-    const cmd_with_mongosh = `mongosh --quiet ${Global.env.MONGO_URL} --eval "use ${this.instance_name}" --eval "db.dropDatabase()"`;
-    const cmd_with_x_mongo = `x-mongo drop-db ${this.instance_name}`;
-    await this.exec(cmd_with_x_mongo);
+    if (!this.instance.db)
+      return this.log("not initial any db for drop instance db");
+    await this.exec(DBCmd.dropDB(this.instance.db));
   }
 
   async rm_domain_cert() {
@@ -132,8 +130,8 @@ export default class DeleteExecuter extends BaseExecuter {
   }
 
   async rm_user_from_db() {
+    this.log("Remove user from db");
     await this.exec(DBCmd.deleteUser({ db: this.instance.db, user: "owner" }));
-    this.log("rm user from db");
   }
 
   async sync_db(isError = false) {

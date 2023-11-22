@@ -5,6 +5,7 @@ import { runRemoteCmd, runRemoteCmdWithId } from "../ws/index.js";
 import { getMyIp, getSlaveSocketOpt, slugify } from "../utils/helpers.js";
 import { SimpleError } from "../common/error.js";
 import { log } from "./utils.js";
+import { Command } from "../common/Command.js";
 
 export class BaseExecuter {
   last_log;
@@ -60,14 +61,31 @@ export class BaseExecuter {
       credentials,
     };
 
-    this.logWithConf(conf);
+    this.#log(conf);
   };
-  logWithConf = (conf) => {
+  logWithConf = (conf = {}) => {
+    const newConf = {
+      chunk: conf.chunk,
+      isEnd: conf.isEnd ?? false,
+      isError: conf.isError ?? false,
+      whenDifferent: conf.whenDifferent ?? false,
+      jobId: this.job._id,
+      instanceName: this.instance_name,
+      last_log: this.last_log,
+      labels: [slugify(this.constructor.name), ...conf.labels],
+      log_file: this.log_file,
+      credentials: conf.credentials,
+    };
+    return this.#log(newConf);
+  };
+
+  #log = (conf) => {
     if (this.logger) this.last_log = this.logger(conf);
     else this.last_log = log(conf);
   };
 
   exec = (cmd) => {
+    cmd = cmd instanceof Command ? cmd : new Command({ cmd });
     return runRemoteCmd(this.instance.server_socket, cmd, {
       log: (isSlave, ...msgs) => {
         this.log(
@@ -75,7 +93,8 @@ export class BaseExecuter {
           false,
           false,
           true,
-          isSlave ? ["slave", this.instance.server_ip] : []
+          isSlave ? ["slave", this.instance.server_ip] : [],
+          cmd.credentials
         );
       },
       error: (isSlave, ...msgs) => {
@@ -84,7 +103,8 @@ export class BaseExecuter {
           false,
           true,
           true,
-          isSlave ? ["slave", this.instance.server_ip] : []
+          isSlave ? ["slave", this.instance.server_ip] : [],
+          cmd.credentials
         );
       },
     });

@@ -6,6 +6,7 @@ import { InstanceStatus } from "../model/instance.model.js";
 import { getEnv, getEnvFromMultiChoose } from "../utils/helpers.js";
 import { supSignToken } from "../supervisor/utils.js";
 import { normalizeArg } from "./utils.js";
+import { Command } from "../common/Command.js";
 export class Service {
   static async getSystemStatus() {}
   static async getServiceStatus(name) {
@@ -21,7 +22,7 @@ export class Service {
     app_name,
     site_url,
     dbName,
-    dbUri,
+    dbURL,
     service_name,
     ownerId,
     nodeewebhub,
@@ -29,9 +30,11 @@ export class Service {
     domains,
     ...instance
   }) {
+    const credentials = [];
+
     const envs = {
       SHARED_PATH: "/app/shared",
-      MONGO_URL: dbUri,
+      MONGO_URL: dbURL.href,
       DB_NAME: dbName,
       PORT: "3000",
       AUTH_SECRET: crypto.randomBytes(24).toString("hex"),
@@ -53,6 +56,12 @@ export class Service {
       ),
       SUPERVISOR_TOKEN: await supSignToken(instance._id.toString(), instance),
     };
+
+    // add credentials
+    ["AUTH_SECRET", "ADMIN_PASSWORD", "SUPERVISOR_TOKEN"].map((k) =>
+      credentials.push(envs[k])
+    );
+    credentials.push(dbURL.password);
 
     const envArgs = Object.entries(envs)
       .filter(([k, v]) => v)
@@ -100,21 +109,24 @@ export class Service {
         " "
       );
 
-    if (executer === "docker") return dockerCreate;
-    return `x-docker --max-retries ${maxRetries} ${dockerCreate}`;
+    let cmd;
+    if (executer === "docker") cmd = dockerCreate;
+    else cmd = `x-docker --max-retries ${maxRetries} ${dockerCreate}`;
+
+    return new Command({ cmd, credentials });
   }
   static getDeleteServiceCommand(name) {
-    return `docker service rm ${name}`;
+    return new Command({ cmd: `docker service rm ${name}` });
   }
   static _getUpdateServiceCommand(
     name,
     configs,
-    { executer = "x-docker", maxRetries = 6 } = {
+    { executer = "x-docker", maxRetries = 6, credentials } = {
       executer: "x-docker",
       maxRetries: 6,
     }
   ) {
-    const cmd = `docker service update ${Object.entries(configs)
+    let cmd = `docker service update ${Object.entries(configs)
       .map(([k, v]) =>
         Array.isArray(v)
           ? `${v.map((sub_v) => `--${k} ${normalizeArg(sub_v)}`).join(" ")}`
@@ -122,8 +134,10 @@ export class Service {
       )
       .join(" ")} ${name}`;
 
-    if (executer === "docker") return cmd;
-    return `x-docker --max-reties ${maxRetries} ${cmd}`;
+    if (executer !== "docker")
+      cmd = `x-docker --max-reties ${maxRetries} ${cmd}`;
+
+    return new Command({ cmd, credentials });
   }
 
   static async getInspect(name, executer) {
@@ -132,7 +146,9 @@ export class Service {
   }
   static async getRawInspect(name, executer) {
     const inspectCmd = `docker service inspect ${name} -f json`;
-    const inspect = JSON.parse((await executer(inspectCmd)).trim());
+    const inspect = JSON.parse(
+      (await executer(new Command({ cmd: inspectCmd }))).trim()
+    );
     return inspect;
   }
 
@@ -147,7 +163,7 @@ export class Service {
       configs_add,
       configs_rm,
     },
-    { name, executer, maxRetries }
+    { name, executer, maxRetries, credentials }
   ) {
     const args = {};
     if (envs_add) {
@@ -201,11 +217,14 @@ export class Service {
     return Service._getUpdateServiceCommand(name, args, {
       executer,
       maxRetries,
+      credentials,
     });
   }
 
   static getAllCmd() {
-    return 'docker service ls --format "{{.Name}} {{.Replicas}}"';
+    return new Command({
+      cmd: 'docker service ls --format "{{.Name}} {{.Replicas}}"',
+    });
   }
   static async getAllServices(exec) {
     const all = await exec(this.getAllCmd());

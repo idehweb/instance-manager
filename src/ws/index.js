@@ -6,6 +6,7 @@ import { DisconnectError } from "./error.js";
 import { SimpleError } from "../common/error.js";
 import { normalizeRegion } from "../utils/helpers.js";
 import { getIP, getRegion, isConnect } from "./utils.js";
+import { Command } from "../common/Command.js";
 
 const confMap = new Map();
 
@@ -113,13 +114,15 @@ export async function runRemoteCmdWithId(id, cmd, logger) {
 }
 
 export async function runRemoteCmd(targetSocket, cmd, logger) {
+  if (!(cmd instanceof Command)) cmd = new Command({ cmd });
+
   if (!isConnect(targetSocket))
     throw new SimpleError("not received any connected target socket");
 
   logger.log(
     false,
     `remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
-    cmd
+    cmd.cmd
   );
 
   const cmdId = crypto.randomUUID();

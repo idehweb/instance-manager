@@ -184,7 +184,6 @@ export default class ExecuteManager {
 
     const needRollbackSteps = [progress_step, ...done_steps.reverse()];
     const rollbackSteps = step2Rollback(...needRollbackSteps);
-    this.log({ rollbackSteps });
 
     // execute steps stack
     await this.#execute_stack(rollbackSteps, {
