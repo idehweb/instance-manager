@@ -66,12 +66,10 @@ class Service {
     if (
       req.instance.jobs.some(({ status }) => status === JobStatus.IN_PROGRESS)
     )
-      return res
-        .status(400)
-        .json({
-          status: "error",
-          message: "please wait until in progress jobs done!",
-        });
+      return res.status(400).json({
+        status: "error",
+        message: "please wait until in progress jobs done!",
+      });
 
     // prevent multi update
     const updateCounts = Service._getUpdateCounts(update);
@@ -167,11 +165,18 @@ class Service {
     return res.status(202).json({ status: "success", job });
   }
   static async deleteOne(req, res, next) {
-    if (req.instance.status === InstanceStatus.JOB_CREATE)
+    if (
+      !req.instance.active ||
+      [InstanceStatus.JOB_CREATE, InstanceStatus.DELETED].includes(
+        req.instance.status
+      )
+    ) {
       return res.status(400).json({
         status: "error",
-        message: "can not delete instance when job is still executing...",
+        message: "can not delete inactive or deleted instance",
       });
+    }
+
     const job = await jobModel.create({
       type: JobType.DELETE,
       instance: req.instance,
