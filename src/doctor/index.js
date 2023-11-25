@@ -29,12 +29,5 @@ const logger = {
 
 export default function registerDoctor() {
   const doctor = new Doctor(logger);
-  doctor
-    .examine()
-    .then(() => {
-      logger.log("finish successfully");
-    })
-    .catch((err) => {
-      logger.error(["finish with error", err]);
-    });
+  doctor.startInterval();
 }

@@ -11,6 +11,18 @@ export class Doctor {
     this.logger = logger;
   }
 
+  async startInterval({ sec = 60 * 60, startNow = true } = {}) {
+    const func = async () => {
+      try {
+        await this.examine();
+      } catch (err) {
+        this.logger.log(["examine rase error", err]);
+      }
+    };
+    if (startNow) func();
+    setInterval(func, sec * 1000);
+  }
+
   async examine() {
     this.logger.log("start examine...");
     this.logger.log("fetch alone jobs...");
