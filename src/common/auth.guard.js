@@ -28,7 +28,8 @@ export function hostGuard(req, res, next) {
 }
 
 export async function tokenGuard(req, res, next) {
-  if (Global.whitelist_path.has(req.path)) return next();
+  const whitePath = [...Global.whitelist_path.keys()];
+  if (whitePath.some((p) => req.path.includes(p))) return next();
   try {
     const token =
       req.headers.authorization?.split("Bearer ")?.[1] ?? req.cookies?.auth;

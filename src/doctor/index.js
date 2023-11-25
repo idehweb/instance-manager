@@ -32,9 +32,9 @@ export default function registerDoctor() {
   doctor
     .examine()
     .then(() => {
-      logger.log("examine finish successfully");
+      logger.log("finish successfully");
     })
     .catch((err) => {
-      logger.error(["examine failed", err]);
+      logger.error(["finish with error", err]);
     });
 }

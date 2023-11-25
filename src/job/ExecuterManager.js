@@ -19,16 +19,19 @@ import RollbackExecuter from "./RollbackExecuter.js";
 
 export default class ExecuteManager {
   last_log;
-  constructor(job, instance, res, req, id) {
+  constructor(job, instance, res, req, id, labels) {
     this.id = id ?? crypto.randomUUID();
     this.job = { ...job._doc };
     this.instance = { ...instance._doc };
     this.remote = new Remote(instance.region);
     this.log_file = fs.createWriteStream(getLogFilePath(this), {
       encoding: "utf8",
+      autoClose: true,
+      flags: "a",
     });
     this.res = res;
     this.req = req;
+    this.labels = labels ?? [];
 
     // initial executer
     this.executer = new (convertJobTypeToExecuter(this.job.type))(
@@ -38,8 +41,8 @@ export default class ExecuteManager {
       this.myLogger
     );
   }
-  static async buildAndRun(job, instance, res, req, id) {
-    const manager = new ExecuteManager(job, instance, res, req, id);
+  static async buildAndRun(job, instance, res, req, id, labels) {
+    const manager = new ExecuteManager(job, instance, res, req, id, labels);
 
     // undertake
     try {
@@ -83,7 +86,7 @@ export default class ExecuteManager {
       jobId: this.job._id,
       instanceName: this.instance_name,
       last_log: this.last_log,
-      labels: [this.constructor.name, ...labels].map(slugify),
+      labels: [...this.labels, this.constructor.name, ...labels].map(slugify),
       log_file: this.log_file,
       credentials,
     });
@@ -109,14 +112,18 @@ export default class ExecuteManager {
       },
       {
         filter: {
-          _id: this.job._id,
-          $expr: {
-            $or: [
-              { executer: { $exists: false } },
-              { "executer.isAlive": false },
-              { "executer.id": this.id },
-            ],
-          },
+          $and: [
+            {
+              _id: this.job._id,
+            },
+            {
+              $or: [
+                { executer: { $exists: false } },
+                { "executer.isAlive": false },
+                { "executer.id": this.id },
+              ],
+            },
+          ],
         },
       }
     );
@@ -242,22 +249,28 @@ export default class ExecuteManager {
   }
 
   async finishWithError() {
-    // snapshot of step
-    const progress_step = this.job.progress_step;
+    try {
+      // snapshot of step
+      const progress_step = this.job.progress_step;
 
-    // sync db
-    this.log("try to sync db", false, true, false, ["finishWithError"]);
-    await this.#updateJobStep({ progress_step: JobSteps.SYNC_DB });
-    await this.#sync_db(true);
-    await this.#updateJobStep({ done_step: JobSteps.SYNC_DB });
+      // sync db
+      this.log("try to sync db", false, true, false, ["finishWithError"]);
+      await this.#updateJobStep({ progress_step: JobSteps.SYNC_DB });
+      await this.#sync_db(true);
+      await this.#updateJobStep({ done_step: JobSteps.SYNC_DB });
 
-    // rollback
-    this.log("start rollback", false, true, false, ["finishWithError"]);
-    await this.#rollback(progress_step);
+      // rollback
+      this.log("start rollback", false, true, false, ["finishWithError"]);
+      await this.#rollback(progress_step);
 
-    // serve
-    this.log("Finish with Error", true, true, false, ["finishWithError"]);
-    this.sendResultToClient(false);
+      // serve
+      this.log("Finish with Error", true, true, false, ["finishWithError"]);
+      this.sendResultToClient(false);
+    } catch (err) {
+      this.log(["Finish with Error&Failed", err], true, true, false, [
+        "finishWithError",
+      ]);
+    }
   }
 
   #sync_db = async (isError = false) => {
