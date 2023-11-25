@@ -1,7 +1,13 @@
 import fs from "fs";
 import crypto from "crypto";
 import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
-import { axiosError2String, getMyIp, slugify, wait } from "../utils/helpers.js";
+import {
+  axiosError2String,
+  getEnv,
+  getMyIp,
+  slugify,
+  wait,
+} from "../utils/helpers.js";
 import { Global } from "../global.js";
 import { transform } from "../common/transform.js";
 import { Remote } from "../utils/remote.js";
@@ -107,7 +113,8 @@ export default class ExecuteManager {
       {
         executer: {
           id: this.id,
-          ip: getMyIp(false),
+          ip: getMyIp(true),
+          host: getEnv("internal-host-name"),
         },
       },
       {

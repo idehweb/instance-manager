@@ -135,7 +135,8 @@ export const jobSchema = new mongoose.Schema(
       type: {
         _id: false,
         id: { type: String, required: true },
-        ip: { type: String, required: true },
+        host: { type: String },
+        ip: { type: String },
         isAlive: { type: Boolean, default: true },
       },
       required: false,

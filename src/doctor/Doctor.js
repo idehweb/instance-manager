@@ -100,6 +100,7 @@ export class Doctor {
         executer: {
           id: execId,
           ip: getMyIp(true),
+          host: getEnv("internal-host-name"),
           isAlive: true,
         },
       }
@@ -124,15 +125,21 @@ export class Doctor {
 
   async checkAliveness(job) {
     if (!job.executer?.isAlive) return false;
+
+    const { host, ip, id } = job.executer;
+
+    if (host && host === getEnv("internal-host-name"))
+      // local
+      return Global.jobs.has(id);
+
+    const adr = host ?? ip;
+
     try {
-      await axios.get(
-        `http://${job.executer.ip}:${Global.env.PORT}/api/v1/doctor/${job.executer.id}`,
-        {
-          headers: {
-            Authorization: getEnv("internal-token", { format: "string" }),
-          },
-        }
-      );
+      await axios.get(`http://${adr}:${Global.env.PORT}/api/v1/doctor/${id}`, {
+        headers: {
+          Authorization: getEnv("internal-token", { format: "string" }),
+        },
+      });
       return true;
     } catch (err) {
       return false;

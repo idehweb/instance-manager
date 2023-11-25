@@ -12,8 +12,9 @@ export function transform(content, code, req) {
     if (result.jobs) result.jobs = { ...result.jobs.map((j) => j._doc) };
     const jobs = [result.job, ...(result.jobs ?? [])].filter((j) => j);
     jobs.forEach((job) => {
-      delete job.logs;
-      delete job.error;
+      // delete job.logs;
+      // delete job.errs;
+      delete job.executer;
     });
   }
 
