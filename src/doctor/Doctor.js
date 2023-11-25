@@ -11,7 +11,11 @@ export class Doctor {
     this.logger = logger;
   }
 
-  async startInterval({ sec = 60 * 60, startNow = true } = {}) {
+  async startInterval({
+    sec = 60 * 60,
+    startNow = true,
+    firstDelay = 30,
+  } = {}) {
     const func = async () => {
       try {
         await this.examine();
@@ -19,8 +23,11 @@ export class Doctor {
         this.logger.log(["examine rase error", err]);
       }
     };
-    if (startNow) func();
     setInterval(func, sec * 1000);
+    if (startNow) {
+      if (firstDelay) await wait(firstDelay);
+      func();
+    }
   }
 
   async examine() {
