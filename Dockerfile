@@ -5,19 +5,9 @@ WORKDIR /app
 ENV INIT_BEFORE Docker
 ENV PORT 3000
 ENV PUBLIC_PATH ./public
-ENV REMOTE_PUBLIC_PATH /var/instanceManager
-ENV MONGO_URL mongodb://mongomaster:27017,mongoslave1:27017,mongoslave2:27017/?replicaSet=mongoReplica
-ENV MONGO_REMOTE_URL mongodb://127.0.0.1:27017/
 ENV MONGO_DB InstanceManager
-ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-shop
 ENV NODEEWEB_DB Idehweb
 ENV JOB_MAX_ATTEMPTS 3
-ENV AUTH_SECRET nodeeweb-token
-ENV ARVAN_TOKEN "apikey 2ecdbfd6-8d9d-55eb-8b6a-e14b718032d7"
-ENV CF_TOKEN FSkS5Wh12LP5avhlgyC3nq7v4vJJZZJfHa0vEiUp
-ENV CF_EMAIL info@idehweb.com
-ENV CF_ZONE_ID e3ea0d3f1a9f06ec460f6ea10cf95487
-ENV CF_ACCOUNT_ID 8049dc6f45635baedfbd4204cd446ebc
 ENV SSH_PRIVATE_KEY_PATH /root/.ssh/host-private
 EXPOSE ${PORT}
 
@@ -32,24 +22,23 @@ HEALTHCHECK --interval=1m --timeout=15s --retries=3 --start-period=2m \
     CMD curl -fk http://localhost:${PORT}/health || exit 1
 
 
+FROM base as build
+
 COPY package*.json ./
 
 # install npm packages
-RUN npm ci && npm cache clean --force
+RUN npm i
+
+# Copy Modules
+COPY . .
+
+# Build
+RUN npm run full:build
+
 
 FROM base as pro
 ENV NODE_ENV production
-ENV KNOWN_HOSTS nodeeweb-server,localhost
-ENV INSTANCE_DEFAULT_IMAGE idehweb/nodeeweb-shop
-ENV NODEEWEB_IP 185.110.190.242
-ENV GERMAN_IP 185.110.190.242
-ENV IRAN_IP 185.19.201.61
-ENV DOCKER_IRAN_CTX iran-ctx
-ENV DOCKER_GERMAN_CTX german-ctx
-ENV DOCKER_DEFAULT_CTX default
-ENV ARVAN_DOMAIN nodeeweb.ir
-ENV CF_DOMAIN nodeeweb.com
-COPY . .
+COPY --from=build /app/dist /app/
 # COPY ./docker-entrypoint.sh /usr/local/bin
 # ENTRYPOINT [ "docker-entrypoint.sh" ]
-CMD [ "server" ]
+CMD [ "--enable-source-maps" ,"index.cjs" ]
