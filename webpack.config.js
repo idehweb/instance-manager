@@ -10,27 +10,11 @@ export default {
   },
   output: {
     path: resolve("dist"),
-    filename: "bundle.cjs",
+    filename: "index.cjs",
     clean: true,
   },
-  resolve: {
-    extensions: [".js"],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader",
-          options: {
-            presets: ["@babel/preset-env"],
-          },
-        },
-      },
-    ],
-  },
-  externals: {
-    cloudflare: "commonjs cloudflare",
+  devtool: "source-map",
+  optimization: {
+    minimize: false,
   },
 };

@@ -1,6 +1,6 @@
 import { JobStatus, jobModel } from "../model/job.model.js";
 import { Remote } from "../utils/remote.js";
-import { runRemoteCmd, runRemoteCmdWithId } from "../ws/index.js";
+import { runRemoteCmd } from "../ws/index.js";
 import { getSlaveSocketOpt, slugify } from "../utils/helpers.js";
 import { SimpleError } from "../common/error.js";
 import { log } from "./utils.js";

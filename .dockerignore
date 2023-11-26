@@ -14,3 +14,6 @@ public/static
 public/db
 public/backup
 public/nginx/test
+dist
+.cache
+.parcel-cache

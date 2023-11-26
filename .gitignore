@@ -7,4 +7,5 @@ public/db
 public/backup
 public/nginx/test
 .cache/
+.parcel-cache/
 dist/

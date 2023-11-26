@@ -79,7 +79,7 @@ class ExpireService {
         if (line.includes("server_name ")) {
           // server name line
           let domains = [];
-          for (const word of line.split(" ")) {
+          for (let word of line.split(" ")) {
             if (!word || word == "server_name") continue;
             word = word.replace(";", "");
             domains.push(word);
