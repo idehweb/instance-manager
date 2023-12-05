@@ -152,7 +152,7 @@ export default class ExecuteManager {
       }
       // update
       if (this.job.type === JobType.UPDATE) {
-        await this.#update_instance(this.req.body);
+        await this.#update_instance();
       }
       // delete
       if (this.job.type === JobType.DELETE) {
@@ -390,15 +390,17 @@ export default class ExecuteManager {
     // execute
     await this.#execute_stack(stack);
   }
-  async #update_instance({
-    domains_add,
-    domains_rm,
-    image,
-    site_name,
-    primary_domain,
-    status,
-  }) {
+  async #update_instance() {
     const stack = [];
+    const {
+      domains_add,
+      domains_rm,
+      image,
+      site_name,
+      primary_domain,
+      status,
+    } = this.job.update_query;
+
     // change status
     if (status) {
       stack.push(JobSteps.CHANGE_STATUS);
