@@ -201,7 +201,8 @@ class Service {
       body.region ??
       getEnvFromMultiChoose(getSafeReferrer(req), "defaultRegions") ??
       InstanceRegion.GERMAN;
-    const slug = slugify(body.name);
+    // const slug = slugify(body.name);
+    const slug = body.name;
     const defaultDomain = Network.getDefaultDomain({
       name: slug,
       region,

@@ -9,7 +9,8 @@ import { createRandomName } from "../utils/helpers.js";
 function nameValidator(name, helpers) {
   const cond = !name || (typeof name == "string" && /^[[a-z0-9]+$/.test(name));
 
-  if (!cond) return helpers.error("name must combine of en chars and numbers");
+  if (!cond)
+    return helpers.message("name must combine of en chars and numbers");
 
   return name;
 }
