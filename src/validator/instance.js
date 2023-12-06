@@ -6,11 +6,21 @@ import {
 } from "../model/instance.model.js";
 import { createRandomName } from "../utils/helpers.js";
 
+function nameValidator(name, helpers) {
+  const cond = !name || (typeof name == "string" && /^[[a-z0-9]+$/.test(name));
+
+  if (!cond) return helpers.error("name must combine of en chars and numbers");
+
+  return name;
+}
+
 const instanceCreateValSch = Joi.object({
   name: Joi.string()
     .optional()
-    .min(2)
+    .min(3)
     .max(100)
+    .lowercase()
+    .custom(nameValidator)
     .default(() => createRandomName(8)),
   site_name: Joi.string().optional().min(2).max(100).default(Joi.ref("name")),
   pattern: Joi.string()
@@ -37,7 +47,12 @@ const instanceCreateValSch = Joi.object({
 });
 
 export const instanceValidSch = Joi.object({
-  name: Joi.string().optional().min(2).max(100),
+  name: Joi.string()
+    .optional()
+    .min(3)
+    .max(100)
+    .lowercase()
+    .custom(nameValidator),
   domains: Joi.array().items(Joi.string().domain()).optional(),
   region: Joi.string()
     .valid(...Object.values(InstanceRegion))
