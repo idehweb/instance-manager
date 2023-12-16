@@ -135,10 +135,10 @@ export default class ExecuteManager {
       }
     );
 
-    // set job to map
-    Global.jobs.set(this.job.id, this);
-
     if (!newJob) throw new Error("can not undertake this job");
+
+    // set executer to map
+    Global.executers.set(this.id, this);
   }
 
   async execute() {

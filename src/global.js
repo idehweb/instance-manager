@@ -1,6 +1,6 @@
 export const Global = {
   slaveSockets: {},
-  jobs: new Map(),
+  executers: new Map(),
   apiUrls: new Map(),
   defaultRegions: new Map(),
   whitelist_path: new Map(),

@@ -4,7 +4,7 @@ import { catchMiddleware } from "../utils/catchAsync.js";
 class Service {
   getOne = catchMiddleware(async (req, res, next) => {
     const id = req.params.id;
-    const hasManager = Global.jobs.has(id);
+    const hasManager = Global.executers.has(id);
     if (hasManager)
       return res.status(200).json({ status: "success", health: "healthy" });
 

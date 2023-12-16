@@ -135,9 +135,11 @@ export class Doctor {
 
     const { host, ip, id } = job.executer;
 
-    if (host && host === getEnv("internal-host-name"))
+    if (host && host === getEnv("internal-host-name")) {
       // local
-      return Global.jobs.has(id);
+      console.log("this is my job", Global.executers.has(id), "in global");
+      return Global.executers.has(id);
+    }
 
     const adr = host ?? ip;
 
@@ -149,6 +151,7 @@ export class Doctor {
       });
       return true;
     } catch (err) {
+      console.log("req for job failed", err);
       return false;
     }
   }
