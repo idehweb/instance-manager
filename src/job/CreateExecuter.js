@@ -65,7 +65,7 @@ export default class CreateExecuter extends BaseExecuter {
 
   async static_permissions() {
     const publicPath = join(nameToDir(this.instance_name), "public");
-    const cmd = `chgrp -R public ${publicPath} && chmod 664 -R ${publicPath}`;
+    const cmd = `sudo chgrp -R public ${publicPath} && sudo chmod 774 -R ${publicPath}`;
     await this.exec(cmd);
   }
 

@@ -347,12 +347,12 @@ export default class ExecuteManager {
       JobSteps.CREATE_STATIC_DIRS,
       JobSteps.CREATE_LINKS,
       JobSteps.COPY_STATIC,
-      JobSteps.STATIC_PERMISSIONS,
       JobSteps.CREATE_USER_IN_DB,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,
       JobSteps.ADD_DOMAIN_CERT,
       JobSteps.RESTORE_DEMO,
+      JobSteps.STATIC_PERMISSIONS,
       JobSteps.SYNC_DB,
     ].filter((step) => {
       // not use demo steps on none pattern mode

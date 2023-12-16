@@ -67,7 +67,7 @@ export async function tokenGuard(req, res, next) {
     };
     return next();
   } catch (err) {
-    console.error(axiosError2String(err));
+    //  console.error(axiosError2String(err));
     return res.status(401).json({ message: "unAuthorization , from auth api" });
   }
 }
