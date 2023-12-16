@@ -137,7 +137,6 @@ export class Doctor {
 
     if (host && host === getEnv("internal-host-name")) {
       // local
-      console.log("this is my job", Global.executers.has(id), "in global");
       return Global.executers.has(id);
     }
 
@@ -151,7 +150,6 @@ export class Doctor {
       });
       return true;
     } catch (err) {
-      console.log("req for job failed", err);
       return false;
     }
   }
