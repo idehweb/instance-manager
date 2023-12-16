@@ -12,6 +12,7 @@ export const JobSteps = {
 
   CREATE_STATIC_DIRS: "create-static-dirs",
   COPY_STATIC: "copy-static",
+  STATIC_PERMISSIONS: "static-permissions",
   ROLLBACK_STATIC_FILES: "rollback-static-files",
 
   CREATE_LINKS: "create-links",

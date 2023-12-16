@@ -1,6 +1,6 @@
 import fs from "fs";
 import crypto from "crypto";
-import { JobStatus, JobSteps, JobType, jobModel } from "../model/job.model.js";
+import { JobSteps, JobType, jobModel } from "../model/job.model.js";
 import {
   axiosError2String,
   getEnv,
@@ -347,6 +347,7 @@ export default class ExecuteManager {
       JobSteps.CREATE_STATIC_DIRS,
       JobSteps.CREATE_LINKS,
       JobSteps.COPY_STATIC,
+      JobSteps.STATIC_PERMISSIONS,
       JobSteps.CREATE_USER_IN_DB,
       JobSteps.CREATE_SERVICE,
       JobSteps.CDN_REGISTER,

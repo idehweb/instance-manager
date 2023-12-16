@@ -17,6 +17,7 @@ import { SimpleError } from "../common/error.js";
 import { JobStatus } from "../model/job.model.js";
 import { nameToDir } from "./utils.js";
 import { Command } from "../common/Command.js";
+import { join } from "path";
 
 export default class CreateExecuter extends BaseExecuter {
   constructor(job, instance, log_file, logger) {
@@ -61,6 +62,13 @@ export default class CreateExecuter extends BaseExecuter {
     )} ${nameToDir(this.instance_name)}/public`;
     await this.exec(copyStatics);
   }
+
+  async static_permissions() {
+    const publicPath = join(nameToDir(this.instance_name), "public");
+    const cmd = `chgrp -R public ${publicPath} && chmod 664 -R ${publicPath}`;
+    await this.exec(cmd);
+  }
+
   async docker_create() {
     // db uri
     let dbUri = this.dbUri;
