@@ -30,6 +30,7 @@ export function hostGuard(req, res, next) {
 export async function tokenGuard(req, res, next) {
   const whitePath = [...Global.whitelist_path.keys()];
   if (whitePath.some((p) => req.path.includes(p))) return next();
+  let targetUrl;
   try {
     const token =
       req.headers.authorization?.split("Bearer ")?.[1] ?? req.cookies?.auth;
@@ -39,7 +40,7 @@ export async function tokenGuard(req, res, next) {
 
     const userType =
       user.payload.type ?? (user.payload.role ?? "").split(":")?.[0];
-    const targetUrl = getEnvFromMultiChoose(getSafeReferrer(req), "apiUrls");
+    targetUrl = getEnvFromMultiChoose(getSafeReferrer(req), "apiUrls");
     if (targetUrl === "*") {
       req.user = user.payload;
       req.user._id = req.user.id;
@@ -68,7 +69,9 @@ export async function tokenGuard(req, res, next) {
     return next();
   } catch (err) {
     //  console.error(axiosError2String(err));
-    return res.status(401).json({ message: "unAuthorization , from auth api" });
+    return res
+      .status(401)
+      .json({ message: `unAuthorization , from ${targetUrl} api` });
   }
 }
 
