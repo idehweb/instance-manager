@@ -194,9 +194,9 @@ export function slugify(str = "") {
 export function getSafeReferrer(req) {
   try {
     const hostname =
-      req.headers["x-origin"] ??
-      req.headers["x-referrer"] ??
-      req.get("Referrer") ??
+      req.headers["x-origin"] ||
+      req.headers["x-referrer"] ||
+      req.get("Referrer") ||
       req.hostname;
     return new URL(hostname).hostname;
   } catch (err) {
