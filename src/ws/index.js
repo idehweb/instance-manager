@@ -119,11 +119,12 @@ export async function runRemoteCmd(targetSocket, cmd, logger) {
   if (!isConnect(targetSocket))
     throw new SimpleError("not received any connected target socket");
 
-  logger.log(
-    false,
-    `remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
-    cmd.cmd
-  );
+  if (cmd.log)
+    logger.log(
+      false,
+      `remote command in ${getRegion(targetSocket)}:${getIP(targetSocket)}`,
+      cmd.cmd
+    );
 
   const cmdId = crypto.randomUUID();
   targetSocket.emit("command", { id: cmdId, cmd });

@@ -147,7 +147,9 @@ export class Service {
   static async getRawInspect(name, executer) {
     const inspectCmd = `docker service inspect ${name} -f json`;
     const inspect = JSON.parse(
-      (await executer(new Command({ cmd: inspectCmd, out: false }))).trim()
+      (
+        await executer(new Command({ cmd: inspectCmd, out: false, log: false }))
+      ).trim()
     );
     return inspect;
   }
