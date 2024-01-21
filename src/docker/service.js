@@ -141,10 +141,8 @@ export class Service {
   }
 
   static async getInspect(name, executer) {
-    try {
-      const raw = await Service.getRawInspect(name, executer);
-      return raw?.[0]?.Spec ?? {};
-    } catch (err) {}
+    const raw = await Service.getRawInspect(name, executer);
+    return raw?.[0]?.Spec ?? {};
   }
   static async getRawInspect(name, executer) {
     const inspectCmd = `docker service inspect ${name} -f json`;
