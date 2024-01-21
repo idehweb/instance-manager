@@ -102,7 +102,7 @@ export async function runRemoteCmdWithRegion(region, cmd, logger = console) {
       `there is not any connected socket for ${region} region`
     );
 
-  await runRemoteCmd(targetSocket, cmd, logger);
+  return await runRemoteCmd(targetSocket, cmd, logger);
 }
 
 export async function runRemoteCmdWithId(id, cmd, logger) {
@@ -110,7 +110,7 @@ export async function runRemoteCmdWithId(id, cmd, logger) {
   if (!targetSocket)
     throw new SimpleError(`there is not any connected socket with id ${id}`);
 
-  await runRemoteCmd(targetSocket, cmd, logger);
+  return await runRemoteCmd(targetSocket, cmd, logger);
 }
 
 export async function runRemoteCmd(targetSocket, cmd, logger) {

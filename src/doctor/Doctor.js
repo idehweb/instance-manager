@@ -8,6 +8,7 @@ import { InstanceStatus, instanceModel } from "../model/instance.model.js";
 import { runRemoteCmdWithRegion } from "../ws/index.js";
 import { Command } from "../common/Command.js";
 import DockerService from "../docker/service.js";
+import { getInstanceName } from "../docker/utils.js";
 
 export class Doctor {
   constructor(logger) {
@@ -110,14 +111,22 @@ export class Doctor {
     this.logger.log(`fetch ${instances.length} instances`);
 
     for (const instance of instances) {
-      const status = await this.getLiveServiceStatus(instance);
-      if (status !== instance.status) {
-        // change status
-        await instanceModel.findOneAndUpdate(
-          { _id: instance._id, status: instance.status },
-          { status }
+      try {
+        const status = await this.getLiveServiceStatus(instance);
+        if (status !== instance.status) {
+          // change status
+          await instanceModel.findOneAndUpdate(
+            { _id: instance._id, status: instance.status },
+            { status }
+          );
+          this.logger.log(`set ${instance.name} into ${status} status`);
+        }
+      } catch (err) {
+        this.logger.log(
+          `skip ${instance.name}${
+            err.message ? ` because of error: ${err.message}` : ""
+          }`
         );
-        this.logger.log(`set ${instance.name} into ${status} status`);
       }
     }
 
@@ -208,7 +217,7 @@ export class Doctor {
 
   async getLiveServiceStatus(instance) {
     const inspect = await DockerService.getInspect(
-      instance.name,
+      getInstanceName(instance),
       this.executer.bind(this, instance.region)
     );
     const activeReplicas = inspect.Mode?.Replicated?.Replicas || 0;

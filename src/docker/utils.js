@@ -4,3 +4,6 @@ export function normalizeArg(value) {
     return value;
   return `"${value}"`;
 }
+export function getInstanceName(instance) {
+  return `nwi-${instance.name}`;
+}
